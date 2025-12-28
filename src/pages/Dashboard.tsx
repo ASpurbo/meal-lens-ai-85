@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChefHat, LogOut, History, BarChart3, Camera, Loader2 } from "lucide-react";
+import { ChefHat, LogOut, History, BarChart3, Camera, Loader2, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageUpload } from "@/components/ImageUpload";
 import { NutritionResults } from "@/components/NutritionResults";
 import { MealHistory } from "@/components/MealHistory";
 import { NutritionCharts } from "@/components/NutritionCharts";
+import { NutritionGoals } from "@/components/NutritionGoals";
+import { DailyProgress } from "@/components/DailyProgress";
 import { useAuth } from "@/hooks/useAuth";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +31,7 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("analyze");
   
   const { user, loading: authLoading, signOut } = useAuth();
-  const { meals, loading: mealsLoading, saveMeal, deleteMeal } = useMealHistory();
+  const { meals, loading: mealsLoading, saveMeal, deleteMeal, refetch } = useMealHistory();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -63,6 +65,10 @@ export default function Dashboard() {
         confidence: data.confidence,
         notes: data.notes,
       });
+
+      if (saved) {
+        refetch(); // Refresh to update progress
+      }
 
       toast({
         title: "Analysis complete!",
@@ -100,7 +106,7 @@ export default function Dashboard() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/");
+    navigate("/auth");
   };
 
   if (authLoading) {
@@ -158,8 +164,13 @@ export default function Dashboard() {
           <p className="text-muted-foreground">Track your meals and nutrition trends</p>
         </motion.div>
 
+        {/* Daily Progress Card */}
+        <div className="mb-6">
+          <DailyProgress meals={meals} />
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3 bg-muted/50">
+          <TabsList className="grid w-full max-w-lg grid-cols-4 bg-muted/50">
             <TabsTrigger value="analyze" className="flex items-center gap-2">
               <Camera className="w-4 h-4" />
               <span className="hidden sm:inline">Analyze</span>
@@ -171,6 +182,10 @@ export default function Dashboard() {
             <TabsTrigger value="charts" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Charts</span>
+            </TabsTrigger>
+            <TabsTrigger value="goals" className="flex items-center gap-2">
+              <Target className="w-4 h-4" />
+              <span className="hidden sm:inline">Goals</span>
             </TabsTrigger>
           </TabsList>
 
@@ -214,6 +229,16 @@ export default function Dashboard() {
               transition={{ delay: 0.1 }}
             >
               <NutritionCharts meals={meals} />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="goals">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <NutritionGoals />
             </motion.div>
           </TabsContent>
         </Tabs>
