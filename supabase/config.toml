@@ -1,4 +1,4 @@
 project_id = "vaxjjcdbhoejcmvuyunv"
 
 [functions.analyze-meal]
-verify_jwt = true
+verify_jwt = false
