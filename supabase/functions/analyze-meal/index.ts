@@ -91,7 +91,8 @@ serve(async (req) => {
         );
       }
       
-      throw new Error(`AI gateway error: ${response.status}`);
+      console.error("Unexpected AI gateway error status:", response.status, errorText);
+      throw new Error("Analysis service temporarily unavailable");
     }
 
     const data = await response.json();
@@ -129,9 +130,13 @@ serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error in analyze-meal function:", error);
+    const errorId = crypto.randomUUID();
+    console.error(`[${errorId}] Error in analyze-meal function:`, error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ 
+        error: "Unable to analyze image. Please try again later.",
+        errorId 
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
