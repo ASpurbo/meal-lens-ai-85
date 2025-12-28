@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sparkles, Zap, Shield, ChefHat } from "lucide-react";
+import { Sparkles, Zap, Shield, ChefHat, User } from "lucide-react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { NutritionResults } from "@/components/NutritionResults";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import heroFood from "@/assets/hero-food.jpg";
 
@@ -40,6 +42,8 @@ export default function Index() {
   const [results, setResults] = useState<NutritionData | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleImageSelect = async (base64: string) => {
     setIsAnalyzing(true);
@@ -94,10 +98,18 @@ export default function Index() {
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-2"
           >
-            <Button variant="ghost" size="sm">
-              About
-            </Button>
+            {user ? (
+              <Button variant="hero" size="sm" onClick={() => navigate("/dashboard")}>
+                Dashboard
+              </Button>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={() => navigate("/auth")}>
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
           </motion.div>
         </nav>
       </header>
