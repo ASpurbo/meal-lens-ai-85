@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,34 @@ serve(async (req) => {
   }
 
   try {
+    // Validate authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.log("Request rejected: No authorization header");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify the user's JWT token
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.log("Request rejected: Invalid token", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Authenticated request from user: ${user.id}`);
+
     const { imageBase64 } = await req.json();
     
     if (!imageBase64) {
@@ -27,7 +56,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Sending image to AI for analysis...");
+    console.log(`[User: ${user.id}] Sending image to AI for analysis...`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -76,7 +105,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      console.error(`[User: ${user.id}] AI gateway error:`, response.status, errorText);
       
       if (response.status === 429) {
         return new Response(
@@ -91,14 +120,14 @@ serve(async (req) => {
         );
       }
       
-      console.error("Unexpected AI gateway error status:", response.status, errorText);
+      console.error(`[User: ${user.id}] Unexpected AI gateway error status:`, response.status, errorText);
       throw new Error("Analysis service temporarily unavailable");
     }
 
     const data = await response.json();
     const content = data.choices?.[0]?.message?.content;
     
-    console.log("Raw AI response:", content);
+    console.log(`[User: ${user.id}] Raw AI response:`, content);
 
     // Parse the JSON response
     let nutritionData;
@@ -111,7 +140,7 @@ serve(async (req) => {
         throw new Error("No JSON found in response");
       }
     } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError);
+      console.error(`[User: ${user.id}] Failed to parse AI response:`, parseError);
       nutritionData = {
         foods: ["Unable to identify"],
         calories: 0,
@@ -123,7 +152,7 @@ serve(async (req) => {
       };
     }
 
-    console.log("Parsed nutrition data:", nutritionData);
+    console.log(`[User: ${user.id}] Parsed nutrition data:`, nutritionData);
 
     return new Response(
       JSON.stringify(nutritionData),
