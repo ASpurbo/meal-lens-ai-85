@@ -86,6 +86,7 @@ export function MoodTracker({ meals }: MoodTrackerProps) {
       toast({
         title: "Mood logged!",
         description: "We'll help you track patterns over time.",
+        duration: 3000,
       });
 
       // Reset form

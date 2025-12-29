@@ -1,9 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Trash2, ChevronDown, ChevronUp, Utensils } from "lucide-react";
+import { Calendar, Trash2, ChevronDown, ChevronUp, Utensils, Share2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MealAnalysis } from "@/hooks/useMealHistory";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 interface MealHistoryProps {
   meals: MealAnalysis[];
@@ -13,6 +16,52 @@ interface MealHistoryProps {
 
 export function MealHistory({ meals, loading, onDelete }: MealHistoryProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sharingId, setSharingId] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  const handleShare = async (mealId: string) => {
+    if (!user) return;
+    
+    setSharingId(mealId);
+    try {
+      const { error } = await supabase
+        .from("shared_meals")
+        .insert({
+          user_id: user.id,
+          meal_id: mealId,
+          is_public: true,
+        });
+
+      if (error) {
+        if (error.code === '23505') {
+          toast({
+            title: "Already shared",
+            description: "This meal is already in the community feed.",
+            duration: 3000,
+          });
+        } else {
+          throw error;
+        }
+      } else {
+        toast({
+          title: "Meal shared!",
+          description: "Your meal is now visible in the community feed.",
+          duration: 3000,
+        });
+      }
+    } catch (error) {
+      console.error("Error sharing meal:", error);
+      toast({
+        title: "Failed to share",
+        description: "Please try again.",
+        variant: "destructive",
+        duration: 3000,
+      });
+    } finally {
+      setSharingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -122,18 +171,37 @@ export function MealHistory({ meals, loading, onDelete }: MealHistoryProps) {
                       <span className="text-xs text-muted-foreground capitalize">
                         Confidence: {meal.confidence}
                       </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(meal.id);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShare(meal.id);
+                          }}
+                          disabled={sharingId === meal.id}
+                        >
+                          {sharingId === meal.id ? (
+                            <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                          ) : (
+                            <Share2 className="w-4 h-4 mr-1" />
+                          )}
+                          Share
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete(meal.id);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
