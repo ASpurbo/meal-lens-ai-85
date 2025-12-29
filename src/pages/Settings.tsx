@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Moon, Sun, Lock, Trash2, LogOut, Camera, 
-  ChevronRight, AlertTriangle, Loader2, ChefHat, ArrowLeft,
+  ChevronRight, AlertTriangle, Loader2, Apple, ArrowLeft,
   Ruler, Scale, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { differenceInYears, format, parseISO } from "date-fns";
+import { differenceInYears, parseISO } from "date-fns";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -61,8 +61,7 @@ export default function Settings() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  // Fetch user profile
-  const { data: profile, isLoading: profileLoading } = useQuery({
+  const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
@@ -77,7 +76,6 @@ export default function Settings() {
     enabled: !!user?.id,
   });
 
-  // Calculate age from birthday
   const calculateAge = (birthday: string | null) => {
     if (!birthday) return null;
     try {
@@ -89,7 +87,6 @@ export default function Settings() {
 
   const userAge = profile?.birthday ? calculateAge(profile.birthday) : profile?.age;
 
-  // Toggle dark mode
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
     setIsDarkMode(newMode);
@@ -102,7 +99,6 @@ export default function Settings() {
     }
   };
 
-  // Initialize theme from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
@@ -114,7 +110,6 @@ export default function Settings() {
     }
   }, []);
 
-  // Handle avatar upload
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !user?.id) return;
@@ -142,28 +137,19 @@ export default function Settings() {
       if (updateError) throw updateError;
 
       queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-      toast({
-        title: "Profile picture updated",
-        description: "Your new avatar has been saved.",
-      });
+      toast({ title: "Profile picture updated" });
     } catch (error: any) {
-      toast({
-        title: "Upload failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
     } finally {
       setIsUploadingAvatar(false);
     }
   };
 
-  // Handle avatar removal
   const handleRemoveAvatar = async () => {
     if (!user?.id) return;
 
     setIsRemovingAvatar(true);
     try {
-      // Remove from storage
       await supabase.storage.from("avatars").remove([
         `${user.id}/avatar.jpg`,
         `${user.id}/avatar.png`,
@@ -171,7 +157,6 @@ export default function Settings() {
         `${user.id}/avatar.webp`
       ]);
 
-      // Update profile
       const { error } = await supabase
         .from("profiles")
         .update({ avatar_url: null })
@@ -180,22 +165,14 @@ export default function Settings() {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-      toast({
-        title: "Profile picture removed",
-        description: "Your avatar has been removed.",
-      });
+      toast({ title: "Profile picture removed" });
     } catch (error: any) {
-      toast({
-        title: "Failed to remove picture",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Failed to remove", description: error.message, variant: "destructive" });
     } finally {
       setIsRemovingAvatar(false);
     }
   };
 
-  // Handle edit field
   const openEditDialog = (field: "height" | "weight") => {
     setEditField(field);
     setEditValue(
@@ -223,39 +200,23 @@ export default function Settings() {
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-      toast({
-        title: "Updated successfully",
-        description: `Your ${editField} has been updated.`,
-      });
+      toast({ title: "Updated successfully" });
       setIsEditDialogOpen(false);
     } catch (error: any) {
-      toast({
-        title: "Update failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Update failed", description: error.message, variant: "destructive" });
     } finally {
       setIsSavingEdit(false);
     }
   };
 
-  // Handle password change
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same.",
-        variant: "destructive",
-      });
+      toast({ title: "Passwords don't match", variant: "destructive" });
       return;
     }
 
     if (newPassword.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters.",
-        variant: "destructive",
-      });
+      toast({ title: "Password too short", description: "Minimum 6 characters", variant: "destructive" });
       return;
     }
 
@@ -264,25 +225,17 @@ export default function Settings() {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
 
-      toast({
-        title: "Password updated",
-        description: "Your password has been changed successfully.",
-      });
+      toast({ title: "Password updated" });
       setIsPasswordDialogOpen(false);
       setNewPassword("");
       setConfirmPassword("");
     } catch (error: any) {
-      toast({
-        title: "Failed to update password",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Failed to update", description: error.message, variant: "destructive" });
     } finally {
       setIsChangingPassword(false);
     }
   };
 
-  // Handle account deletion
   const handleDeleteAccount = async () => {
     if (!user?.id) return;
 
@@ -299,18 +252,10 @@ export default function Settings() {
       await supabase.storage.from("avatars").remove([`${user.id}/avatar.jpg`, `${user.id}/avatar.png`]);
 
       await signOut();
-      
-      toast({
-        title: "Account deleted",
-        description: "Your account and all data have been removed.",
-      });
+      toast({ title: "Account deleted" });
       navigate("/");
     } catch (error: any) {
-      toast({
-        title: "Failed to delete account",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Failed to delete", description: error.message, variant: "destructive" });
     } finally {
       setIsDeletingAccount(false);
     }
@@ -334,29 +279,29 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background border-b border-border/30">
+      <header className="sticky top-0 z-50 bg-background border-b border-border">
         <div className="container py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="rounded-full">
+          <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-accent transition-colors">
             <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-xl font-semibold">Settings</h1>
+          </button>
+          <h1 className="text-lg font-semibold">Settings</h1>
         </div>
       </header>
 
       <main className="container py-8 pb-24 space-y-8 max-w-lg mx-auto">
-        {/* Profile Section - Cal AI style */}
+        {/* Profile */}
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="relative">
-            <Avatar className="w-24 h-24 border-4 border-background shadow-xl">
+            <Avatar className="w-24 h-24 border-2 border-border">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="text-2xl bg-primary/10 text-primary font-medium">
+              <AvatarFallback className="text-xl bg-accent text-foreground font-medium">
                 {getInitials()}
               </AvatarFallback>
             </Avatar>
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploadingAvatar}
-              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-foreground flex items-center justify-center text-background hover:bg-foreground/90 transition-colors"
             >
               {isUploadingAvatar ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -377,85 +322,75 @@ export default function Settings() {
             <p className="text-sm text-muted-foreground">{user?.email}</p>
           </div>
           {profile?.avatar_url && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <button 
               onClick={handleRemoveAvatar}
               disabled={isRemovingAvatar}
-              className="text-muted-foreground hover:text-destructive"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
-              {isRemovingAvatar ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <X className="w-4 h-4 mr-2" />
-              )}
-              Remove Photo
-            </Button>
+              {isRemovingAvatar ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+              Remove photo
+            </button>
           )}
         </div>
 
-        {/* Stats Cards - Cal AI style */}
+        {/* Stats */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="bg-card rounded-2xl p-4 text-center border border-border/50">
-            <p className="text-2xl font-bold text-foreground">{userAge || "—"}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Age</p>
+          <div className="bg-accent rounded-2xl p-4 text-center">
+            <p className="text-2xl font-semibold">{userAge || "—"}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Age</p>
           </div>
           <button 
             onClick={() => openEditDialog("height")}
-            className="bg-card rounded-2xl p-4 text-center border border-border/50 hover:border-primary/50 transition-colors"
+            className="bg-accent rounded-2xl p-4 text-center hover:bg-accent/80 transition-colors"
           >
-            <p className="text-2xl font-bold text-foreground">{profile?.height_cm || "—"}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Height cm</p>
+            <p className="text-2xl font-semibold">{profile?.height_cm || "—"}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Height cm</p>
           </button>
           <button 
             onClick={() => openEditDialog("weight")}
-            className="bg-card rounded-2xl p-4 text-center border border-border/50 hover:border-primary/50 transition-colors"
+            className="bg-accent rounded-2xl p-4 text-center hover:bg-accent/80 transition-colors"
           >
-            <p className="text-2xl font-bold text-foreground">{profile?.weight_kg || "—"}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Weight kg</p>
+            <p className="text-2xl font-semibold">{profile?.weight_kg || "—"}</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Weight kg</p>
           </button>
         </div>
 
-        {/* Settings List - Clean minimal style */}
+        {/* Preferences */}
         <div className="space-y-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide px-1 mb-3">Preferences</p>
-          
-          {/* Dark Mode Toggle */}
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">Preferences</p>
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-accent">
             <div className="flex items-center gap-3">
-              {isDarkMode ? <Moon className="w-5 h-5 text-muted-foreground" /> : <Sun className="w-5 h-5 text-muted-foreground" />}
+              {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               <span className="font-medium">Dark Mode</span>
             </div>
             <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
           </div>
         </div>
 
-        {/* Security Section */}
+        {/* Security */}
         <div className="space-y-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide px-1 mb-3">Security</p>
-          
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">Security</p>
           <button 
             onClick={() => setIsPasswordDialogOpen(true)}
-            className="w-full flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50 hover:bg-muted/50 transition-colors"
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <Lock className="w-5 h-5 text-muted-foreground" />
+              <Lock className="w-5 h-5" />
               <span className="font-medium">Change Password</span>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
-        {/* Account Section */}
+        {/* Account */}
         <div className="space-y-1">
-          <p className="text-xs text-muted-foreground uppercase tracking-wide px-1 mb-3">Account</p>
-          
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">Account</p>
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center justify-between p-4 rounded-2xl bg-card border border-border/50 hover:bg-muted/50 transition-colors"
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
           >
             <div className="flex items-center gap-3">
-              <LogOut className="w-5 h-5 text-muted-foreground" />
+              <LogOut className="w-5 h-5" />
               <span className="font-medium">Sign Out</span>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
@@ -463,7 +398,7 @@ export default function Settings() {
 
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <button className="w-full flex items-center justify-between p-4 rounded-2xl bg-card border border-destructive/30 hover:bg-destructive/10 transition-colors text-destructive">
+              <button className="w-full flex items-center justify-between p-4 rounded-2xl border border-destructive/30 text-destructive hover:bg-destructive/5 transition-colors">
                 <div className="flex items-center gap-3">
                   <Trash2 className="w-5 h-5" />
                   <span className="font-medium">Delete Account</span>
@@ -478,9 +413,7 @@ export default function Settings() {
                   Delete Account
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete your
-                  account and remove all your data including meal history, goals,
-                  and progress.
+                  This action cannot be undone. All your data will be permanently deleted.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -491,22 +424,20 @@ export default function Settings() {
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
                 >
                   {isDeletingAccount && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Delete Account
+                  Delete
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
 
-        {/* App Info */}
+        {/* Footer */}
         <div className="text-center text-sm text-muted-foreground pt-8">
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="w-8 h-8 rounded-xl gradient-primary flex items-center justify-center">
-              <ChefHat className="w-4 h-4 text-primary-foreground" />
-            </div>
-            <span className="font-semibold text-foreground">NutriMind</span>
+            <Apple className="w-5 h-5 text-foreground" />
+            <span className="font-medium text-foreground">NutriMind</span>
           </div>
-          <p>Version 1.0.0</p>
+          <p className="text-xs">Version 1.0.0</p>
         </div>
       </main>
 
@@ -515,9 +446,7 @@ export default function Settings() {
         <DialogContent className="rounded-2xl">
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>
-            <DialogDescription>
-              Enter your new password below
-            </DialogDescription>
+            <DialogDescription>Enter your new password</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -528,7 +457,7 @@ export default function Settings() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Enter new password"
-                className="rounded-xl"
+                className="h-12 rounded-xl"
               />
             </div>
             <div className="space-y-2">
@@ -539,7 +468,7 @@ export default function Settings() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirm new password"
-                className="rounded-xl"
+                className="h-12 rounded-xl"
               />
             </div>
           </div>
@@ -549,13 +478,13 @@ export default function Settings() {
             </Button>
             <Button onClick={handlePasswordChange} disabled={isChangingPassword} className="rounded-xl">
               {isChangingPassword && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Update Password
+              Update
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Height/Weight Dialog */}
+      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="rounded-2xl">
           <DialogHeader>
@@ -563,25 +492,18 @@ export default function Settings() {
               {editField === "height" ? <Ruler className="w-5 h-5" /> : <Scale className="w-5 h-5" />}
               Edit {editField === "height" ? "Height" : "Weight"}
             </DialogTitle>
-            <DialogDescription>
-              Update your {editField === "height" ? "height in centimeters" : "weight in kilograms"}
-            </DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-value">{editField === "height" ? "Height (cm)" : "Weight (kg)"}</Label>
-              <Input
-                id="edit-value"
-                type="number"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                placeholder={editField === "height" ? "170" : "70"}
-                min={editField === "height" ? 100 : 30}
-                max={editField === "height" ? 250 : 300}
-                step={editField === "height" ? 1 : 0.1}
-                className="rounded-xl text-lg"
-              />
-            </div>
+            <Input
+              type="number"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              placeholder={editField === "height" ? "170" : "70"}
+              min={editField === "height" ? 100 : 30}
+              max={editField === "height" ? 250 : 300}
+              step={editField === "height" ? 1 : 0.1}
+              className="h-12 rounded-xl text-lg text-center"
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-xl">

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, Camera, X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Upload, Camera, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -52,10 +52,10 @@ export function ImageUpload({ onImageSelect, isAnalyzing }: ImageUploadProps) {
         {preview ? (
           <motion.div
             key="preview"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="relative rounded-2xl overflow-hidden shadow-card"
+            exit={{ opacity: 0, scale: 0.98 }}
+            className="relative rounded-2xl overflow-hidden border border-border"
           >
             <img
               src={preview}
@@ -63,68 +63,57 @@ export function ImageUpload({ onImageSelect, isAnalyzing }: ImageUploadProps) {
               className="w-full aspect-square object-cover"
             />
             {isAnalyzing && (
-              <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm flex items-center justify-center">
-                <div className="flex flex-col items-center gap-3 text-card">
-                  <Loader2 className="w-10 h-10 animate-spin" />
-                  <span className="font-medium">Analyzing your meal...</span>
+              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center">
+                <div className="flex flex-col items-center gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-foreground" />
+                  <span className="text-sm font-medium">Analyzing...</span>
                 </div>
               </div>
             )}
             {!isAnalyzing && (
               <button
                 onClick={clearImage}
-                className="absolute top-3 right-3 p-2 rounded-full bg-foreground/80 text-background hover:bg-foreground transition-colors"
+                className="absolute top-3 right-3 p-2 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </motion.div>
         ) : (
           <motion.div
             key="upload"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            exit={{ opacity: 0, scale: 0.98 }}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
             className={cn(
-              "relative border-2 border-dashed rounded-2xl p-8 transition-all duration-300 cursor-pointer",
+              "relative border-2 border-dashed rounded-2xl p-12 transition-all duration-200 cursor-pointer",
               isDragging
-                ? "border-primary bg-accent/50 scale-[1.02]"
-                : "border-border hover:border-primary/50 hover:bg-accent/30"
+                ? "border-foreground bg-accent"
+                : "border-border hover:border-foreground/50"
             )}
             onClick={() => fileInputRef.current?.click()}
           >
             <div className="flex flex-col items-center gap-4 text-center">
-              <div className="relative">
-                <div className={cn(
-                  "w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300",
-                  isDragging ? "bg-primary text-primary-foreground" : "bg-accent text-accent-foreground"
-                )}>
-                  {isDragging ? (
-                    <Upload className="w-8 h-8" />
-                  ) : (
-                    <ImageIcon className="w-8 h-8" />
-                  )}
-                </div>
-                {!isDragging && (
-                  <motion.div
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                    className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center"
-                  >
-                    <Upload className="w-3 h-3" />
-                  </motion.div>
+              <div className={cn(
+                "w-16 h-16 rounded-full flex items-center justify-center transition-colors",
+                isDragging ? "bg-foreground text-background" : "bg-accent"
+              )}>
+                {isDragging ? (
+                  <Upload className="w-6 h-6" />
+                ) : (
+                  <Camera className="w-6 h-6" />
                 )}
               </div>
               
               <div>
-                <p className="text-lg font-semibold text-foreground">
-                  {isDragging ? "Drop your image here" : "Upload a meal photo"}
+                <p className="text-base font-medium">
+                  {isDragging ? "Drop here" : "Scan your meal"}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Drag & drop or click to browse
+                  Take a photo or upload an image
                 </p>
               </div>
 
@@ -132,23 +121,24 @@ export function ImageUpload({ onImageSelect, isAnalyzing }: ImageUploadProps) {
                 <Button
                   variant="outline"
                   size="sm"
+                  className="rounded-xl"
                   onClick={(e) => {
                     e.stopPropagation();
                     fileInputRef.current?.click();
                   }}
                 >
-                  <Upload className="w-4 h-4" />
-                  Browse
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload
                 </Button>
                 <Button
-                  variant="outline"
                   size="sm"
+                  className="rounded-xl"
                   onClick={(e) => {
                     e.stopPropagation();
                     cameraInputRef.current?.click();
                   }}
                 >
-                  <Camera className="w-4 h-4" />
+                  <Camera className="w-4 h-4 mr-2" />
                   Camera
                 </Button>
               </div>

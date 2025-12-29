@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChefHat, ArrowRight, ArrowLeft, Loader2, User, Ruler, Scale, Activity, Calendar } from "lucide-react";
+import { Apple, ArrowRight, ArrowLeft, Loader2, User, Ruler, Scale, Activity, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,7 +39,6 @@ const calculateAge = (birthday: string): number => {
 const calculateNutritionGoals = (data: OnboardingData) => {
   const age = calculateAge(data.birthday);
   
-  // Mifflin-St Jeor Equation for BMR
   let bmr: number;
   if (data.gender === "male") {
     bmr = 10 * data.weight_kg + 6.25 * data.height_cm - 5 * age + 5;
@@ -48,7 +46,6 @@ const calculateNutritionGoals = (data: OnboardingData) => {
     bmr = 10 * data.weight_kg + 6.25 * data.height_cm - 5 * age - 161;
   }
 
-  // Activity multiplier
   const activityMultipliers: Record<string, number> = {
     sedentary: 1.2,
     light: 1.375,
@@ -59,7 +56,6 @@ const calculateNutritionGoals = (data: OnboardingData) => {
 
   const tdee = Math.round(bmr * (activityMultipliers[data.activity_level] || 1.55));
   
-  // Macro distribution: 30% protein, 40% carbs, 30% fat
   const protein = Math.round((tdee * 0.30) / 4);
   const carbs = Math.round((tdee * 0.40) / 4);
   const fat = Math.round((tdee * 0.30) / 9);
@@ -83,9 +79,9 @@ export default function Onboarding() {
   const navigate = useNavigate();
 
   const steps = [
-    { title: "About You", icon: User },
-    { title: "Body Stats", icon: Ruler },
-    { title: "Activity Level", icon: Activity },
+    { title: "About You", description: "Tell us about yourself" },
+    { title: "Body Stats", description: "Your measurements" },
+    { title: "Activity", description: "How active are you?" },
   ];
 
   const calculatedAge = calculateAge(data.birthday);
@@ -98,7 +94,6 @@ export default function Onboarding() {
       const goals = calculateNutritionGoals(data);
       const age = calculateAge(data.birthday);
 
-      // Update profile with onboarding data
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
@@ -114,7 +109,6 @@ export default function Onboarding() {
 
       if (profileError) throw profileError;
 
-      // Save nutrition goals
       const { error: goalsError } = await supabase
         .from("nutrition_goals")
         .upsert({
@@ -127,7 +121,6 @@ export default function Onboarding() {
 
       if (goalsError) throw goalsError;
 
-      // Initialize streak
       await supabase
         .from("user_streaks")
         .upsert({
@@ -138,7 +131,7 @@ export default function Onboarding() {
 
       toast({
         title: "Welcome to NutriMind!",
-        description: `Your daily goal is ${goals.calories} calories. Let's get started!`,
+        description: `Your daily goal is ${goals.calories} calories.`,
       });
 
       navigate("/scan");
@@ -160,54 +153,39 @@ export default function Onboarding() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label htmlFor="birthday" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                When is your birthday?
-              </Label>
+              <Label htmlFor="birthday" className="text-sm font-medium">Birthday</Label>
               <Input
                 id="birthday"
                 type="date"
                 value={data.birthday}
                 onChange={(e) => setData({ ...data, birthday: e.target.value })}
                 max={format(new Date(), "yyyy-MM-dd")}
-                className="text-lg"
+                className="h-12 rounded-xl"
               />
               {data.birthday && (
                 <p className="text-sm text-muted-foreground">
-                  You are {calculatedAge} years old
+                  {calculatedAge} years old
                 </p>
               )}
             </div>
             <div className="space-y-3">
-              <Label>Gender</Label>
-              <RadioGroup
-                value={data.gender}
-                onValueChange={(value) => setData({ ...data, gender: value })}
-                className="grid grid-cols-2 gap-4"
-              >
-                <Label
-                  htmlFor="male"
-                  className={`flex items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    data.gender === "male"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <RadioGroupItem value="male" id="male" className="sr-only" />
-                  <span className="font-medium">Male</span>
-                </Label>
-                <Label
-                  htmlFor="female"
-                  className={`flex items-center justify-center p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    data.gender === "female"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <RadioGroupItem value="female" id="female" className="sr-only" />
-                  <span className="font-medium">Female</span>
-                </Label>
-              </RadioGroup>
+              <Label className="text-sm font-medium">Gender</Label>
+              <div className="grid grid-cols-2 gap-3">
+                {["male", "female"].map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setData({ ...data, gender: g })}
+                    className={`p-4 rounded-xl border text-center transition-all ${
+                      data.gender === g
+                        ? "border-foreground bg-foreground text-background"
+                        : "border-border hover:border-foreground/50"
+                    }`}
+                  >
+                    <span className="font-medium capitalize">{g}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         );
@@ -216,10 +194,7 @@ export default function Onboarding() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label htmlFor="height" className="flex items-center gap-2">
-                <Ruler className="w-4 h-4" />
-                Height (cm)
-              </Label>
+              <Label htmlFor="height" className="text-sm font-medium">Height (cm)</Label>
               <Input
                 id="height"
                 type="number"
@@ -227,14 +202,11 @@ export default function Onboarding() {
                 max="250"
                 value={data.height_cm}
                 onChange={(e) => setData({ ...data, height_cm: Number(e.target.value) })}
-                className="text-lg"
+                className="h-12 rounded-xl text-lg"
               />
             </div>
             <div className="space-y-3">
-              <Label htmlFor="weight" className="flex items-center gap-2">
-                <Scale className="w-4 h-4" />
-                Weight (kg)
-              </Label>
+              <Label htmlFor="weight" className="text-sm font-medium">Weight (kg)</Label>
               <Input
                 id="weight"
                 type="number"
@@ -243,7 +215,7 @@ export default function Onboarding() {
                 step="0.1"
                 value={data.weight_kg}
                 onChange={(e) => setData({ ...data, weight_kg: Number(e.target.value) })}
-                className="text-lg"
+                className="h-12 rounded-xl text-lg"
               />
             </div>
           </div>
@@ -252,31 +224,27 @@ export default function Onboarding() {
       case 2:
         return (
           <div className="space-y-4">
-            <Label className="flex items-center gap-2">
-              <Activity className="w-4 h-4" />
-              Activity Level
-            </Label>
-            <RadioGroup
-              value={data.activity_level}
-              onValueChange={(value) => setData({ ...data, activity_level: value })}
-              className="space-y-3"
-            >
-              {activityLevels.map((level) => (
-                <Label
-                  key={level.value}
-                  htmlFor={level.value}
-                  className={`flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                    data.activity_level === level.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/50"
-                  }`}
-                >
-                  <RadioGroupItem value={level.value} id={level.value} className="sr-only" />
-                  <span className="font-medium">{level.label}</span>
-                  <span className="text-sm text-muted-foreground">{level.description}</span>
-                </Label>
-              ))}
-            </RadioGroup>
+            {activityLevels.map((level) => (
+              <button
+                key={level.value}
+                type="button"
+                onClick={() => setData({ ...data, activity_level: level.value })}
+                className={`w-full p-4 rounded-xl border text-left transition-all ${
+                  data.activity_level === level.value
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border hover:border-foreground/50"
+                }`}
+              >
+                <span className="font-medium">{level.label}</span>
+                <p className={`text-sm mt-0.5 ${
+                  data.activity_level === level.value 
+                    ? "text-background/70" 
+                    : "text-muted-foreground"
+                }`}>
+                  {level.description}
+                </p>
+              </button>
+            ))}
           </div>
         );
 
@@ -286,108 +254,91 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex flex-col">
-      <header className="container py-4">
+    <div className="min-h-screen bg-background flex flex-col">
+      <header className="container py-8">
         <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-center gap-2"
         >
-          <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-soft">
-            <ChefHat className="w-5 h-5 text-primary-foreground" />
-          </div>
-          <span className="text-xl font-bold text-foreground">NutriMind</span>
+          <Apple className="w-7 h-7 text-foreground" />
+          <span className="text-xl font-semibold tracking-tight">NutriMind</span>
         </motion.div>
       </header>
 
-      <main className="flex-1 container flex items-center justify-center py-12">
+      <main className="flex-1 container flex flex-col justify-center py-8 max-w-sm mx-auto">
+        {/* Progress */}
+        <div className="flex justify-center gap-2 mb-8">
+          {steps.map((s, i) => (
+            <div
+              key={i}
+              className={`h-1 rounded-full transition-all ${
+                i <= step ? "w-10 bg-foreground" : "w-6 bg-border"
+              }`}
+            />
+          ))}
+        </div>
+
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
         >
-          {/* Progress indicator */}
-          <div className="flex justify-center gap-2 mb-8">
-            {steps.map((s, i) => (
-              <div
-                key={i}
-                className={`h-2 rounded-full transition-all ${
-                  i <= step ? "w-12 bg-primary" : "w-8 bg-muted"
-                }`}
-              />
-            ))}
+          {/* Step header */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-semibold tracking-tight">{steps[step].title}</h1>
+            <p className="text-muted-foreground text-sm mt-1">{steps[step].description}</p>
           </div>
 
-          <Card className="border-border/50 bg-card/50 backdrop-blur-sm">
-            <CardHeader>
-              <div className="flex items-center gap-3">
-                {(() => {
-                  const StepIcon = steps[step].icon;
-                  return (
-                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <StepIcon className="w-6 h-6 text-primary" />
-                    </div>
-                  );
-                })()}
-                <div>
-                  <CardTitle>{steps[step].title}</CardTitle>
-                  <CardDescription>
-                    Step {step + 1} of {steps.length}
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={step}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {renderStep()}
-                </motion.div>
-              </AnimatePresence>
+          {/* Step content */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderStep()}
+            </motion.div>
+          </AnimatePresence>
 
-              <div className="flex gap-3 mt-8">
-                {step > 0 && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setStep(step - 1)}
-                    className="flex-1"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                  </Button>
-                )}
-                {step < steps.length - 1 ? (
-                  <Button
-                    onClick={() => setStep(step + 1)}
-                    className="flex-1"
-                  >
-                    Next
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+          {/* Navigation */}
+          <div className="flex gap-3 mt-10">
+            {step > 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setStep(step - 1)}
+                className="flex-1 h-12 rounded-xl"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            )}
+            {step < steps.length - 1 ? (
+              <Button
+                onClick={() => setStep(step + 1)}
+                className="flex-1 h-12 rounded-xl"
+              >
+                Next
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleComplete}
+                disabled={loading}
+                className="flex-1 h-12 rounded-xl"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
-                  <Button
-                    onClick={handleComplete}
-                    disabled={loading}
-                    className="flex-1"
-                  >
-                    {loading ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        Get Started
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
+                  <>
+                    Get Started
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </Button>
+            )}
+          </div>
         </motion.div>
       </main>
     </div>
