@@ -162,6 +162,7 @@ export type Database = {
           activity_level: string | null
           age: number | null
           avatar_url: string | null
+          birthday: string | null
           created_at: string
           display_name: string | null
           email: string | null
@@ -178,6 +179,7 @@ export type Database = {
           activity_level?: string | null
           age?: number | null
           avatar_url?: string | null
+          birthday?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
@@ -194,6 +196,7 @@ export type Database = {
           activity_level?: string | null
           age?: number | null
           avatar_url?: string | null
+          birthday?: string | null
           created_at?: string
           display_name?: string | null
           email?: string | null
