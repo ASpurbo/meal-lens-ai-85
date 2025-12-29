@@ -51,7 +51,6 @@ export function AppLayout({ children }: AppLayoutProps) {
         <div className="container py-4 flex items-center justify-between">
           <Link to="/scan" className="flex items-center gap-2">
             <Apple className="w-6 h-6 text-foreground" />
-            <span className="text-lg font-semibold tracking-tight">NutriMind</span>
           </Link>
           
           <Link to="/settings">
