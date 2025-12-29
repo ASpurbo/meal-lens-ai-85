@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChefHat, Mail, Lock, Loader2 } from "lucide-react";
+import { Apple, Mail, Lock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,111 +106,100 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen gradient-hero flex flex-col">
-      <header className="container py-4">
-        <nav className="flex items-center justify-center">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center gap-2"
-          >
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-soft">
-              <ChefHat className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold text-foreground">NutriMind</span>
-          </motion.div>
-        </nav>
+    <div className="min-h-screen bg-background flex flex-col">
+      {/* Cal AI style - centered logo */}
+      <header className="container py-8">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-center gap-2"
+        >
+          <Apple className="w-7 h-7 text-foreground" />
+          <span className="text-xl font-semibold tracking-tight">NutriMind</span>
+        </motion.div>
       </header>
 
-      <main className="flex-1 container flex items-center justify-center py-12 px-4">
+      <main className="flex-1 container flex items-center justify-center py-8 px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md"
+          transition={{ delay: 0.1 }}
+          className="w-full max-w-sm"
         >
-          <div className="bg-card rounded-3xl shadow-card p-8 border border-border">
-            <div className="text-center mb-8">
-              <h1 className="text-2xl font-bold text-foreground mb-2">
-                {isLogin ? "Welcome Back" : "Create Account"}
-              </h1>
-              <p className="text-muted-foreground">
-                {isLogin
-                  ? "Sign in to track your nutrition"
-                  : "Start your nutrition journey today"}
-              </p>
+          <div className="text-center mb-10">
+            <h1 className="text-2xl font-semibold tracking-tight mb-2">
+              {isLogin ? "Welcome back" : "Create account"}
+            </h1>
+            <p className="text-muted-foreground text-sm">
+              {isLogin
+                ? "Sign in to continue tracking"
+                : "Start your nutrition journey"}
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-12 rounded-xl border-border bg-background"
+                disabled={loading}
+              />
+              {errors.email && (
+                <p className="text-xs text-destructive">{errors.email}</p>
+              )}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                    disabled={loading}
-                  />
-                </div>
-                {errors.email && (
-                  <p className="text-sm text-destructive">{errors.email}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                    disabled={loading}
-                  />
-                </div>
-                {errors.password && (
-                  <p className="text-sm text-destructive">{errors.password}</p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                variant="hero"
-                size="lg"
-                className="w-full"
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 rounded-xl border-border bg-background"
                 disabled={loading}
-              >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : isLogin ? (
-                  "Sign In"
-                ) : (
-                  "Create Account"
-                )}
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrors({});
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                disabled={loading}
-              >
-                {isLogin
-                  ? "Don't have an account? Sign up"
-                  : "Already have an account? Sign in"}
-              </button>
+              />
+              {errors.password && (
+                <p className="text-xs text-destructive">{errors.password}</p>
+              )}
             </div>
+
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full h-12 rounded-xl"
+              disabled={loading}
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : isLogin ? (
+                "Sign in"
+              ) : (
+                "Create account"
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setErrors({});
+              }}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              disabled={loading}
+            >
+              {isLogin
+                ? "Don't have an account? Sign up"
+                : "Already have an account? Sign in"}
+            </button>
           </div>
         </motion.div>
       </main>

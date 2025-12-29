@@ -1,7 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { ChefHat, Settings, Camera, History, BarChart3, Target, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Apple, Settings, Camera, History, BarChart3, Target, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { cn } from "@/lib/utils";
@@ -38,7 +37,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <Loader2 className="w-6 h-6 animate-spin text-foreground" />
       </div>
     );
   }
@@ -47,20 +46,18 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
-        <div className="container py-3 flex items-center justify-between">
+      {/* Header - Cal AI style minimal */}
+      <header className="sticky top-0 z-50 bg-background border-b border-border">
+        <div className="container py-4 flex items-center justify-between">
           <Link to="/scan" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
-              <ChefHat className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-lg font-bold">NutriMind</span>
+            <Apple className="w-6 h-6 text-foreground" />
+            <span className="text-lg font-semibold tracking-tight">NutriMind</span>
           </Link>
           
           <Link to="/settings">
-            <Button variant="ghost" size="icon" className="text-muted-foreground">
-              <Settings className="w-5 h-5" />
-            </Button>
+            <button className="p-2 rounded-full hover:bg-accent transition-colors">
+              <Settings className="w-5 h-5 text-muted-foreground" />
+            </button>
           </Link>
         </div>
       </header>
@@ -70,10 +67,10 @@ export function AppLayout({ children }: AppLayoutProps) {
         {children}
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg border-t border-border/50">
+      {/* Bottom Navigation - Cal AI style */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
         <div className="container">
-          <div className="flex items-center justify-around py-2">
+          <div className="flex items-center justify-around py-3">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -81,14 +78,19 @@ export function AppLayout({ children }: AppLayoutProps) {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    "flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors",
+                    "flex flex-col items-center gap-1 px-6 py-1 transition-colors",
                     isActive 
-                      ? "text-primary" 
+                      ? "text-foreground" 
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <item.icon className={cn("w-5 h-5", isActive && "text-primary")} />
-                  <span className="text-xs font-medium">{item.label}</span>
+                  <item.icon className={cn("w-5 h-5", isActive && "text-foreground")} />
+                  <span className={cn(
+                    "text-[10px] font-medium uppercase tracking-wider",
+                    isActive && "font-semibold"
+                  )}>
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}
