@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChefHat, LogOut, History, BarChart3, Camera, Loader2, Target, Trophy, Clock, Lightbulb, Smile, Users } from "lucide-react";
+import { ChefHat, LogOut, History, BarChart3, Camera, Loader2, Target, Trophy, Clock, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageUpload } from "@/components/ImageUpload";
@@ -15,7 +15,6 @@ import { GamificationPanel } from "@/components/GamificationPanel";
 import { MealTimeline } from "@/components/MealTimeline";
 import { SmartRecommendations } from "@/components/SmartRecommendations";
 import { MoodTracker } from "@/components/MoodTracker";
-import { CommunityFeed } from "@/components/CommunityFeed";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useMealHistory } from "@/hooks/useMealHistory";
@@ -37,7 +36,7 @@ export default function Dashboard() {
   const [pendingResults, setPendingResults] = useState<NutritionData | null>(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeTab, setActiveTab] = useState("analyze");
+  const [activeTab, setActiveTab] = useState("scan");
   
   const { user, loading: authLoading, signOut } = useAuth();
   const { needsOnboarding, loading: onboardingLoading } = useOnboarding();
@@ -70,7 +69,6 @@ export default function Dashboard() {
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
 
-      // Show confirmation dialog instead of auto-saving
       setPendingResults(data);
       setShowConfirmation(true);
 
@@ -106,11 +104,9 @@ export default function Dashboard() {
 
     if (saved) {
       refetch();
-      // Update streak properly
       if (user) {
         const today = new Date().toISOString().split('T')[0];
         
-        // First check if user has a streak record
         const { data: existingStreak } = await supabase
           .from("user_streaks")
           .select("*")
@@ -126,12 +122,10 @@ export default function Dashboard() {
           let newStreak = existingStreak.current_streak || 0;
           
           if (lastActivity === today) {
-            // Already logged today, no change
+            // Already logged today
           } else if (lastActivity === yesterdayStr) {
-            // Consecutive day, increment streak
             newStreak += 1;
           } else {
-            // Streak broken, start fresh
             newStreak = 1;
           }
           
@@ -146,7 +140,6 @@ export default function Dashboard() {
             })
             .eq("user_id", user.id);
         } else {
-          // Create new streak record
           await supabase
             .from("user_streaks")
             .insert({
@@ -158,8 +151,8 @@ export default function Dashboard() {
         }
       }
       toast({
-        title: "Added to daily goal!",
-        description: "Your meal has been saved to your history.",
+        title: "Meal added",
+        description: "Your meal has been saved",
         duration: 3000,
       });
     }
@@ -173,11 +166,6 @@ export default function Dashboard() {
     setResults(pendingResults);
     setPendingResults(null);
     setShowConfirmation(false);
-    toast({
-      title: "View only",
-      description: "Meal info shown but not added to your daily intake.",
-      duration: 3000,
-    });
   };
 
   const handleDeleteMeal = async (id: string) => {
@@ -185,14 +173,8 @@ export default function Dashboard() {
     if (success) {
       toast({
         title: "Meal deleted",
-        description: "The meal has been removed from your history",
+        description: "Removed from your history",
         duration: 3000,
-      });
-    } else {
-      toast({
-        title: "Delete failed",
-        description: "Could not delete the meal. Please try again.",
-        variant: "destructive",
       });
     }
   };
@@ -204,19 +186,16 @@ export default function Dashboard() {
 
   if (authLoading || onboardingLoading) {
     return (
-      <div className="min-h-screen gradient-hero flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
-    <div className="min-h-screen gradient-hero">
-      {/* Confirmation Dialog */}
+    <div className="min-h-screen bg-background">
       {pendingResults && (
         <FoodScanConfirmation
           open={showConfirmation}
@@ -227,185 +206,129 @@ export default function Dashboard() {
         />
       )}
 
-      {/* Header */}
-      <header className="container py-4">
-        <nav className="flex items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2"
-          >
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-soft">
+      {/* Minimal Header */}
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border/50">
+        <div className="container py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
               <ChefHat className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">NutriMind</span>
-          </motion.div>
+            <span className="text-lg font-bold">NutriMind</span>
+          </div>
           
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-2"
-          >
-            <span className="text-sm text-muted-foreground hidden md:block">
-              {user.email}
-            </span>
-            <Button variant="ghost" size="sm" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </motion.div>
-        </nav>
+          <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground">
+            <LogOut className="w-4 h-4" />
+          </Button>
+        </div>
       </header>
 
       {/* Main Content */}
-      <main className="container py-8">
+      <main className="container py-6 space-y-6">
+        {/* Daily Progress - Always visible */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-foreground mb-2">Your Dashboard</h1>
-          <p className="text-muted-foreground">Track your meals and nutrition trends</p>
+          <DailyProgress meals={meals} />
         </motion.div>
 
-        {/* Daily Progress Card */}
-        <div className="mb-6">
-          <DailyProgress meals={meals} />
-        </div>
-
         {/* Smart Recommendations */}
-        <div className="mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
           <SmartRecommendations meals={meals} />
-        </div>
+        </motion.div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-3xl grid-cols-8 bg-muted/50">
-            <TabsTrigger value="analyze" className="flex items-center gap-1">
+        {/* Tab Navigation */}
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="w-full bg-muted/30 p-1 rounded-2xl grid grid-cols-7 gap-1">
+            <TabsTrigger 
+              value="scan" 
+              className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-1.5 text-xs"
+            >
               <Camera className="w-4 h-4" />
-              <span className="hidden lg:inline">Scan</span>
+              <span className="hidden sm:inline">Scan</span>
             </TabsTrigger>
-            <TabsTrigger value="timeline" className="flex items-center gap-1">
+            <TabsTrigger 
+              value="timeline" 
+              className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-1.5 text-xs"
+            >
               <Clock className="w-4 h-4" />
-              <span className="hidden lg:inline">Timeline</span>
+              <span className="hidden sm:inline">Today</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-1">
+            <TabsTrigger 
+              value="history" 
+              className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-1.5 text-xs"
+            >
               <History className="w-4 h-4" />
-              <span className="hidden lg:inline">History</span>
+              <span className="hidden sm:inline">History</span>
             </TabsTrigger>
-            <TabsTrigger value="charts" className="flex items-center gap-1">
+            <TabsTrigger 
+              value="charts" 
+              className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-1.5 text-xs"
+            >
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden lg:inline">Charts</span>
+              <span className="hidden sm:inline">Charts</span>
             </TabsTrigger>
-            <TabsTrigger value="goals" className="flex items-center gap-1">
+            <TabsTrigger 
+              value="goals" 
+              className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-1.5 text-xs"
+            >
               <Target className="w-4 h-4" />
-              <span className="hidden lg:inline">Goals</span>
+              <span className="hidden sm:inline">Goals</span>
             </TabsTrigger>
-            <TabsTrigger value="achievements" className="flex items-center gap-1">
+            <TabsTrigger 
+              value="badges" 
+              className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-1.5 text-xs"
+            >
               <Trophy className="w-4 h-4" />
-              <span className="hidden lg:inline">Badges</span>
+              <span className="hidden sm:inline">Badges</span>
             </TabsTrigger>
-            <TabsTrigger value="mood" className="flex items-center gap-1">
+            <TabsTrigger 
+              value="mood" 
+              className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm flex items-center gap-1.5 text-xs"
+            >
               <Smile className="w-4 h-4" />
-              <span className="hidden lg:inline">Mood</span>
-            </TabsTrigger>
-            <TabsTrigger value="community" className="flex items-center gap-1">
-              <Users className="w-4 h-4" />
-              <span className="hidden lg:inline">Feed</span>
+              <span className="hidden sm:inline">Mood</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="analyze" className="space-y-6">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
+          <div className="mt-6">
+            <TabsContent value="scan" className="m-0 space-y-4">
               <ImageUpload onImageSelect={handleImageSelect} isAnalyzing={isAnalyzing} />
-            </motion.div>
-            
-            {results && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <NutritionResults data={results} />
-              </motion.div>
-            )}
-          </TabsContent>
+              {results && <NutritionResults data={results} />}
+            </TabsContent>
 
-          <TabsContent value="timeline">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
+            <TabsContent value="timeline" className="m-0">
               <MealTimeline meals={meals} />
-            </motion.div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="history">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
+            <TabsContent value="history" className="m-0">
               <MealHistory
                 meals={meals}
                 loading={mealsLoading}
                 onDelete={handleDeleteMeal}
               />
-            </motion.div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="charts">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
+            <TabsContent value="charts" className="m-0">
               <NutritionCharts meals={meals} />
-            </motion.div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="goals">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
+            <TabsContent value="goals" className="m-0">
               <NutritionGoals />
-            </motion.div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="achievements">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
+            <TabsContent value="badges" className="m-0">
               <GamificationPanel />
-            </motion.div>
-          </TabsContent>
+            </TabsContent>
 
-          <TabsContent value="mood">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
+            <TabsContent value="mood" className="m-0">
               <MoodTracker meals={meals} />
-            </motion.div>
-          </TabsContent>
-
-          <TabsContent value="community">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <CommunityFeed />
-            </motion.div>
-          </TabsContent>
+            </TabsContent>
+          </div>
         </Tabs>
       </main>
     </div>
