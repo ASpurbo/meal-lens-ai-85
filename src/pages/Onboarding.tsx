@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChefHat, ArrowRight, ArrowLeft, Loader2, User, Ruler, Scale, Activity } from "lucide-react";
+import { ChefHat, ArrowRight, ArrowLeft, Loader2, User, Ruler, Scale, Activity, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,9 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { differenceInYears, format, parse } from "date-fns";
 
 interface OnboardingData {
-  age: number;
+  birthday: string;
   height_cm: number;
   weight_kg: number;
   gender: string;
@@ -27,13 +28,24 @@ const activityLevels = [
   { value: "athlete", label: "Athlete", description: "Professional/intense training" },
 ];
 
+const calculateAge = (birthday: string): number => {
+  try {
+    const birthDate = parse(birthday, "yyyy-MM-dd", new Date());
+    return differenceInYears(new Date(), birthDate);
+  } catch {
+    return 25;
+  }
+};
+
 const calculateNutritionGoals = (data: OnboardingData) => {
+  const age = calculateAge(data.birthday);
+  
   // Mifflin-St Jeor Equation for BMR
   let bmr: number;
   if (data.gender === "male") {
-    bmr = 10 * data.weight_kg + 6.25 * data.height_cm - 5 * data.age + 5;
+    bmr = 10 * data.weight_kg + 6.25 * data.height_cm - 5 * age + 5;
   } else {
-    bmr = 10 * data.weight_kg + 6.25 * data.height_cm - 5 * data.age - 161;
+    bmr = 10 * data.weight_kg + 6.25 * data.height_cm - 5 * age - 161;
   }
 
   // Activity multiplier
@@ -48,9 +60,9 @@ const calculateNutritionGoals = (data: OnboardingData) => {
   const tdee = Math.round(bmr * (activityMultipliers[data.activity_level] || 1.55));
   
   // Macro distribution: 30% protein, 40% carbs, 30% fat
-  const protein = Math.round((tdee * 0.30) / 4); // 4 cal per gram
-  const carbs = Math.round((tdee * 0.40) / 4);   // 4 cal per gram
-  const fat = Math.round((tdee * 0.30) / 9);     // 9 cal per gram
+  const protein = Math.round((tdee * 0.30) / 4);
+  const carbs = Math.round((tdee * 0.40) / 4);
+  const fat = Math.round((tdee * 0.30) / 9);
 
   return { calories: tdee, protein, carbs, fat };
 };
@@ -59,7 +71,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<OnboardingData>({
-    age: 25,
+    birthday: "2000-01-01",
     height_cm: 170,
     weight_kg: 70,
     gender: "male",
@@ -76,19 +88,22 @@ export default function Onboarding() {
     { title: "Activity Level", icon: Activity },
   ];
 
+  const calculatedAge = calculateAge(data.birthday);
+
   const handleComplete = async () => {
     if (!user) return;
     setLoading(true);
 
     try {
-      // Calculate nutrition goals
       const goals = calculateNutritionGoals(data);
+      const age = calculateAge(data.birthday);
 
       // Update profile with onboarding data
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
-          age: data.age,
+          birthday: data.birthday,
+          age: age,
           height_cm: data.height_cm,
           weight_kg: data.weight_kg,
           gender: data.gender,
@@ -126,7 +141,7 @@ export default function Onboarding() {
         description: `Your daily goal is ${goals.calories} calories. Let's get started!`,
       });
 
-      navigate("/dashboard");
+      navigate("/scan");
     } catch (error) {
       console.error("Onboarding error:", error);
       toast({
@@ -145,16 +160,23 @@ export default function Onboarding() {
         return (
           <div className="space-y-6">
             <div className="space-y-3">
-              <Label htmlFor="age">How old are you?</Label>
+              <Label htmlFor="birthday" className="flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                When is your birthday?
+              </Label>
               <Input
-                id="age"
-                type="number"
-                min="13"
-                max="120"
-                value={data.age}
-                onChange={(e) => setData({ ...data, age: Number(e.target.value) })}
+                id="birthday"
+                type="date"
+                value={data.birthday}
+                onChange={(e) => setData({ ...data, birthday: e.target.value })}
+                max={format(new Date(), "yyyy-MM-dd")}
                 className="text-lg"
               />
+              {data.birthday && (
+                <p className="text-sm text-muted-foreground">
+                  You are {calculatedAge} years old
+                </p>
+              )}
             </div>
             <div className="space-y-3">
               <Label>Gender</Label>
