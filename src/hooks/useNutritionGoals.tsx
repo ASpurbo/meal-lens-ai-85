@@ -3,14 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
 export interface NutritionGoals {
-  id: string;
+  id?: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
 }
 
-const DEFAULT_GOALS: Omit<NutritionGoals, "id"> = {
+export const DEFAULT_GOALS: NutritionGoals = {
   calories: 2000,
   protein: 50,
   carbs: 250,
@@ -18,13 +18,13 @@ const DEFAULT_GOALS: Omit<NutritionGoals, "id"> = {
 };
 
 export function useNutritionGoals() {
-  const [goals, setGoals] = useState<NutritionGoals | null>(null);
+  const [goals, setGoals] = useState<NutritionGoals>(DEFAULT_GOALS);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
   const fetchGoals = async () => {
     if (!user) {
-      setGoals(null);
+      setGoals(DEFAULT_GOALS);
       setLoading(false);
       return;
     }
@@ -36,14 +36,22 @@ export function useNutritionGoals() {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching goals:", error);
-        return;
+      if (error) throw error;
+      
+      if (data) {
+        setGoals({
+          id: data.id,
+          calories: data.calories,
+          protein: Number(data.protein),
+          carbs: Number(data.carbs),
+          fat: Number(data.fat),
+        });
+      } else {
+        setGoals(DEFAULT_GOALS);
       }
-
-      setGoals(data);
     } catch (error) {
       console.error("Error fetching goals:", error);
+      setGoals(DEFAULT_GOALS);
     } finally {
       setLoading(false);
     }
@@ -57,35 +65,19 @@ export function useNutritionGoals() {
     if (!user) return false;
 
     try {
-      if (goals) {
-        // Update existing goals
-        const { error } = await supabase
-          .from("nutrition_goals")
-          .update({
-            calories: newGoals.calories,
-            protein: newGoals.protein,
-            carbs: newGoals.carbs,
-            fat: newGoals.fat,
-          })
-          .eq("user_id", user.id);
+      const { error } = await supabase
+        .from("nutrition_goals")
+        .upsert({
+          user_id: user.id,
+          calories: newGoals.calories,
+          protein: newGoals.protein,
+          carbs: newGoals.carbs,
+          fat: newGoals.fat,
+        }, { onConflict: "user_id" });
 
-        if (error) throw error;
-      } else {
-        // Insert new goals
-        const { error } = await supabase
-          .from("nutrition_goals")
-          .insert({
-            user_id: user.id,
-            calories: newGoals.calories,
-            protein: newGoals.protein,
-            carbs: newGoals.carbs,
-            fat: newGoals.fat,
-          });
-
-        if (error) throw error;
-      }
-
-      await fetchGoals();
+      if (error) throw error;
+      
+      setGoals(newGoals);
       return true;
     } catch (error) {
       console.error("Error saving goals:", error);
@@ -94,8 +86,8 @@ export function useNutritionGoals() {
   };
 
   return {
-    goals: goals || { id: "", ...DEFAULT_GOALS },
-    hasCustomGoals: !!goals,
+    goals,
+    hasCustomGoals: goals.id !== undefined,
     loading,
     saveGoals,
     refetch: fetchGoals,
