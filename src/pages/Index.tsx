@@ -10,7 +10,7 @@ export default function Index() {
   useEffect(() => {
     if (!loading) {
       if (user) {
-        navigate("/dashboard");
+        navigate("/scan");
       } else {
         navigate("/auth");
       }
