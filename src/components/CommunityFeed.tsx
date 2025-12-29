@@ -195,20 +195,19 @@ export function CommunityFeed() {
                   {/* Meal info */}
                   {sharedMeal.meal && (
                     <div className="space-y-3">
-                      <div className="flex flex-wrap gap-2">
-                        {sharedMeal.meal.foods.slice(0, 3).map((food, j) => (
-                          <span
-                            key={j}
-                            className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full"
-                          >
-                            {food}
-                          </span>
-                        ))}
-                        {sharedMeal.meal.foods.length > 3 && (
-                          <span className="px-3 py-1 bg-muted text-muted-foreground text-xs rounded-full">
-                            +{sharedMeal.meal.foods.length - 3} more
-                          </span>
-                        )}
+                      {/* All foods */}
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2 font-medium">Foods:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {sharedMeal.meal.foods.map((food, j) => (
+                            <span
+                              key={j}
+                              className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full"
+                            >
+                              {food}
+                            </span>
+                          ))}
+                        </div>
                       </div>
 
                       <div className="grid grid-cols-4 gap-2 text-center">

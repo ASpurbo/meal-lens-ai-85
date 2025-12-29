@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChefHat, Mail, Lock, Loader2 } from "lucide-react";
+import { ChefHat, Mail, Lock, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-
+import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
@@ -18,6 +18,9 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [showVerificationMessage, setShowVerificationMessage] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const { toast } = useToast();
   const { user, signIn, signUp } = useAuth();
@@ -25,9 +28,34 @@ export default function Auth() {
 
   useEffect(() => {
     if (user) {
-      navigate("/");
+      checkVerificationAndRedirect();
     }
-  }, [user, navigate]);
+  }, [user]);
+
+  const checkVerificationAndRedirect = async () => {
+    if (!user) return;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email_verified")
+      .eq("user_id", user.id)
+      .single();
+
+    if (profile?.email_verified) {
+      navigate("/");
+    } else {
+      // User exists but not verified - sign them out
+      await supabase.auth.signOut();
+      setPendingUserId(user.id);
+      setShowVerificationMessage(true);
+      toast({
+        title: "Email not verified",
+        description: "Please check your email and verify your account before logging in.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    }
+  };
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -52,12 +80,75 @@ export default function Auth() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const sendVerificationEmail = async (userId: string, userEmail: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("send-verification-email", {
+        body: { email: userEmail, userId },
+      });
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error("Error sending verification email:", error);
+      return false;
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address to resend verification.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setResendLoading(true);
+    try {
+      // First, try to sign in to get the user ID
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password: password || "dummy-password-for-lookup",
+      });
+
+      if (data?.user) {
+        await supabase.auth.signOut();
+        const success = await sendVerificationEmail(data.user.id, email);
+        if (success) {
+          toast({
+            title: "Verification email sent!",
+            description: "Please check your inbox for the verification link.",
+            duration: 5000,
+          });
+        } else {
+          throw new Error("Failed to send email");
+        }
+      } else {
+        // If login fails, user might not exist or password is wrong
+        toast({
+          title: "Cannot resend",
+          description: "Please make sure you've signed up first.",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Failed to resend",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
     
     setLoading(true);
+    setShowVerificationMessage(false);
     
     try {
       if (isLogin) {
@@ -76,12 +167,8 @@ export default function Auth() {
               variant: "destructive",
             });
           }
-        } else {
-          toast({
-            title: "Welcome back!",
-            description: "Successfully logged in",
-          });
         }
+        // If login succeeds, useEffect will handle verification check
       } else {
         const { error } = await signUp(email, password);
         if (error) {
@@ -99,10 +186,31 @@ export default function Auth() {
             });
           }
         } else {
-          toast({
-            title: "Account created!",
-            description: "You've been automatically logged in",
-          });
+          // Get the newly created user
+          const { data: { user: newUser } } = await supabase.auth.getUser();
+          
+          if (newUser) {
+            // Send verification email
+            const emailSent = await sendVerificationEmail(newUser.id, email);
+            
+            // Sign out the user until they verify
+            await supabase.auth.signOut();
+            
+            if (emailSent) {
+              setShowVerificationMessage(true);
+              toast({
+                title: "Account created!",
+                description: "Please check your email to verify your account.",
+                duration: 5000,
+              });
+            } else {
+              toast({
+                title: "Account created",
+                description: "But we couldn't send a verification email. Please try resending.",
+                variant: "destructive",
+              });
+            }
+          }
         }
       }
     } finally {
@@ -127,7 +235,7 @@ export default function Auth() {
         </nav>
       </header>
 
-      <main className="flex-1 container flex items-center justify-center py-12">
+      <main className="flex-1 container flex items-center justify-center py-12 px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -144,6 +252,33 @@ export default function Auth() {
                   : "Start your nutrition journey today"}
               </p>
             </div>
+
+            {showVerificationMessage && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6 p-4 rounded-xl bg-primary/10 border border-primary/20"
+              >
+                <p className="text-sm text-foreground text-center mb-3">
+                  📧 Please check your email and click the verification link to activate your account.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={handleResendVerification}
+                  disabled={resendLoading}
+                >
+                  {resendLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  Resend Verification Email
+                </Button>
+              </motion.div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
@@ -201,12 +336,29 @@ export default function Auth() {
               </Button>
             </form>
 
+            {isLogin && !showVerificationMessage && (
+              <div className="mt-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setShowVerificationMessage(true);
+                  }}
+                >
+                  Didn't receive verification email?
+                </Button>
+              </div>
+            )}
+
             <div className="mt-6 text-center">
               <button
                 type="button"
                 onClick={() => {
                   setIsLogin(!isLogin);
                   setErrors({});
+                  setShowVerificationMessage(false);
                 }}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 disabled={loading}

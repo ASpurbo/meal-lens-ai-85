@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_verification_tokens: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       meal_analyses: {
         Row: {
           analyzed_at: string
@@ -137,6 +164,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           email: string | null
+          email_verified: boolean | null
           gender: string | null
           height_cm: number | null
           id: string
@@ -151,6 +179,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          email_verified?: boolean | null
           gender?: string | null
           height_cm?: number | null
           id?: string
@@ -165,6 +194,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           email?: string | null
+          email_verified?: boolean | null
           gender?: string | null
           height_cm?: number | null
           id?: string
