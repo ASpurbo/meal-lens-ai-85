@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { ChefHat, LogOut, Camera, History, BarChart3, Target, Loader2 } from "lucide-react";
+import { ChefHat, Settings, Camera, History, BarChart3, Target, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
@@ -18,7 +18,7 @@ const navItems = [
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { needsOnboarding, loading: onboardingLoading } = useOnboarding();
   const navigate = useNavigate();
   const location = useLocation();
@@ -34,11 +34,6 @@ export function AppLayout({ children }: AppLayoutProps) {
       navigate("/onboarding");
     }
   }, [needsOnboarding, onboardingLoading, user, navigate]);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth");
-  };
 
   if (authLoading || onboardingLoading) {
     return (
@@ -62,9 +57,11 @@ export function AppLayout({ children }: AppLayoutProps) {
             <span className="text-lg font-bold">NutriMind</span>
           </Link>
           
-          <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground">
-            <LogOut className="w-4 h-4" />
-          </Button>
+          <Link to="/settings">
+            <Button variant="ghost" size="icon" className="text-muted-foreground">
+              <Settings className="w-5 h-5" />
+            </Button>
+          </Link>
         </div>
       </header>
 
