@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChefHat, LogOut, History, BarChart3, Camera, Loader2, Target } from "lucide-react";
+import { ChefHat, LogOut, History, BarChart3, Camera, Loader2, Target, Trophy, Clock, Lightbulb, Smile, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ImageUpload } from "@/components/ImageUpload";
@@ -10,7 +10,14 @@ import { MealHistory } from "@/components/MealHistory";
 import { NutritionCharts } from "@/components/NutritionCharts";
 import { NutritionGoals } from "@/components/NutritionGoals";
 import { DailyProgress } from "@/components/DailyProgress";
+import { FoodScanConfirmation } from "@/components/FoodScanConfirmation";
+import { GamificationPanel } from "@/components/GamificationPanel";
+import { MealTimeline } from "@/components/MealTimeline";
+import { SmartRecommendations } from "@/components/SmartRecommendations";
+import { MoodTracker } from "@/components/MoodTracker";
+import { CommunityFeed } from "@/components/CommunityFeed";
 import { useAuth } from "@/hooks/useAuth";
+import { useOnboarding } from "@/hooks/useOnboarding";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,10 +34,13 @@ interface NutritionData {
 
 export default function Dashboard() {
   const [results, setResults] = useState<NutritionData | null>(null);
+  const [pendingResults, setPendingResults] = useState<NutritionData | null>(null);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [activeTab, setActiveTab] = useState("analyze");
   
   const { user, loading: authLoading, signOut } = useAuth();
+  const { needsOnboarding, loading: onboardingLoading } = useOnboarding();
   const { meals, loading: mealsLoading, saveMeal, deleteMeal, refetch } = useMealHistory();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -41,9 +51,16 @@ export default function Dashboard() {
     }
   }, [user, authLoading, navigate]);
 
+  useEffect(() => {
+    if (!onboardingLoading && needsOnboarding && user) {
+      navigate("/onboarding");
+    }
+  }, [needsOnboarding, onboardingLoading, user, navigate]);
+
   const handleImageSelect = async (base64: string) => {
     setIsAnalyzing(true);
     setResults(null);
+    setPendingResults(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("analyze-meal", {
@@ -53,28 +70,13 @@ export default function Dashboard() {
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
 
-      setResults(data);
-      
-      // Auto-save the meal
-      const saved = await saveMeal({
-        foods: data.foods,
-        calories: data.calories,
-        protein: data.protein,
-        carbs: data.carbs,
-        fat: data.fat,
-        confidence: data.confidence,
-        notes: data.notes,
-      });
-
-      if (saved) {
-        refetch(); // Refresh to update progress
-      }
+      // Show confirmation dialog instead of auto-saving
+      setPendingResults(data);
+      setShowConfirmation(true);
 
       toast({
         title: "Analysis complete!",
-        description: saved 
-          ? `Found ${data.foods.length} food item(s) and saved to history`
-          : `Found ${data.foods.length} food item(s)`,
+        description: `Found ${data.foods.length} food item(s)`,
       });
     } catch (error) {
       console.error("Analysis error:", error);
@@ -86,6 +88,49 @@ export default function Dashboard() {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleConfirmAdd = async () => {
+    if (!pendingResults) return;
+
+    const saved = await saveMeal({
+      foods: pendingResults.foods,
+      calories: pendingResults.calories,
+      protein: pendingResults.protein,
+      carbs: pendingResults.carbs,
+      fat: pendingResults.fat,
+      confidence: pendingResults.confidence,
+      notes: pendingResults.notes,
+    });
+
+    if (saved) {
+      refetch();
+      // Update streak
+      if (user) {
+        await supabase.from("user_streaks").upsert({
+          user_id: user.id,
+          last_activity_date: new Date().toISOString().split('T')[0],
+        }, { onConflict: "user_id" });
+      }
+      toast({
+        title: "Added to daily goal!",
+        description: "Your meal has been saved to your history.",
+      });
+    }
+
+    setResults(pendingResults);
+    setPendingResults(null);
+    setShowConfirmation(false);
+  };
+
+  const handleDeclineAdd = () => {
+    setResults(pendingResults);
+    setPendingResults(null);
+    setShowConfirmation(false);
+    toast({
+      title: "View only",
+      description: "Meal info shown but not added to your daily intake.",
+    });
   };
 
   const handleDeleteMeal = async (id: string) => {
@@ -109,7 +154,7 @@ export default function Dashboard() {
     navigate("/auth");
   };
 
-  if (authLoading) {
+  if (authLoading || onboardingLoading) {
     return (
       <div className="min-h-screen gradient-hero flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -123,6 +168,17 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen gradient-hero">
+      {/* Confirmation Dialog */}
+      {pendingResults && (
+        <FoodScanConfirmation
+          open={showConfirmation}
+          onOpenChange={setShowConfirmation}
+          data={pendingResults}
+          onConfirm={handleConfirmAdd}
+          onDecline={handleDeclineAdd}
+        />
+      )}
+
       {/* Header */}
       <header className="container py-4">
         <nav className="flex items-center justify-between">
@@ -169,23 +225,44 @@ export default function Dashboard() {
           <DailyProgress meals={meals} />
         </div>
 
+        {/* Smart Recommendations */}
+        <div className="mb-6">
+          <SmartRecommendations meals={meals} />
+        </div>
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-lg grid-cols-4 bg-muted/50">
-            <TabsTrigger value="analyze" className="flex items-center gap-2">
+          <TabsList className="grid w-full max-w-3xl grid-cols-8 bg-muted/50">
+            <TabsTrigger value="analyze" className="flex items-center gap-1">
               <Camera className="w-4 h-4" />
-              <span className="hidden sm:inline">Analyze</span>
+              <span className="hidden lg:inline">Scan</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
+            <TabsTrigger value="timeline" className="flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              <span className="hidden lg:inline">Timeline</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-1">
               <History className="w-4 h-4" />
-              <span className="hidden sm:inline">History</span>
+              <span className="hidden lg:inline">History</span>
             </TabsTrigger>
-            <TabsTrigger value="charts" className="flex items-center gap-2">
+            <TabsTrigger value="charts" className="flex items-center gap-1">
               <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Charts</span>
+              <span className="hidden lg:inline">Charts</span>
             </TabsTrigger>
-            <TabsTrigger value="goals" className="flex items-center gap-2">
+            <TabsTrigger value="goals" className="flex items-center gap-1">
               <Target className="w-4 h-4" />
-              <span className="hidden sm:inline">Goals</span>
+              <span className="hidden lg:inline">Goals</span>
+            </TabsTrigger>
+            <TabsTrigger value="achievements" className="flex items-center gap-1">
+              <Trophy className="w-4 h-4" />
+              <span className="hidden lg:inline">Badges</span>
+            </TabsTrigger>
+            <TabsTrigger value="mood" className="flex items-center gap-1">
+              <Smile className="w-4 h-4" />
+              <span className="hidden lg:inline">Mood</span>
+            </TabsTrigger>
+            <TabsTrigger value="community" className="flex items-center gap-1">
+              <Users className="w-4 h-4" />
+              <span className="hidden lg:inline">Feed</span>
             </TabsTrigger>
           </TabsList>
 
@@ -206,6 +283,16 @@ export default function Dashboard() {
                 <NutritionResults data={results} />
               </motion.div>
             )}
+          </TabsContent>
+
+          <TabsContent value="timeline">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <MealTimeline meals={meals} />
+            </motion.div>
           </TabsContent>
 
           <TabsContent value="history">
@@ -239,6 +326,36 @@ export default function Dashboard() {
               transition={{ delay: 0.1 }}
             >
               <NutritionGoals />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="achievements">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <GamificationPanel />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="mood">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <MoodTracker meals={meals} />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="community">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <CommunityFeed />
             </motion.div>
           </TabsContent>
         </Tabs>
