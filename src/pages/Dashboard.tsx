@@ -77,6 +77,7 @@ export default function Dashboard() {
       toast({
         title: "Analysis complete!",
         description: `Found ${data.foods.length} food item(s)`,
+        duration: 3000,
       });
     } catch (error) {
       console.error("Analysis error:", error);
@@ -105,16 +106,61 @@ export default function Dashboard() {
 
     if (saved) {
       refetch();
-      // Update streak
+      // Update streak properly
       if (user) {
-        await supabase.from("user_streaks").upsert({
-          user_id: user.id,
-          last_activity_date: new Date().toISOString().split('T')[0],
-        }, { onConflict: "user_id" });
+        const today = new Date().toISOString().split('T')[0];
+        
+        // First check if user has a streak record
+        const { data: existingStreak } = await supabase
+          .from("user_streaks")
+          .select("*")
+          .eq("user_id", user.id)
+          .single();
+        
+        if (existingStreak) {
+          const lastActivity = existingStreak.last_activity_date;
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          const yesterdayStr = yesterday.toISOString().split('T')[0];
+          
+          let newStreak = existingStreak.current_streak || 0;
+          
+          if (lastActivity === today) {
+            // Already logged today, no change
+          } else if (lastActivity === yesterdayStr) {
+            // Consecutive day, increment streak
+            newStreak += 1;
+          } else {
+            // Streak broken, start fresh
+            newStreak = 1;
+          }
+          
+          const longestStreak = Math.max(existingStreak.longest_streak || 0, newStreak);
+          
+          await supabase
+            .from("user_streaks")
+            .update({
+              current_streak: newStreak,
+              longest_streak: longestStreak,
+              last_activity_date: today,
+            })
+            .eq("user_id", user.id);
+        } else {
+          // Create new streak record
+          await supabase
+            .from("user_streaks")
+            .insert({
+              user_id: user.id,
+              current_streak: 1,
+              longest_streak: 1,
+              last_activity_date: today,
+            });
+        }
       }
       toast({
         title: "Added to daily goal!",
         description: "Your meal has been saved to your history.",
+        duration: 3000,
       });
     }
 
@@ -130,6 +176,7 @@ export default function Dashboard() {
     toast({
       title: "View only",
       description: "Meal info shown but not added to your daily intake.",
+      duration: 3000,
     });
   };
 
@@ -139,6 +186,7 @@ export default function Dashboard() {
       toast({
         title: "Meal deleted",
         description: "The meal has been removed from your history",
+        duration: 3000,
       });
     } else {
       toast({
