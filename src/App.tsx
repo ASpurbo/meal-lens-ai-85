@@ -8,6 +8,7 @@ import { AuthProvider } from "./hooks/useAuth";
 import { SplashScreen } from "./components/SplashScreen";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import VerifyEmail from "./pages/VerifyEmail";
 import Onboarding from "./pages/Onboarding";
 import Scan from "./pages/Scan";
 import History from "./pages/History";
@@ -32,6 +33,7 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/verify" element={<VerifyEmail />} />
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/scan" element={<Scan />} />
               <Route path="/history" element={<History />} />
