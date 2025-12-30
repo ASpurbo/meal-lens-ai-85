@@ -241,21 +241,27 @@ export default function Settings() {
 
     setIsDeletingAccount(true);
     try {
-      await supabase.from("meal_analyses").delete().eq("user_id", user.id);
-      await supabase.from("mood_logs").delete().eq("user_id", user.id);
-      await supabase.from("nutrition_goals").delete().eq("user_id", user.id);
-      await supabase.from("user_streaks").delete().eq("user_id", user.id);
-      await supabase.from("user_badges").delete().eq("user_id", user.id);
-      await supabase.from("user_challenge_progress").delete().eq("user_id", user.id);
-      await supabase.from("profiles").delete().eq("user_id", user.id);
+      // Call the edge function to completely delete the account
+      const { data, error } = await supabase.functions.invoke("delete-account");
 
-      await supabase.storage.from("avatars").remove([`${user.id}/avatar.jpg`, `${user.id}/avatar.png`]);
+      if (error) {
+        throw error;
+      }
 
+      if (data?.error) {
+        throw new Error(data.error);
+      }
+
+      toast({ title: "Account deleted successfully" });
       await signOut();
-      toast({ title: "Account deleted" });
-      navigate("/");
+      navigate("/auth");
     } catch (error: any) {
-      toast({ title: "Failed to delete", description: error.message, variant: "destructive" });
+      console.error("Delete account error:", error);
+      toast({ 
+        title: "Failed to delete account", 
+        description: error.message || "Please try again later", 
+        variant: "destructive" 
+      });
     } finally {
       setIsDeletingAccount(false);
     }
