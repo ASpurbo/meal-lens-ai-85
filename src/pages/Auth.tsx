@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
@@ -52,28 +51,6 @@ export default function Auth() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const sendVerificationEmail = async (userId: string, userEmail: string) => {
-    try {
-      const { error } = await supabase.functions.invoke("send-verification-email", {
-        body: { email: userEmail, userId },
-      });
-      
-      if (error) {
-        console.error("Failed to send verification email:", error);
-        toast({
-          title: "Warning",
-          description: "Account created but verification email failed to send. Please contact support.",
-          variant: "destructive",
-        });
-        return false;
-      }
-      return true;
-    } catch (error) {
-      console.error("Error sending verification email:", error);
-      return false;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -91,6 +68,12 @@ export default function Auth() {
               description: "Invalid email or password. Please try again.",
               variant: "destructive",
             });
+          } else if (error.message.includes("Email not confirmed")) {
+            toast({
+              title: "Email not verified",
+              description: "Please check your inbox and verify your email before signing in.",
+              variant: "destructive",
+            });
           } else {
             toast({
               title: "Login failed",
@@ -100,7 +83,7 @@ export default function Auth() {
           }
         }
       } else {
-        const { error, data } = await signUp(email, password);
+        const { error } = await signUp(email, password);
         if (error) {
           if (error.message.includes("already registered")) {
             toast({
@@ -115,9 +98,8 @@ export default function Auth() {
               variant: "destructive",
             });
           }
-        } else if (data?.user) {
-          // Send verification email
-          await sendVerificationEmail(data.user.id, email);
+        } else {
+          // Supabase sends confirmation email automatically
           navigate("/verify");
         }
       }
