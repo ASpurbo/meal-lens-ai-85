@@ -311,9 +311,9 @@ export default function Settings() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-background border-b border-border">
+      <header className="flex-shrink-0 bg-background border-b border-border">
         <div className="container py-4 flex items-center gap-4">
           <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-accent transition-colors">
             <ArrowLeft className="w-5 h-5" />
@@ -322,7 +322,8 @@ export default function Settings() {
         </div>
       </header>
 
-      <main className="container py-8 pb-24 space-y-8 max-w-lg mx-auto">
+      <main className="flex-1 overflow-y-auto overscroll-none">
+        <div className="container py-8 pb-24 space-y-8 max-w-lg mx-auto">
         {/* Profile */}
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="relative">
@@ -491,6 +492,7 @@ export default function Settings() {
             <span className="font-medium text-foreground">NutriMind</span>
           </div>
           <p className="text-xs">{t.settings.version} 1.0.0</p>
+        </div>
         </div>
       </main>
 
