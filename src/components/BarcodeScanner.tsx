@@ -42,14 +42,18 @@ interface ProductData {
 export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCameraLoading, setIsCameraLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrCodeRef = useRef<any>(null);
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
-    if (open) {
+    if (open && !hasStartedRef.current) {
+      hasStartedRef.current = true;
       startScanner();
-    } else {
+    } else if (!open) {
+      hasStartedRef.current = false;
       stopScanner();
     }
 
@@ -60,49 +64,64 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
 
   const startScanner = async () => {
     setError(null);
-    setIsScanning(true);
+    setIsCameraLoading(true);
     
     try {
       const { Html5Qrcode } = await import("html5-qrcode");
       
-      if (!scannerRef.current) return;
+      if (!scannerRef.current) {
+        setIsCameraLoading(false);
+        return;
+      }
 
       const scannerId = "barcode-scanner-element";
       
-      // Create scanner element if it doesn't exist
-      let scannerElement = document.getElementById(scannerId);
-      if (!scannerElement && scannerRef.current) {
-        scannerElement = document.createElement("div");
-        scannerElement.id = scannerId;
-        scannerRef.current.appendChild(scannerElement);
+      // Clear existing scanner element
+      const existingElement = document.getElementById(scannerId);
+      if (existingElement) {
+        existingElement.remove();
       }
+      
+      // Create fresh scanner element
+      const scannerElement = document.createElement("div");
+      scannerElement.id = scannerId;
+      scannerRef.current.appendChild(scannerElement);
 
-      html5QrCodeRef.current = new Html5Qrcode(scannerId);
+      html5QrCodeRef.current = new Html5Qrcode(scannerId, { verbose: false });
 
       await html5QrCodeRef.current.start(
         { facingMode: "environment" },
         {
-          fps: 10,
-          qrbox: { width: 250, height: 150 },
+          fps: 15,
+          qrbox: { width: 280, height: 160 },
+          aspectRatio: 1.333,
+          disableFlip: false,
         },
         async (decodedText: string) => {
           await handleBarcodeScan(decodedText);
         },
         () => {
-          // QR Code not found - ignore silently
+          // Barcode not found - ignore silently
         }
       );
+      
+      setIsScanning(true);
+      setIsCameraLoading(false);
     } catch (err) {
       console.error("Scanner error:", err);
       setError("Could not access camera. Please ensure camera permissions are granted.");
       setIsScanning(false);
+      setIsCameraLoading(false);
     }
   };
 
   const stopScanner = async () => {
     if (html5QrCodeRef.current) {
       try {
-        await html5QrCodeRef.current.stop();
+        const state = html5QrCodeRef.current.getState?.();
+        if (state === 2) { // SCANNING state
+          await html5QrCodeRef.current.stop();
+        }
         html5QrCodeRef.current.clear();
       } catch (err) {
         // Ignore errors when stopping
@@ -110,6 +129,7 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
       html5QrCodeRef.current = null;
     }
     setIsScanning(false);
+    setIsCameraLoading(false);
   };
 
   const handleBarcodeScan = async (barcode: string) => {
@@ -118,11 +138,15 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
     setError(null);
 
     try {
-      // Use Open Food Facts API (free, no API key needed)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      
       const response = await fetch(
-        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`
+        `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
+        { signal: controller.signal }
       );
       
+      clearTimeout(timeoutId);
       const data = await response.json();
 
       if (data.status !== 1 || !data.product) {
@@ -201,9 +225,12 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
               </div>
             )}
             
-            {!isScanning && !isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            {isCameraLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground">Initializing camera...</span>
+                </div>
               </div>
             )}
           </div>
