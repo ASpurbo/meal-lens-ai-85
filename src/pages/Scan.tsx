@@ -216,12 +216,12 @@ export default function ScanPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="flex gap-2"
+          className="grid grid-cols-1 gap-2 sm:grid-cols-3"
         >
           <Button
             variant={activeMethod === "camera" ? "default" : "outline"}
             onClick={() => setActiveMethod("camera")}
-            className="flex-1"
+            className="w-full"
           >
             <Camera className="w-4 h-4 mr-2" />
             {t.scan.takePhoto}
@@ -232,7 +232,7 @@ export default function ScanPage() {
               setActiveMethod("barcode");
               setShowBarcodeScanner(true);
             }}
-            className="flex-1"
+            className="w-full"
           >
             <Barcode className="w-4 h-4 mr-2" />
             {t.scan.scanBarcode}
@@ -243,7 +243,7 @@ export default function ScanPage() {
               setActiveMethod("manual");
               setShowManualEntry(true);
             }}
-            className="flex-1"
+            className="w-full"
           >
             <PenLine className="w-4 h-4 mr-2" />
             {t.scan.manualEntry}
