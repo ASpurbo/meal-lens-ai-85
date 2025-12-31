@@ -8,10 +8,12 @@ import { SmartRecommendations } from "@/components/SmartRecommendations";
 import { FoodScanConfirmation } from "@/components/FoodScanConfirmation";
 import { ManualMealEntry } from "@/components/ManualMealEntry";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
+import { TourGuide } from "@/components/TourGuide";
 import { AppLayout } from "@/components/AppLayout";
 import { Button } from "@/components/ui/button";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useAuth } from "@/hooks/useAuth";
+import { useTour } from "@/hooks/useTour";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
@@ -37,6 +39,7 @@ export default function ScanPage() {
   
   const { user } = useAuth();
   const { meals, saveMeal, refetch } = useMealHistory();
+  const { showTour, completeTour } = useTour();
   const { toast } = useToast();
   const { t } = useTranslation();
 
@@ -173,6 +176,8 @@ export default function ScanPage() {
 
   return (
     <AppLayout>
+      {showTour && <TourGuide onComplete={completeTour} />}
+      
       {pendingResults && (
         <FoodScanConfirmation
           open={showConfirmation}

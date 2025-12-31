@@ -229,6 +229,23 @@ export const en = {
     instructions: "Instructions",
     difficulty: "Difficulty",
   },
+
+  // Tour Guide
+  tour: {
+    welcome: "Welcome to NutriMind!",
+    welcomeDesc: "Let's take a quick tour to help you get started with tracking your nutrition.",
+    scanTitle: "Scan Your Meals",
+    scanDesc: "Take a photo of your food, scan a barcode, or enter meals manually. Our AI will analyze the nutrition instantly.",
+    historyTitle: "Track Your History",
+    historyDesc: "View all your logged meals and see your daily nutrition breakdown over time.",
+    chartsTitle: "Visualize Progress",
+    chartsDesc: "See your nutrition trends with beautiful charts showing weekly and monthly progress.",
+    goalsTitle: "Set Your Goals",
+    goalsDesc: "Customize your daily calorie and macro targets based on your personal fitness goals.",
+    coachTitle: "AI Nutrition Coach",
+    coachDesc: "Tap the sparkle icon in the header anytime to chat with your personal AI coach for nutrition advice.",
+    getStarted: "Get Started",
+  },
 };
 
 // Define a flexible type that allows any string values
@@ -254,4 +271,5 @@ export type TranslationKeys = {
   mealPeriods: Record<string, string>;
   progress: Record<string, string>;
   recommendations: Record<string, string>;
+  tour: Record<string, string>;
 };

@@ -169,6 +169,7 @@ export type Database = {
           email: string | null
           email_verified: boolean | null
           gender: string | null
+          has_seen_tour: boolean | null
           height_cm: number | null
           id: string
           language: string | null
@@ -188,6 +189,7 @@ export type Database = {
           email?: string | null
           email_verified?: boolean | null
           gender?: string | null
+          has_seen_tour?: boolean | null
           height_cm?: number | null
           id?: string
           language?: string | null
@@ -207,6 +209,7 @@ export type Database = {
           email?: string | null
           email_verified?: boolean | null
           gender?: string | null
+          has_seen_tour?: boolean | null
           height_cm?: number | null
           id?: string
           language?: string | null

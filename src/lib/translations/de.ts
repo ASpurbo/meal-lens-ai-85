@@ -231,4 +231,21 @@ export const de: TranslationKeys = {
     instructions: "Zubereitung",
     difficulty: "Schwierigkeit",
   },
+
+  // Tour Guide
+  tour: {
+    welcome: "Willkommen bei NutriMind!",
+    welcomeDesc: "Lass uns eine kurze Tour machen, damit du mit der Ernährungsverfolgung beginnen kannst.",
+    scanTitle: "Scanne deine Mahlzeiten",
+    scanDesc: "Mach ein Foto von deinem Essen, scanne einen Barcode oder gib Mahlzeiten manuell ein. Unsere KI analysiert die Nährwerte sofort.",
+    historyTitle: "Verfolge deine Historie",
+    historyDesc: "Sieh alle deine erfassten Mahlzeiten und deine tägliche Nährwertaufschlüsselung im Zeitverlauf.",
+    chartsTitle: "Visualisiere Fortschritte",
+    chartsDesc: "Sieh deine Ernährungstrends mit schönen Diagrammen für wöchentliche und monatliche Fortschritte.",
+    goalsTitle: "Setze deine Ziele",
+    goalsDesc: "Passe deine täglichen Kalorien- und Makroziele basierend auf deinen persönlichen Fitnesszielen an.",
+    coachTitle: "KI-Ernährungscoach",
+    coachDesc: "Tippe jederzeit auf das Funkeln-Symbol in der Kopfzeile, um mit deinem persönlichen KI-Coach für Ernährungsberatung zu chatten.",
+    getStarted: "Loslegen",
+  },
 };

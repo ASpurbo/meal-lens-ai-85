@@ -231,4 +231,21 @@ export const pt: TranslationKeys = {
     instructions: "Instruções",
     difficulty: "Dificuldade",
   },
+
+  // Tour Guide
+  tour: {
+    welcome: "Bem-vindo ao NutriMind!",
+    welcomeDesc: "Vamos fazer um tour rápido para ajudá-lo a começar a rastrear sua nutrição.",
+    scanTitle: "Escaneie suas refeições",
+    scanDesc: "Tire uma foto da sua comida, escaneie um código de barras ou insira as refeições manualmente. Nossa IA analisará a nutrição instantaneamente.",
+    historyTitle: "Acompanhe seu histórico",
+    historyDesc: "Veja todas as suas refeições registradas e observe sua divisão nutricional diária ao longo do tempo.",
+    chartsTitle: "Visualize o progresso",
+    chartsDesc: "Veja suas tendências nutricionais com gráficos bonitos mostrando o progresso semanal e mensal.",
+    goalsTitle: "Defina suas metas",
+    goalsDesc: "Personalize suas metas diárias de calorias e macros com base em seus objetivos pessoais de fitness.",
+    coachTitle: "Coach nutricional IA",
+    coachDesc: "Toque no ícone de brilho no cabeçalho a qualquer momento para conversar com seu coach de IA pessoal para conselhos nutricionais.",
+    getStarted: "Começar",
+  },
 };
