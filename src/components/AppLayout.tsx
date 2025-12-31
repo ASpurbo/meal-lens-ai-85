@@ -14,7 +14,6 @@ const navItems = [
   { path: "/history", icon: History, label: "History" },
   { path: "/charts", icon: BarChart3, label: "Charts" },
   { path: "/goals", icon: Target, label: "Goals" },
-  { path: "/coach", icon: Sparkles, label: "Coach" },
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {
@@ -54,11 +53,18 @@ export function AppLayout({ children }: AppLayoutProps) {
             <Apple className="w-6 h-6 text-foreground" />
           </Link>
           
-          <Link to="/settings">
-            <button className="p-2 rounded-full hover:bg-accent transition-colors">
-              <Settings className="w-5 h-5 text-muted-foreground" />
-            </button>
-          </Link>
+          <div className="flex items-center gap-1">
+            <Link to="/coach">
+              <button className="p-2 rounded-full hover:bg-accent transition-colors">
+                <Sparkles className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </Link>
+            <Link to="/settings">
+              <button className="p-2 rounded-full hover:bg-accent transition-colors">
+                <Settings className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </Link>
+          </div>
         </div>
       </header>
 
