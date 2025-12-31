@@ -227,7 +227,7 @@ export default function Settings() {
       if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
-      await queryClient.refetchQueries({ queryKey: ["profile", user.id] });
+      await queryClient.invalidateQueries({ queryKey: ["profile-language", user.id] });
       toast({ title: "Language updated" });
       setIsLanguageDialogOpen(false);
     } catch (error: any) {
