@@ -52,5 +52,20 @@ export function useTour() {
     }
   };
 
-  return { showTour, loading, completeTour };
+  const resetTour = async () => {
+    if (!user) return;
+
+    try {
+      await supabase
+        .from("profiles")
+        .update({ has_seen_tour: false })
+        .eq("user_id", user.id);
+
+      setShowTour(true);
+    } catch (error) {
+      console.error("Error resetting tour:", error);
+    }
+  };
+
+  return { showTour, loading, completeTour, resetTour };
 }

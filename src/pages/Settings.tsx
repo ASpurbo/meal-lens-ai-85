@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Moon, Sun, Lock, Trash2, LogOut, Camera, 
   ChevronRight, AlertTriangle, Loader2, Apple, ArrowLeft,
-  Ruler, Scale, X, Globe
+  Ruler, Scale, X, Globe, HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -431,6 +431,28 @@ export default function Settings() {
             <div className="flex items-center gap-3">
               <Lock className="w-5 h-5" />
               <span className="font-medium">{t.settings.changePassword}</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* Help */}
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">{t.settings.help}</p>
+          <button 
+            onClick={async () => {
+              if (!user?.id) return;
+              await supabase
+                .from("profiles")
+                .update({ has_seen_tour: false })
+                .eq("user_id", user.id);
+              navigate("/scan");
+            }}
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <HelpCircle className="w-5 h-5" />
+              <span className="font-medium">{t.settings.replayTour}</span>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>

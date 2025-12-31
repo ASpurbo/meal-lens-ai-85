@@ -102,6 +102,8 @@ export const de: TranslationKeys = {
     selectLanguage: "Sprache auswählen",
     choosePreferredLanguage: "Wählen Sie Ihre bevorzugte Sprache",
     version: "Version",
+    help: "Hilfe",
+    replayTour: "Tour wiederholen",
   },
 
   // Scan
