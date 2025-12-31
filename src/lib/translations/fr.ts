@@ -209,4 +209,26 @@ export const fr: TranslationKeys = {
     over: "en excès",
     ofGoal: "de l'objectif",
   },
+
+  // Recommendations
+  recommendations: {
+    title: "Recommandations",
+    onTrack: "Vous êtes sur la bonne voie !",
+    keepItUp: "Continuez comme ça !",
+    proteinToGo: "protéines restantes",
+    carbsRemaining: "glucides restants",
+    addHealthyFats: "Ajoutez des graisses saines",
+    tryHighProtein: "Essayez ces recettes riches en protéines",
+    healthyCarbOptions: "Options de glucides sains",
+    goodFatSources: "Bonnes sources de graisses",
+    startYourDay: "Bien commencer la journée",
+    noMealsLogged: "Aucun repas enregistré — voici quelques idées",
+    cal: "cal",
+    protein: "protéines",
+    prepTime: "temps de préparation",
+    servings: "portions",
+    ingredients: "Ingrédients",
+    instructions: "Instructions",
+    difficulty: "Difficulté",
+  },
 };

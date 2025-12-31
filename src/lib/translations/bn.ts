@@ -209,4 +209,26 @@ export const bn: TranslationKeys = {
     over: "over",
     ofGoal: "of goal",
   },
+
+  // Recommendations
+  recommendations: {
+    title: "Recommendations",
+    onTrack: "You're on track today!",
+    keepItUp: "Keep up the great work",
+    proteinToGo: "protein to go",
+    carbsRemaining: "carbs remaining",
+    addHealthyFats: "Add healthy fats",
+    tryHighProtein: "Try these high-protein recipes",
+    healthyCarbOptions: "Healthy carb options for you",
+    goodFatSources: "Good fat sources",
+    startYourDay: "Start your day right",
+    noMealsLogged: "No meals logged — here are some ideas",
+    cal: "cal",
+    protein: "protein",
+    prepTime: "prep time",
+    servings: "servings",
+    ingredients: "Ingredients",
+    instructions: "Instructions",
+    difficulty: "Difficulty",
+  },
 };

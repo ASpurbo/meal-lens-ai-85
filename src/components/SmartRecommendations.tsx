@@ -4,6 +4,7 @@ import { Lightbulb, ChevronRight, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { MealAnalysis } from "@/hooks/useMealHistory";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
+import { useTranslation } from "@/hooks/useTranslation";
 import { RecipeModal, Recipe } from "./RecipeModal";
 
 interface SmartRecommendationsProps {
@@ -234,6 +235,7 @@ interface Recommendation {
 
 export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
   const { goals } = useNutritionGoals();
+  const { t } = useTranslation();
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
   const recommendations = useMemo<Recommendation[]>(() => {
@@ -264,8 +266,8 @@ export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
     if (remaining.protein > 15) {
       const proteinRecipes = recipes.filter((r) => r.protein >= 15).slice(0, 3);
       recs.push({
-        title: `${Math.round(remaining.protein)}g protein to go`,
-        description: "Try these high-protein recipes",
+        title: `${Math.round(remaining.protein)}g ${t.recommendations.proteinToGo}`,
+        description: t.recommendations.tryHighProtein,
         macro: "protein",
         recipes: proteinRecipes,
       });
@@ -274,8 +276,8 @@ export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
     if (remaining.carbs > 30) {
       const carbRecipes = recipes.filter((r) => r.carbs >= 25).slice(0, 3);
       recs.push({
-        title: `${Math.round(remaining.carbs)}g carbs remaining`,
-        description: "Healthy carb options for you",
+        title: `${Math.round(remaining.carbs)}g ${t.recommendations.carbsRemaining}`,
+        description: t.recommendations.healthyCarbOptions,
         macro: "carbs",
         recipes: carbRecipes,
       });
@@ -284,8 +286,8 @@ export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
     if (remaining.fat > 15) {
       const fatRecipes = recipes.filter((r) => r.fat >= 15).slice(0, 3);
       recs.push({
-        title: `Add ${Math.round(remaining.fat)}g healthy fats`,
-        description: "Good fat sources",
+        title: `${Math.round(remaining.fat)}g ${t.recommendations.addHealthyFats}`,
+        description: t.recommendations.goodFatSources,
         macro: "fat",
         recipes: fatRecipes,
       });
@@ -293,15 +295,15 @@ export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
 
     if (todayMeals.length === 0) {
       recs.push({
-        title: "Start your day right",
-        description: "No meals logged — here are some ideas",
+        title: t.recommendations.startYourDay,
+        description: t.recommendations.noMealsLogged,
         macro: "protein",
         recipes: recipes.filter((r) => r.calories < 400).slice(0, 3),
       });
     }
 
     return recs.slice(0, 2);
-  }, [meals, goals]);
+  }, [meals, goals, t]);
 
   const macroColors: Record<string, string> = {
     protein: "text-protein",
@@ -317,8 +319,8 @@ export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
           <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
             <Sparkles className="w-6 h-6 text-primary" />
           </div>
-          <p className="font-medium">You're on track today!</p>
-          <p className="text-sm text-muted-foreground">Keep up the great work</p>
+          <p className="font-medium">{t.recommendations.onTrack}</p>
+          <p className="text-sm text-muted-foreground">{t.recommendations.keepItUp}</p>
         </CardContent>
       </Card>
     );
@@ -335,7 +337,7 @@ export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Lightbulb className="w-5 h-5 text-primary" />
-          <h2 className="font-semibold">Recommendations</h2>
+          <h2 className="font-semibold">{t.recommendations.title}</h2>
         </div>
 
         {recommendations.map((rec, i) => (
@@ -361,8 +363,8 @@ export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm truncate">{recipe.name}</p>
                         <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
-                          <span>{recipe.calories} cal</span>
-                          <span>{recipe.protein}g protein</span>
+                          <span>{recipe.calories} {t.recommendations.cal}</span>
+                          <span>{recipe.protein}g {t.recommendations.protein}</span>
                           <span>{recipe.prepTime}</span>
                         </div>
                       </div>
