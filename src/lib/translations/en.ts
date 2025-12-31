@@ -207,6 +207,28 @@ export const en = {
     over: "over",
     ofGoal: "of goal",
   },
-} as const;
+};
 
-export type TranslationKeys = typeof en;
+// Define a flexible type that allows any string values
+export type TranslationKeys = {
+  common: Record<string, string>;
+  nav: Record<string, string>;
+  auth: Record<string, string>;
+  onboarding: Record<string, string>;
+  settings: Record<string, string>;
+  scan: Record<string, string>;
+  history: Record<string, string>;
+  charts: Record<string, string>;
+  goals: Record<string, string>;
+  coach: {
+    title: string;
+    subtitle: string;
+    askAnything: string;
+    placeholder: string;
+    starterPrompts: Record<string, string>;
+    error: string;
+  };
+  dietGoals: Record<string, string>;
+  mealPeriods: Record<string, string>;
+  progress: Record<string, string>;
+};
