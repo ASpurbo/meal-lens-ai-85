@@ -46,30 +46,35 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
   const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrCodeRef = useRef<any>(null);
-  const hasStartedRef = useRef(false);
+  const isStartingRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
-    if (open && !hasStartedRef.current) {
-      hasStartedRef.current = true;
+    isMountedRef.current = true;
+    
+    if (open) {
       startScanner();
-    } else if (!open) {
-      hasStartedRef.current = false;
-      stopScanner();
     }
 
     return () => {
+      isMountedRef.current = false;
       stopScanner();
     };
   }, [open]);
 
   const startScanner = async () => {
+    // Prevent multiple simultaneous starts
+    if (isStartingRef.current || html5QrCodeRef.current) return;
+    isStartingRef.current = true;
+    
     setError(null);
     setIsCameraLoading(true);
     
     try {
       const { Html5Qrcode } = await import("html5-qrcode");
       
-      if (!scannerRef.current) {
+      if (!isMountedRef.current || !scannerRef.current) {
+        isStartingRef.current = false;
         setIsCameraLoading(false);
         return;
       }
@@ -92,47 +97,57 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
       await html5QrCodeRef.current.start(
         { facingMode: "environment" },
         {
-          fps: 15,
-          qrbox: { width: 280, height: 160 },
+          fps: 10,
+          qrbox: { width: 250, height: 100 },
           aspectRatio: 1.333,
-          disableFlip: false,
         },
         async (decodedText: string) => {
-          await handleBarcodeScan(decodedText);
+          if (isMountedRef.current) {
+            await handleBarcodeScan(decodedText);
+          }
         },
-        () => {
-          // Barcode not found - ignore silently
-        }
+        () => {}
       );
       
-      setIsScanning(true);
-      setIsCameraLoading(false);
+      if (isMountedRef.current) {
+        setIsScanning(true);
+        setIsCameraLoading(false);
+      }
     } catch (err) {
       console.error("Scanner error:", err);
-      setError("Could not access camera. Please ensure camera permissions are granted.");
-      setIsScanning(false);
-      setIsCameraLoading(false);
+      if (isMountedRef.current) {
+        setError("Could not access camera. Please ensure camera permissions are granted.");
+        setIsScanning(false);
+        setIsCameraLoading(false);
+      }
+    } finally {
+      isStartingRef.current = false;
     }
   };
 
   const stopScanner = async () => {
     if (html5QrCodeRef.current) {
       try {
-        const state = html5QrCodeRef.current.getState?.();
-        if (state === 2) { // SCANNING state
-          await html5QrCodeRef.current.stop();
-        }
-        html5QrCodeRef.current.clear();
+        await html5QrCodeRef.current.stop();
       } catch (err) {
         // Ignore errors when stopping
+      }
+      try {
+        html5QrCodeRef.current.clear();
+      } catch (err) {
+        // Ignore errors when clearing
       }
       html5QrCodeRef.current = null;
     }
     setIsScanning(false);
     setIsCameraLoading(false);
+    isStartingRef.current = false;
   };
 
   const handleBarcodeScan = async (barcode: string) => {
+    // Prevent duplicate scans
+    if (isLoading) return;
+    
     await stopScanner();
     setIsLoading(true);
     setError(null);
@@ -214,8 +229,25 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
         <div className="space-y-4">
           <div 
             ref={scannerRef}
-            className="relative w-full aspect-[4/3] bg-muted rounded-lg overflow-hidden"
+            className="relative w-full aspect-[4/3] bg-black rounded-lg overflow-hidden"
           >
+            {/* Scanning frame overlay */}
+            {isScanning && !isLoading && (
+              <div className="absolute inset-0 z-[5] pointer-events-none flex items-center justify-center">
+                <div className="w-[260px] h-[110px] border-2 border-primary rounded-md relative">
+                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary -translate-x-0.5 -translate-y-0.5" />
+                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary translate-x-0.5 -translate-y-0.5" />
+                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary -translate-x-0.5 translate-y-0.5" />
+                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary translate-x-0.5 translate-y-0.5" />
+                  <motion.div 
+                    className="absolute left-0 right-0 h-0.5 bg-primary/80"
+                    animate={{ top: ["10%", "90%", "10%"] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                </div>
+              </div>
+            )}
+            
             {isLoading && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
                 <div className="flex flex-col items-center gap-2">
@@ -229,7 +261,7 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
               <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
                 <div className="flex flex-col items-center gap-2">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">Initializing camera...</span>
+                  <span className="text-sm text-muted-foreground">Starting camera...</span>
                 </div>
               </div>
             )}
