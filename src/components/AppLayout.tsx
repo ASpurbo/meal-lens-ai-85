@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Apple, Settings, Camera, History, BarChart3, Target, Loader2 } from "lucide-react";
+import { Apple, Settings, Camera, History, BarChart3, Target, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ const navItems = [
   { path: "/history", icon: History, label: "History" },
   { path: "/charts", icon: BarChart3, label: "Charts" },
   { path: "/goals", icon: Target, label: "Goals" },
+  { path: "/coach", icon: Sparkles, label: "Coach" },
 ];
 
 export function AppLayout({ children }: AppLayoutProps) {

@@ -164,12 +164,14 @@ export type Database = {
           avatar_url: string | null
           birthday: string | null
           created_at: string
+          diet_goal: string | null
           display_name: string | null
           email: string | null
           email_verified: boolean | null
           gender: string | null
           height_cm: number | null
           id: string
+          language: string | null
           onboarding_completed: boolean | null
           updated_at: string
           user_id: string
@@ -181,12 +183,14 @@ export type Database = {
           avatar_url?: string | null
           birthday?: string | null
           created_at?: string
+          diet_goal?: string | null
           display_name?: string | null
           email?: string | null
           email_verified?: boolean | null
           gender?: string | null
           height_cm?: number | null
           id?: string
+          language?: string | null
           onboarding_completed?: boolean | null
           updated_at?: string
           user_id: string
@@ -198,12 +202,14 @@ export type Database = {
           avatar_url?: string | null
           birthday?: string | null
           created_at?: string
+          diet_goal?: string | null
           display_name?: string | null
           email?: string | null
           email_verified?: boolean | null
           gender?: string | null
           height_cm?: number | null
           id?: string
+          language?: string | null
           onboarding_completed?: boolean | null
           updated_at?: string
           user_id?: string
