@@ -45,9 +45,9 @@ export function AppLayout({ children }: AppLayoutProps) {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="h-full flex flex-col overflow-hidden">
       {/* Header - Cal AI style minimal */}
-      <header className="sticky top-0 z-50 bg-background border-b border-border">
+      <header className="flex-shrink-0 bg-background border-b border-border">
         <div className="container py-4 flex items-center justify-between">
           <Link to="/scan" className="flex items-center gap-2">
             <Apple className="w-6 h-6 text-foreground" />
@@ -68,13 +68,15 @@ export function AppLayout({ children }: AppLayoutProps) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container py-6">
-        {children}
+      {/* Main Content - Scrollable */}
+      <main className="flex-1 overflow-y-auto overscroll-none">
+        <div className="container py-6 pb-24">
+          {children}
+        </div>
       </main>
 
       {/* Bottom Navigation - Cal AI style */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t border-border">
+      <nav className="flex-shrink-0 bg-background border-t border-border">
         <div className="container">
           <div className="flex items-center justify-around py-3">
             {navItems.map((item) => {
