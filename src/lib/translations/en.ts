@@ -100,6 +100,8 @@ export const en = {
     selectLanguage: "Select Language",
     choosePreferredLanguage: "Choose your preferred language",
     version: "Version",
+    help: "Help",
+    replayTour: "Replay Tour",
   },
 
   // Scan
