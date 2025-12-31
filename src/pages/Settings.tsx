@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Moon, Sun, Lock, Trash2, LogOut, Camera, 
   ChevronRight, AlertTriangle, Loader2, Apple, ArrowLeft,
-  Ruler, Scale, X
+  Ruler, Scale, X, Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -35,6 +35,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { differenceInYears, parseISO } from "date-fns";
+import { SUPPORTED_LANGUAGES, getLanguageLabel, getLanguageFlag } from "@/lib/languages";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ export default function Settings() {
   });
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isLanguageDialogOpen, setIsLanguageDialogOpen] = useState(false);
   const [editField, setEditField] = useState<"height" | "weight" | null>(null);
   const [editValue, setEditValue] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -60,6 +62,7 @@ export default function Settings() {
   const [isRemovingAvatar, setIsRemovingAvatar] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isSavingLanguage, setIsSavingLanguage] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -206,6 +209,28 @@ export default function Settings() {
       toast({ title: "Update failed", description: error.message, variant: "destructive" });
     } finally {
       setIsSavingEdit(false);
+    }
+  };
+
+  const handleLanguageChange = async (languageCode: string) => {
+    if (!user?.id) return;
+
+    setIsSavingLanguage(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ language: languageCode })
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["profile", user.id] });
+      toast({ title: "Language updated" });
+      setIsLanguageDialogOpen(false);
+    } catch (error: any) {
+      toast({ title: "Update failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSavingLanguage(false);
     }
   };
 
@@ -364,6 +389,25 @@ export default function Settings() {
         {/* Preferences */}
         <div className="space-y-1">
           <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">Preferences</p>
+          
+          {/* Language */}
+          <button 
+            onClick={() => setIsLanguageDialogOpen(true)}
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors mb-2"
+          >
+            <div className="flex items-center gap-3">
+              <Globe className="w-5 h-5" />
+              <span className="font-medium">Language</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-muted-foreground">
+                {getLanguageFlag(profile?.language || "en")} {getLanguageLabel(profile?.language || "en")}
+              </span>
+              <ChevronRight className="w-5 h-5 text-muted-foreground" />
+            </div>
+          </button>
+          
+          {/* Dark Mode */}
           <div className="flex items-center justify-between p-4 rounded-2xl bg-accent">
             <div className="flex items-center gap-3">
               {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -520,6 +564,39 @@ export default function Settings() {
               Save
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Language Dialog */}
+      <Dialog open={isLanguageDialogOpen} onOpenChange={setIsLanguageDialogOpen}>
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              Select Language
+            </DialogTitle>
+            <DialogDescription>Choose your preferred language</DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-2 max-h-[50vh] overflow-y-auto">
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => handleLanguageChange(lang.code)}
+                disabled={isSavingLanguage}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                  profile?.language === lang.code
+                    ? "bg-foreground text-background"
+                    : "hover:bg-accent"
+                }`}
+              >
+                <span className="text-xl">{lang.flag}</span>
+                <span className="font-medium">{lang.label}</span>
+                {isSavingLanguage && profile?.language !== lang.code && (
+                  <Loader2 className="w-4 h-4 ml-auto animate-spin" />
+                )}
+              </button>
+            ))}
+          </div>
         </DialogContent>
       </Dialog>
     </div>

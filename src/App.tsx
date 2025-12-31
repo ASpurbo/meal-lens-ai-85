@@ -14,6 +14,7 @@ import Scan from "./pages/Scan";
 import History from "./pages/History";
 import Charts from "./pages/Charts";
 import Goals from "./pages/Goals";
+import Coach from "./pages/Coach";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => {
               <Route path="/history" element={<History />} />
               <Route path="/charts" element={<Charts />} />
               <Route path="/goals" element={<Goals />} />
+              <Route path="/coach" element={<Coach />} />
               <Route path="/settings" element={<Settings />} />
               {/* Redirect old dashboard to scan */}
               <Route path="/dashboard" element={<Navigate to="/scan" replace />} />

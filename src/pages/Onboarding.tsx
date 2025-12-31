@@ -1,17 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Apple, ArrowRight, ArrowLeft, Loader2, User, Ruler, Scale, Activity, Calendar } from "lucide-react";
+import { Apple, ArrowRight, ArrowLeft, Loader2, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { differenceInYears, format, parse } from "date-fns";
+import { SUPPORTED_LANGUAGES } from "@/lib/languages";
+import { DIET_GOALS, getDietGoalModifier } from "@/lib/dietGoals";
 
 interface OnboardingData {
+  language: string;
+  diet_goal: string;
   birthday: string;
   height_cm: number;
   weight_kg: number;
@@ -56,17 +59,38 @@ const calculateNutritionGoals = (data: OnboardingData) => {
 
   const tdee = Math.round(bmr * (activityMultipliers[data.activity_level] || 1.55));
   
-  const protein = Math.round((tdee * 0.30) / 4);
-  const carbs = Math.round((tdee * 0.40) / 4);
-  const fat = Math.round((tdee * 0.30) / 9);
+  // Apply diet goal modifier
+  const goalModifier = getDietGoalModifier(data.diet_goal);
+  const targetCalories = Math.max(1200, tdee + goalModifier);
+  
+  // Adjust macros based on goal
+  let proteinRatio = 0.30;
+  let carbsRatio = 0.40;
+  let fatRatio = 0.30;
 
-  return { calories: tdee, protein, carbs, fat };
+  if (data.diet_goal === "gain_muscle" || data.diet_goal === "bulk") {
+    proteinRatio = 0.35;
+    carbsRatio = 0.45;
+    fatRatio = 0.20;
+  } else if (data.diet_goal === "cut" || data.diet_goal === "lose_weight") {
+    proteinRatio = 0.40;
+    carbsRatio = 0.30;
+    fatRatio = 0.30;
+  }
+
+  const protein = Math.round((targetCalories * proteinRatio) / 4);
+  const carbs = Math.round((targetCalories * carbsRatio) / 4);
+  const fat = Math.round((targetCalories * fatRatio) / 9);
+
+  return { calories: targetCalories, protein, carbs, fat };
 };
 
 export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<OnboardingData>({
+    language: "en",
+    diet_goal: "maintain",
     birthday: "2000-01-01",
     height_cm: 170,
     weight_kg: 70,
@@ -79,6 +103,8 @@ export default function Onboarding() {
   const navigate = useNavigate();
 
   const steps = [
+    { title: "Language", description: "Choose your preferred language" },
+    { title: "Your Goal", description: "What do you want to achieve?" },
     { title: "About You", description: "Tell us about yourself" },
     { title: "Body Stats", description: "Your measurements" },
     { title: "Activity", description: "How active are you?" },
@@ -97,6 +123,8 @@ export default function Onboarding() {
       const { error: profileError } = await supabase
         .from("profiles")
         .update({
+          language: data.language,
+          diet_goal: data.diet_goal,
           birthday: data.birthday,
           age: age,
           height_cm: data.height_cm,
@@ -151,6 +179,54 @@ export default function Onboarding() {
     switch (step) {
       case 0:
         return (
+          <div className="space-y-3">
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <button
+                key={lang.code}
+                type="button"
+                onClick={() => setData({ ...data, language: lang.code })}
+                className={`w-full p-4 rounded-xl border text-left transition-all flex items-center gap-3 ${
+                  data.language === lang.code
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border hover:border-foreground/50"
+                }`}
+              >
+                <span className="text-2xl">{lang.flag}</span>
+                <span className="font-medium">{lang.label}</span>
+              </button>
+            ))}
+          </div>
+        );
+
+      case 1:
+        return (
+          <div className="space-y-3">
+            {DIET_GOALS.map((goal) => (
+              <button
+                key={goal.value}
+                type="button"
+                onClick={() => setData({ ...data, diet_goal: goal.value })}
+                className={`w-full p-4 rounded-xl border text-left transition-all ${
+                  data.diet_goal === goal.value
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border hover:border-foreground/50"
+                }`}
+              >
+                <span className="font-medium">{goal.label}</span>
+                <p className={`text-sm mt-0.5 ${
+                  data.diet_goal === goal.value 
+                    ? "text-background/70" 
+                    : "text-muted-foreground"
+                }`}>
+                  {goal.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        );
+
+      case 2:
+        return (
           <div className="space-y-6">
             <div className="space-y-3">
               <Label htmlFor="birthday" className="text-sm font-medium">Birthday</Label>
@@ -190,7 +266,7 @@ export default function Onboarding() {
           </div>
         );
 
-      case 1:
+      case 3:
         return (
           <div className="space-y-6">
             <div className="space-y-3">
@@ -221,7 +297,7 @@ export default function Onboarding() {
           </div>
         );
 
-      case 2:
+      case 4:
         return (
           <div className="space-y-4">
             {activityLevels.map((level) => (
@@ -273,7 +349,7 @@ export default function Onboarding() {
             <div
               key={i}
               className={`h-1 rounded-full transition-all ${
-                i <= step ? "w-10 bg-foreground" : "w-6 bg-border"
+                i <= step ? "w-8 bg-foreground" : "w-4 bg-border"
               }`}
             />
           ))}
@@ -297,6 +373,7 @@ export default function Onboarding() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.2 }}
+              className="max-h-[50vh] overflow-y-auto"
             >
               {renderStep()}
             </motion.div>
