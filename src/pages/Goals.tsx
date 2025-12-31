@@ -2,8 +2,11 @@ import { motion } from "framer-motion";
 import { NutritionGoals } from "@/components/NutritionGoals";
 import { GamificationPanel } from "@/components/GamificationPanel";
 import { AppLayout } from "@/components/AppLayout";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function GoalsPage() {
+  const { t } = useTranslation();
+
   return (
     <AppLayout>
       <motion.div
@@ -12,14 +15,14 @@ export default function GoalsPage() {
         className="space-y-6"
       >
         <div>
-          <h1 className="text-2xl font-bold">Goals & Achievements</h1>
-          <p className="text-muted-foreground text-sm">Customize your nutrition targets</p>
+          <h1 className="text-2xl font-bold">{t.goals.title}</h1>
+          <p className="text-muted-foreground text-sm">{t.goals.dailyTarget}</p>
         </div>
 
         <NutritionGoals />
         
         <div className="pt-4">
-          <h2 className="text-xl font-bold mb-4">Your Badges</h2>
+          <h2 className="text-xl font-bold mb-4">{t.goals.badges}</h2>
           <GamificationPanel />
         </div>
       </motion.div>

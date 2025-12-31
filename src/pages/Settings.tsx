@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -41,6 +42,7 @@ export default function Settings() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -316,7 +318,7 @@ export default function Settings() {
           <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-accent transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-semibold">Settings</h1>
+          <h1 className="text-lg font-semibold">{t.settings.title}</h1>
         </div>
       </header>
 
@@ -360,7 +362,7 @@ export default function Settings() {
               className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
             >
               {isRemovingAvatar ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
-              Remove photo
+              {t.settings.removePhoto}
             </button>
           )}
         </div>
@@ -369,27 +371,27 @@ export default function Settings() {
         <div className="grid grid-cols-3 gap-3">
           <div className="bg-accent rounded-2xl p-4 text-center">
             <p className="text-2xl font-semibold">{userAge || "—"}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Age</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.settings.age}</p>
           </div>
           <button 
             onClick={() => openEditDialog("height")}
             className="bg-accent rounded-2xl p-4 text-center hover:bg-accent/80 transition-colors"
           >
             <p className="text-2xl font-semibold">{profile?.height_cm || "—"}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Height cm</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.settings.heightCm}</p>
           </button>
           <button 
             onClick={() => openEditDialog("weight")}
             className="bg-accent rounded-2xl p-4 text-center hover:bg-accent/80 transition-colors"
           >
             <p className="text-2xl font-semibold">{profile?.weight_kg || "—"}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Weight kg</p>
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.settings.weightKg}</p>
           </button>
         </div>
 
         {/* Preferences */}
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">Preferences</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">{t.settings.preferences}</p>
           
           {/* Language */}
           <button 
@@ -398,7 +400,7 @@ export default function Settings() {
           >
             <div className="flex items-center gap-3">
               <Globe className="w-5 h-5" />
-              <span className="font-medium">Language</span>
+              <span className="font-medium">{t.settings.language}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">
@@ -412,7 +414,7 @@ export default function Settings() {
           <div className="flex items-center justify-between p-4 rounded-2xl bg-accent">
             <div className="flex items-center gap-3">
               {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              <span className="font-medium">Dark Mode</span>
+              <span className="font-medium">{t.settings.darkMode}</span>
             </div>
             <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
           </div>
@@ -420,14 +422,14 @@ export default function Settings() {
 
         {/* Security */}
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">Security</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">{t.settings.security}</p>
           <button 
             onClick={() => setIsPasswordDialogOpen(true)}
             className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
           >
             <div className="flex items-center gap-3">
               <Lock className="w-5 h-5" />
-              <span className="font-medium">Change Password</span>
+              <span className="font-medium">{t.settings.changePassword}</span>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -435,14 +437,14 @@ export default function Settings() {
 
         {/* Account */}
         <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">Account</p>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">{t.settings.account}</p>
           <button
             onClick={handleSignOut}
             className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
           >
             <div className="flex items-center gap-3">
               <LogOut className="w-5 h-5" />
-              <span className="font-medium">Sign Out</span>
+              <span className="font-medium">{t.settings.signOut}</span>
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
@@ -452,7 +454,7 @@ export default function Settings() {
               <button className="w-full flex items-center justify-between p-4 rounded-2xl border border-destructive/30 text-destructive hover:bg-destructive/5 transition-colors">
                 <div className="flex items-center gap-3">
                   <Trash2 className="w-5 h-5" />
-                  <span className="font-medium">Delete Account</span>
+                  <span className="font-medium">{t.settings.deleteAccount}</span>
                 </div>
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -461,21 +463,21 @@ export default function Settings() {
               <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-destructive" />
-                  Delete Account
+                  {t.settings.deleteAccount}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. All your data will be permanently deleted.
+                  {t.settings.deleteWarning}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="rounded-xl">{t.common.cancel}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={handleDeleteAccount}
                   disabled={isDeletingAccount}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
                 >
                   {isDeletingAccount && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Delete
+                  {t.common.delete}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
@@ -488,7 +490,7 @@ export default function Settings() {
             <Apple className="w-5 h-5 text-foreground" />
             <span className="font-medium text-foreground">NutriMind</span>
           </div>
-          <p className="text-xs">Version 1.0.0</p>
+          <p className="text-xs">{t.settings.version} 1.0.0</p>
         </div>
       </main>
 
@@ -574,9 +576,9 @@ export default function Settings() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Globe className="w-5 h-5" />
-              Select Language
+              {t.settings.selectLanguage}
             </DialogTitle>
-            <DialogDescription>Choose your preferred language</DialogDescription>
+            <DialogDescription>{t.settings.choosePreferredLanguage}</DialogDescription>
           </DialogHeader>
           <div className="py-4 space-y-2 max-h-[50vh] overflow-y-auto">
             {SUPPORTED_LANGUAGES.map((lang) => (
