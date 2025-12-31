@@ -3,23 +3,25 @@ import { MealHistory } from "@/components/MealHistory";
 import { AppLayout } from "@/components/AppLayout";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export default function HistoryPage() {
   const { meals, loading, deleteMeal } = useMealHistory();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleDeleteMeal = async (id: string) => {
     const success = await deleteMeal(id);
     if (success) {
       toast({
-        title: "Meal deleted",
-        description: "Removed from your history",
+        title: t.history.mealDeleted,
+        description: t.history.mealDeleted,
         duration: 3000,
       });
     } else {
       toast({
-        title: "Delete failed",
-        description: "Please try again",
+        title: t.common.error,
+        description: t.common.error,
         variant: "destructive",
       });
     }
@@ -33,8 +35,8 @@ export default function HistoryPage() {
         className="space-y-4"
       >
         <div>
-          <h1 className="text-2xl font-bold">Meal History</h1>
-          <p className="text-muted-foreground text-sm">All your logged meals</p>
+          <h1 className="text-2xl font-bold">{t.history.title}</h1>
+          <p className="text-muted-foreground text-sm">{t.history.startTracking}</p>
         </div>
 
         <MealHistory

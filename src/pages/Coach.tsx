@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { getDietGoalLabel } from "@/lib/dietGoals";
 
 interface Message {
@@ -31,6 +32,7 @@ export default function Coach() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -155,12 +157,12 @@ export default function Coach() {
         <div className="mb-4">
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Sparkles className="w-6 h-6 text-primary" />
-            AI Coach
+            {t.coach.title}
           </h1>
           <p className="text-muted-foreground text-sm">
             {profile?.diet_goal
-              ? `Goal: ${getDietGoalLabel(profile.diet_goal)}`
-              : "Your personal nutrition assistant"}
+              ? `${getDietGoalLabel(profile.diet_goal)}`
+              : t.coach.subtitle}
           </p>
         </div>
 
@@ -173,11 +175,10 @@ export default function Coach() {
               </div>
               <div>
                 <h2 className="text-lg font-semibold mb-2">
-                  Hi! I'm your nutrition coach
+                  {t.coach.subtitle}
                 </h2>
                 <p className="text-muted-foreground text-sm max-w-xs">
-                  Ask me anything about your diet, macros, or meal planning. I'll
-                  personalize advice based on your goals.
+                  {t.coach.askAnything}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
@@ -234,7 +235,7 @@ export default function Coach() {
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about nutrition..."
+            placeholder={t.coach.placeholder}
             className="flex-1 h-12 rounded-xl"
             disabled={isLoading}
           />

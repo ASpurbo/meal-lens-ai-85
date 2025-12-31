@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NutritionData {
@@ -37,6 +38,7 @@ export default function ScanPage() {
   const { user } = useAuth();
   const { meals, saveMeal, refetch } = useMealHistory();
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const handleImageSelect = async (base64: string) => {
     setIsAnalyzing(true);
@@ -55,15 +57,15 @@ export default function ScanPage() {
       setShowConfirmation(true);
 
       toast({
-        title: "Analysis complete!",
+        title: t.scan.mealAnalyzed,
         description: `Found ${data.foods.length} food item(s)`,
         duration: 3000,
       });
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
-        title: "Analysis failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        title: t.scan.analysisError,
+        description: error instanceof Error ? error.message : t.common.error,
         variant: "destructive",
       });
     } finally {
@@ -152,8 +154,8 @@ export default function ScanPage() {
       refetch();
       await updateStreak();
       toast({
-        title: "Meal added",
-        description: "Your meal has been saved",
+        title: t.scan.addedToHistory,
+        description: t.scan.mealAnalyzed,
         duration: 3000,
       });
     }
@@ -222,7 +224,7 @@ export default function ScanPage() {
             className="flex-1"
           >
             <Camera className="w-4 h-4 mr-2" />
-            Photo
+            {t.scan.takePhoto}
           </Button>
           <Button
             variant={activeMethod === "barcode" ? "default" : "outline"}
@@ -233,7 +235,7 @@ export default function ScanPage() {
             className="flex-1"
           >
             <Barcode className="w-4 h-4 mr-2" />
-            Barcode
+            {t.scan.scanBarcode}
           </Button>
           <Button
             variant={activeMethod === "manual" ? "default" : "outline"}
@@ -244,7 +246,7 @@ export default function ScanPage() {
             className="flex-1"
           >
             <PenLine className="w-4 h-4 mr-2" />
-            Manual
+            {t.scan.manualEntry}
           </Button>
         </motion.div>
 
