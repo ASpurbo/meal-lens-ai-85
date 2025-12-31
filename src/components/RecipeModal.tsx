@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, Flame, ChefHat } from "lucide-react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 export interface Recipe {
   id: string;
@@ -24,6 +25,8 @@ interface RecipeModalProps {
 }
 
 export function RecipeModal({ recipe, open, onOpenChange }: RecipeModalProps) {
+  const { t } = useTranslation();
+  
   if (!recipe) return null;
 
   return (
@@ -43,11 +46,11 @@ export function RecipeModal({ recipe, open, onOpenChange }: RecipeModalProps) {
             </Badge>
             <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1.5">
               <Users className="w-3.5 h-3.5" />
-              {recipe.servings} servings
+              {recipe.servings} {t.recommendations.servings}
             </Badge>
             <Badge variant="secondary" className="flex items-center gap-1.5 px-3 py-1.5">
               <ChefHat className="w-3.5 h-3.5" />
-              {recipe.difficulty}
+              {t.recommendations.difficulty}: {recipe.difficulty}
             </Badge>
           </div>
 
@@ -56,25 +59,25 @@ export function RecipeModal({ recipe, open, onOpenChange }: RecipeModalProps) {
             <div className="text-center p-3 rounded-xl bg-calories/10">
               <Flame className="w-5 h-5 mx-auto mb-1 text-calories" />
               <p className="text-lg font-bold text-calories">{recipe.calories}</p>
-              <p className="text-xs text-muted-foreground">Calories</p>
+              <p className="text-xs text-muted-foreground">{t.goals.calories}</p>
             </div>
             <div className="text-center p-3 rounded-xl bg-protein/10">
               <p className="text-lg font-bold text-protein">{recipe.protein}g</p>
-              <p className="text-xs text-muted-foreground">Protein</p>
+              <p className="text-xs text-muted-foreground">{t.goals.protein}</p>
             </div>
             <div className="text-center p-3 rounded-xl bg-carbs/10">
               <p className="text-lg font-bold text-carbs">{recipe.carbs}g</p>
-              <p className="text-xs text-muted-foreground">Carbs</p>
+              <p className="text-xs text-muted-foreground">{t.goals.carbs}</p>
             </div>
             <div className="text-center p-3 rounded-xl bg-fat/10">
               <p className="text-lg font-bold text-fat">{recipe.fat}g</p>
-              <p className="text-xs text-muted-foreground">Fat</p>
+              <p className="text-xs text-muted-foreground">{t.goals.fat}</p>
             </div>
           </div>
 
           {/* Ingredients */}
           <div>
-            <h3 className="font-semibold text-lg mb-3">Ingredients</h3>
+            <h3 className="font-semibold text-lg mb-3">{t.recommendations.ingredients}</h3>
             <ul className="space-y-2">
               {recipe.ingredients.map((ingredient, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
@@ -87,7 +90,7 @@ export function RecipeModal({ recipe, open, onOpenChange }: RecipeModalProps) {
 
           {/* Instructions */}
           <div>
-            <h3 className="font-semibold text-lg mb-3">Instructions</h3>
+            <h3 className="font-semibold text-lg mb-3">{t.recommendations.instructions}</h3>
             <ol className="space-y-3">
               {recipe.instructions.map((step, i) => (
                 <li key={i} className="flex gap-3 text-sm">

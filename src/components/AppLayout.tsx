@@ -3,24 +3,26 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Apple, Settings, Camera, History, BarChart3, Target, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
+import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
-  { path: "/scan", icon: Camera, label: "Scan" },
-  { path: "/history", icon: History, label: "History" },
-  { path: "/charts", icon: BarChart3, label: "Charts" },
-  { path: "/goals", icon: Target, label: "Goals" },
-];
-
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, loading: authLoading } = useAuth();
   const { needsOnboarding, loading: onboardingLoading } = useOnboarding();
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const navItems = [
+    { path: "/scan", icon: Camera, label: t.nav.scan },
+    { path: "/history", icon: History, label: t.nav.history },
+    { path: "/charts", icon: BarChart3, label: t.nav.charts },
+    { path: "/goals", icon: Target, label: t.nav.goals },
+  ];
 
   useEffect(() => {
     if (!authLoading && !user) {
