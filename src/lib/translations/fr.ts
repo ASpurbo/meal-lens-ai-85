@@ -1,0 +1,212 @@
+import type { TranslationKeys } from "./en";
+
+export const fr: TranslationKeys = {
+  // Common
+  common: {
+    loading: "Chargement...",
+    save: "Enregistrer",
+    cancel: "Annuler",
+    delete: "Supprimer",
+    edit: "Modifier",
+    back: "Retour",
+    next: "Suivant",
+    done: "Terminé",
+    error: "Erreur",
+    success: "Succès",
+  },
+
+  // Navigation
+  nav: {
+    scan: "Scanner",
+    history: "Historique",
+    charts: "Graphiques",
+    goals: "Objectifs",
+    coach: "Coach",
+    settings: "Paramètres",
+  },
+
+  // Auth
+  auth: {
+    welcomeBack: "Bienvenue",
+    createAccount: "Créer un compte",
+    signInToContinue: "Connectez-vous pour continuer",
+    startJourney: "Commencez votre parcours nutritionnel",
+    email: "Email",
+    password: "Mot de passe",
+    signIn: "Se connecter",
+    signUp: "Créer un compte",
+    noAccount: "Pas de compte ? Inscrivez-vous",
+    hasAccount: "Déjà un compte ? Connectez-vous",
+    loginFailed: "Échec de connexion",
+    invalidCredentials: "Email ou mot de passe invalide. Veuillez réessayer.",
+    emailNotVerified: "Veuillez vérifier votre boîte mail et confirmer votre email.",
+    signUpFailed: "Échec de l'inscription",
+    accountExists: "Cet email est déjà enregistré. Veuillez vous connecter.",
+  },
+
+  // Onboarding
+  onboarding: {
+    welcome: "Bienvenue sur NutriMind",
+    letsPersonalize: "Personnalisons votre expérience",
+    selectLanguage: "Sélectionnez votre langue",
+    chooseLanguage: "Choisissez votre langue préférée",
+    whatsYourGoal: "Quel est votre objectif ?",
+    selectGoal: "Sélectionnez votre objectif nutritionnel principal",
+    birthday: "Quelle est votre date de naissance ?",
+    birthdayHelp: "Cela nous aide à calculer vos besoins nutritionnels",
+    height: "Quelle est votre taille ?",
+    heightUnit: "cm",
+    weight: "Quel est votre poids actuel ?",
+    weightUnit: "kg",
+    gender: "Quel est votre genre ?",
+    male: "Homme",
+    female: "Femme",
+    other: "Autre",
+    activityLevel: "Quel est votre niveau d'activité ?",
+    sedentary: "Sédentaire",
+    sedentaryDesc: "Peu ou pas d'exercice",
+    light: "Légèrement actif",
+    lightDesc: "Exercice léger 1-3 jours/semaine",
+    moderate: "Modérément actif",
+    moderateDesc: "Exercice modéré 3-5 jours/semaine",
+    active: "Très actif",
+    activeDesc: "Exercice intense 6-7 jours/semaine",
+    veryActive: "Extrêmement actif",
+    veryActiveDesc: "Exercice très intense et travail physique",
+    getStarted: "Commencer",
+  },
+
+  // Settings
+  settings: {
+    title: "Paramètres",
+    preferences: "Préférences",
+    language: "Langue",
+    darkMode: "Mode sombre",
+    security: "Sécurité",
+    changePassword: "Changer le mot de passe",
+    account: "Compte",
+    signOut: "Déconnexion",
+    deleteAccount: "Supprimer le compte",
+    deleteWarning: "Cette action est irréversible. Toutes vos données seront définitivement supprimées.",
+    age: "Âge",
+    heightCm: "Taille cm",
+    weightKg: "Poids kg",
+    removePhoto: "Supprimer la photo",
+    passwordUpdated: "Mot de passe mis à jour",
+    passwordsDontMatch: "Les mots de passe ne correspondent pas",
+    passwordTooShort: "Le mot de passe doit contenir au moins 6 caractères",
+    newPassword: "Nouveau mot de passe",
+    confirmPassword: "Confirmer le mot de passe",
+    updatePassword: "Mettre à jour le mot de passe",
+    languageUpdated: "Langue mise à jour",
+    selectLanguage: "Sélectionner la langue",
+    choosePreferredLanguage: "Choisissez votre langue préférée",
+    version: "Version",
+  },
+
+  // Scan
+  scan: {
+    title: "Qu'avez-vous mangé ?",
+    subtitle: "Prenez une photo ou saisissez manuellement",
+    takePhoto: "Prendre une photo",
+    uploadImage: "Télécharger une image",
+    scanBarcode: "Scanner le code-barres",
+    manualEntry: "Saisie manuelle",
+    analyzing: "Analyse de votre repas...",
+    mealAnalyzed: "Repas analysé",
+    addedToHistory: "Ajouté à votre historique",
+    analysisError: "Impossible d'analyser l'image",
+  },
+
+  // History
+  history: {
+    title: "Historique des repas",
+    today: "Aujourd'hui",
+    yesterday: "Hier",
+    noMeals: "Aucun repas enregistré",
+    startTracking: "Commencez à suivre vos repas pour les voir ici",
+    calories: "cal",
+    protein: "Protéines",
+    carbs: "Glucides",
+    fat: "Lipides",
+    delete: "Supprimer",
+    mealDeleted: "Repas supprimé",
+  },
+
+  // Charts
+  charts: {
+    title: "Graphiques nutritionnels",
+    weekly: "Hebdomadaire",
+    monthly: "Mensuel",
+    calories: "Calories",
+    macros: "Macros",
+    trends: "Tendances",
+    average: "Moyenne",
+    total: "Total",
+    noData: "Données insuffisantes",
+    trackMore: "Suivez plus de repas pour voir les graphiques",
+  },
+
+  // Goals
+  goals: {
+    title: "Objectifs nutritionnels",
+    dailyTarget: "Objectif quotidien",
+    calories: "Calories",
+    protein: "Protéines",
+    carbs: "Glucides",
+    fat: "Lipides",
+    grams: "g",
+    save: "Enregistrer les objectifs",
+    saved: "Objectifs enregistrés",
+    streak: "Jours consécutifs",
+    badges: "Badges",
+    challenges: "Défis",
+  },
+
+  // Coach
+  coach: {
+    title: "Coach IA",
+    subtitle: "Votre assistant nutrition personnel",
+    askAnything: "Posez-moi n'importe quelle question sur votre alimentation, vos macros ou votre planification de repas. Je personnaliserai les conseils selon vos objectifs.",
+    placeholder: "Posez une question sur la nutrition...",
+    starterPrompts: {
+      calories: "Combien de calories dois-je consommer ?",
+      breakfast: "Suggérez un petit-déjeuner riche en protéines",
+      macros: "Comment atteindre mes objectifs macro ?",
+      mealPrep: "Conseils pour la préparation des repas",
+    },
+    error: "Impossible d'envoyer le message",
+  },
+
+  // Diet Goals
+  dietGoals: {
+    loseWeight: "Perdre du poids",
+    loseWeightDesc: "Créer un déficit calorique pour perdre de la graisse",
+    maintain: "Maintenir le poids",
+    maintainDesc: "Rester à votre poids actuel",
+    gainMuscle: "Prendre du muscle",
+    gainMuscleDesc: "Développer les muscles avec un léger surplus",
+    bulk: "Prise de masse",
+    bulkDesc: "Maximiser la prise de muscle avec plus de calories",
+    cut: "Sèche",
+    cutDesc: "Perte de graisse agressive tout en préservant les muscles",
+    recomp: "Recomposition",
+    recompDesc: "Développer les muscles et perdre de la graisse simultanément",
+  },
+
+  // Meal Periods
+  mealPeriods: {
+    breakfast: "Petit-déjeuner",
+    lunch: "Déjeuner",
+    dinner: "Dîner",
+    snack: "Collation",
+  },
+
+  // Daily Progress
+  progress: {
+    todayProgress: "Progrès du jour",
+    remaining: "restant",
+    over: "en excès",
+    ofGoal: "de l'objectif",
+  },
+};
