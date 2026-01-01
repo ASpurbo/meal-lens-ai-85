@@ -1,9 +1,9 @@
 import { useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { 
   Moon, Sun, Lock, Trash2, LogOut, Camera, 
   ChevronRight, AlertTriangle, Loader2, Apple, ArrowLeft,
-  Ruler, Scale, X, Globe, HelpCircle
+  Ruler, Scale, X, Globe, HelpCircle, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -456,6 +456,31 @@ export default function Settings() {
             </div>
             <ChevronRight className="w-5 h-5 text-muted-foreground" />
           </button>
+        </div>
+
+        {/* Legal */}
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">Rechtliches</p>
+          <Link 
+            to="/datenschutz"
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors mb-2"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className="w-5 h-5" />
+              <span className="font-medium">Datenschutzerklärung</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </Link>
+          <Link 
+            to="/impressum"
+            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <FileText className="w-5 h-5" />
+              <span className="font-medium">Impressum</span>
+            </div>
+            <ChevronRight className="w-5 h-5 text-muted-foreground" />
+          </Link>
         </div>
 
         {/* Account */}
