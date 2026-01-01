@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Apple, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -203,6 +203,15 @@ export default function Auth() {
                 ? "Don't have an account? Sign up"
                 : "Already have an account? Sign in"}
             </button>
+          </div>
+
+          <div className="mt-6 text-center">
+            <Link
+              to="/datenschutz"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Datenschutzerklärung
+            </Link>
           </div>
         </motion.div>
       </main>

@@ -17,6 +17,7 @@ import Charts from "./pages/Charts";
 import Goals from "./pages/Goals";
 import Coach from "./pages/Coach";
 import Settings from "./pages/Settings";
+import Datenschutz from "./pages/Datenschutz";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => {
                 <Route path="/goals" element={<Goals />} />
                 <Route path="/coach" element={<Coach />} />
                 <Route path="/settings" element={<Settings />} />
+                <Route path="/datenschutz" element={<Datenschutz />} />
                 <Route path="/dashboard" element={<Navigate to="/scan" replace />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
