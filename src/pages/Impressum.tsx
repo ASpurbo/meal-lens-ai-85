@@ -4,8 +4,8 @@ import { ArrowLeft } from "lucide-react";
 
 export default function Impressum() {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="container py-6">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      <header className="flex-shrink-0 container py-6">
         <Link
           to="/auth"
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -15,7 +15,8 @@ export default function Impressum() {
         </Link>
       </header>
 
-      <main className="container py-8 px-4 max-w-2xl">
+      <main className="flex-1 overflow-y-auto">
+        <div className="container py-8 px-4 pb-16 max-w-2xl">
         <h1 className="text-2xl font-semibold tracking-tight mb-8">
           Impressum
         </h1>
@@ -90,6 +91,7 @@ export default function Impressum() {
           </section>
 
           <p className="pt-4 text-xs">Stand: Januar 2026</p>
+        </div>
         </div>
       </main>
     </div>
