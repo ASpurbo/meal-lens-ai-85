@@ -205,12 +205,19 @@ export default function Auth() {
             </button>
           </div>
 
-          <div className="mt-6 text-center">
+          <div className="mt-6 text-center flex items-center justify-center gap-3">
             <Link
               to="/datenschutz"
               className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Datenschutzerklärung
+            </Link>
+            <span className="text-xs text-muted-foreground">·</span>
+            <Link
+              to="/impressum"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Impressum
             </Link>
           </div>
         </motion.div>
