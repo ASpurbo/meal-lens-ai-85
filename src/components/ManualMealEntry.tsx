@@ -11,6 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -38,8 +45,17 @@ interface EstimatedNutrition {
   notes: string;
 }
 
+type PortionSize = "small" | "medium" | "large";
+
+const portionLabels: Record<PortionSize, string> = {
+  small: "Small (75%)",
+  medium: "Medium (100%)",
+  large: "Large (150%)",
+};
+
 export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntryProps) {
   const [foodDescription, setFoodDescription] = useState("");
+  const [portionSize, setPortionSize] = useState<PortionSize>("medium");
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimation, setEstimation] = useState<EstimatedNutrition | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -60,20 +76,33 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
     setEstimation(null);
 
     try {
+      const portionText = portionSize === "small" 
+        ? "small portion (about 75% of normal serving)" 
+        : portionSize === "large" 
+        ? "large portion (about 150% of normal serving)"
+        : "medium/normal portion";
+
       const { data, error } = await supabase.functions.invoke("estimate-nutrition", {
-        body: { foodDescription: foodDescription.trim() },
+        body: { 
+          foodDescription: `${foodDescription.trim()} (${portionText})` 
+        },
       });
 
       if (error) throw error;
 
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
       setEstimation(data);
-      setCalories(String(data.calories));
-      setProtein(String(data.protein));
-      setCarbs(String(data.carbs));
-      setFat(String(data.fat));
-    } catch (error: any) {
+      setCalories(String(Math.round(data.calories)));
+      setProtein(String(Math.round(data.protein * 10) / 10));
+      setCarbs(String(Math.round(data.carbs * 10) / 10));
+      setFat(String(Math.round(data.fat * 10) / 10));
+    } catch (error: unknown) {
       console.error("Estimation error:", error);
-      toast.error(error.message || "Failed to estimate nutrition");
+      const message = error instanceof Error ? error.message : "Failed to estimate nutrition";
+      toast.error(message);
     } finally {
       setIsEstimating(false);
     }
@@ -97,19 +126,13 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
       notes: estimation?.notes,
     });
 
-    // Reset form
-    setFoodDescription("");
-    setEstimation(null);
-    setCalories("");
-    setProtein("");
-    setCarbs("");
-    setFat("");
-    setIsEditing(false);
+    resetForm();
     onOpenChange(false);
   };
 
   const resetForm = () => {
     setFoodDescription("");
+    setPortionSize("medium");
     setEstimation(null);
     setCalories("");
     setProtein("");
@@ -123,7 +146,7 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
       if (!isOpen) resetForm();
       onOpenChange(isOpen);
     }}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
+      <DialogContent className="sm:max-w-md bg-card border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-foreground flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
@@ -146,8 +169,27 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
               disabled={isEstimating}
             />
             <p className="text-xs text-muted-foreground">
-              Be specific about ingredients and portions for better estimates
+              Be specific about ingredients for better estimates
             </p>
+          </div>
+
+          {/* Portion Size Selector */}
+          <div className="space-y-2">
+            <Label className="text-foreground">Portion Size</Label>
+            <Select 
+              value={portionSize} 
+              onValueChange={(v) => setPortionSize(v as PortionSize)}
+              disabled={isEstimating}
+            >
+              <SelectTrigger className="bg-background border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="small">🥄 Small (75%)</SelectItem>
+                <SelectItem value="medium">🍽️ Medium (100%)</SelectItem>
+                <SelectItem value="large">🍲 Large (150%)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Estimate Button */}
@@ -171,9 +213,10 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
           </Button>
 
           {/* Estimation Results */}
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {estimation && (
               <motion.div
+                key="estimation"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
