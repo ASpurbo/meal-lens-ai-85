@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
@@ -27,8 +27,6 @@ export function useOnboarding() {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const isOffline = useMemo(() => !navigator.onLine, []);
-
   useEffect(() => {
     const checkOnboarding = async () => {
       if (!user) {
@@ -50,15 +48,11 @@ export function useOnboarding() {
           .from("profiles")
           .select("onboarding_completed")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
-        if (error) {
-          // If profile doesn't exist yet, they need onboarding.
-          setNeedsOnboarding(true);
-          setCachedOnboarding(user.id, false);
-          return;
-        }
+        if (error) throw error;
 
+        // If profile doesn't exist yet, they need onboarding.
         const completed = Boolean(data?.onboarding_completed);
         setNeedsOnboarding(!completed);
         setCachedOnboarding(user.id, completed);
@@ -72,8 +66,9 @@ export function useOnboarding() {
     };
 
     checkOnboarding();
-  }, [user, isOffline]);
+  }, [user]);
 
   return { needsOnboarding, loading };
 }
+
 
