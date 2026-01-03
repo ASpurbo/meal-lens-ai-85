@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 
@@ -14,14 +14,63 @@ export interface MealAnalysis {
   analyzed_at: string;
 }
 
+const CACHE_KEY = "meallens_meal_history";
+
+function getCachedMeals(userId: string): MealAnalysis[] {
+  try {
+    const cached = localStorage.getItem(`${CACHE_KEY}_${userId}`);
+    if (cached) {
+      return JSON.parse(cached);
+    }
+  } catch (error) {
+    console.error("Error reading from cache:", error);
+  }
+  return [];
+}
+
+function setCachedMeals(userId: string, meals: MealAnalysis[]): void {
+  try {
+    localStorage.setItem(`${CACHE_KEY}_${userId}`, JSON.stringify(meals));
+  } catch (error) {
+    console.error("Error writing to cache:", error);
+  }
+}
+
 export function useMealHistory() {
   const [meals, setMeals] = useState<MealAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const { user } = useAuth();
+
+  // Track online/offline status
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const fetchMeals = async () => {
     if (!user) {
       setMeals([]);
+      setLoading(false);
+      return;
+    }
+
+    // Load from cache first for instant display
+    const cachedMeals = getCachedMeals(user.id);
+    if (cachedMeals.length > 0) {
+      setMeals(cachedMeals);
+    }
+
+    // If offline, just use cache
+    if (!navigator.onLine) {
       setLoading(false);
       return;
     }
@@ -34,13 +83,26 @@ export function useMealHistory() {
         .order("analyzed_at", { ascending: false });
 
       if (error) throw error;
-      setMeals(data || []);
+      
+      const fetchedMeals = data || [];
+      setMeals(fetchedMeals);
+      
+      // Update cache with fresh data
+      setCachedMeals(user.id, fetchedMeals);
     } catch (error) {
       console.error("Error fetching meals:", error);
+      // Keep showing cached data on error
     } finally {
       setLoading(false);
     }
   };
+
+  // Refetch when coming back online
+  useEffect(() => {
+    if (!isOffline && user) {
+      fetchMeals();
+    }
+  }, [isOffline]);
 
   useEffect(() => {
     fetchMeals();
@@ -75,7 +137,7 @@ export function useMealHistory() {
 
       if (error) throw error;
       
-      // Refresh the list
+      // Refresh the list and update cache
       fetchMeals();
       return data;
     } catch (error) {
@@ -85,6 +147,8 @@ export function useMealHistory() {
   };
 
   const deleteMeal = async (id: string) => {
+    if (!user) return false;
+
     try {
       const { error } = await supabase
         .from("meal_analyses")
@@ -93,8 +157,11 @@ export function useMealHistory() {
 
       if (error) throw error;
       
-      // Refresh the list
-      fetchMeals();
+      // Update local state and cache immediately
+      const updatedMeals = meals.filter(m => m.id !== id);
+      setMeals(updatedMeals);
+      setCachedMeals(user.id, updatedMeals);
+      
       return true;
     } catch (error) {
       console.error("Error deleting meal:", error);
@@ -102,5 +169,5 @@ export function useMealHistory() {
     }
   };
 
-  return { meals, loading, saveMeal, deleteMeal, refetch: fetchMeals };
+  return { meals, loading, isOffline, saveMeal, deleteMeal, refetch: fetchMeals };
 }
