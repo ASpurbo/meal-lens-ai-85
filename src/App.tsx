@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { TranslationProvider } from "./hooks/useTranslation";
 import { SplashScreen } from "./components/SplashScreen";
+import { OfflineBanner } from "./components/OfflineBanner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -31,6 +32,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <OfflineBanner />
         {showSplash && <SplashScreen onComplete={() => setShowSplash(false)} />}
         <BrowserRouter>
           <AuthProvider>
