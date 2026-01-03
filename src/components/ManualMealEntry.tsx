@@ -11,13 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -45,17 +38,8 @@ interface EstimatedNutrition {
   notes: string;
 }
 
-type PortionSize = "small" | "medium" | "large";
-
-const portionLabels: Record<PortionSize, string> = {
-  small: "Small (75%)",
-  medium: "Medium (100%)",
-  large: "Large (150%)",
-};
-
 export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntryProps) {
   const [foodDescription, setFoodDescription] = useState("");
-  const [portionSize, setPortionSize] = useState<PortionSize>("medium");
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimation, setEstimation] = useState<EstimatedNutrition | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -76,15 +60,9 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
     setEstimation(null);
 
     try {
-      const portionText = portionSize === "small" 
-        ? "small portion (about 75% of normal serving)" 
-        : portionSize === "large" 
-        ? "large portion (about 150% of normal serving)"
-        : "medium/normal portion";
-
       const { data, error } = await supabase.functions.invoke("estimate-nutrition", {
         body: { 
-          foodDescription: `${foodDescription.trim()} (${portionText})` 
+          foodDescription: foodDescription.trim()
         },
       });
 
@@ -132,7 +110,6 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
 
   const resetForm = () => {
     setFoodDescription("");
-    setPortionSize("medium");
     setEstimation(null);
     setCalories("");
     setProtein("");
@@ -171,25 +148,6 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
             <p className="text-xs text-muted-foreground">
               Be specific about ingredients for better estimates
             </p>
-          </div>
-
-          {/* Portion Size Selector */}
-          <div className="space-y-2">
-            <Label className="text-foreground">Portion Size</Label>
-            <Select 
-              value={portionSize} 
-              onValueChange={(v) => setPortionSize(v as PortionSize)}
-              disabled={isEstimating}
-            >
-              <SelectTrigger className="bg-background border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="small">🥄 Small (75%)</SelectItem>
-                <SelectItem value="medium">🍽️ Medium (100%)</SelectItem>
-                <SelectItem value="large">🍲 Large (150%)</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {/* Estimate Button */}

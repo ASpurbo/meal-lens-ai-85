@@ -51,24 +51,43 @@ serve(async (req) => {
       });
     }
 
-    const systemPrompt = `You are a nutrition expert. Given a food description, estimate the nutritional content.
+    const systemPrompt = `You are a precise nutrition calculator. Given a food description with specific quantities, calculate the exact nutritional content.
+
 Return ONLY a valid JSON object with this exact structure:
 {
   "foods": ["list", "of", "detected", "food", "items"],
-  "calories": number (total estimated calories),
+  "calories": number (total calculated calories),
   "protein": number (grams of protein),
   "carbs": number (grams of carbohydrates),
   "fat": number (grams of fat),
   "confidence": "low" | "medium" | "high",
-  "notes": "brief explanation of your estimation, portion assumptions, etc."
+  "notes": "brief breakdown showing calculation per ingredient"
 }
 
-Guidelines:
-- Assume standard serving sizes unless specified
-- For mixed dishes, estimate based on typical recipes
-- Be conservative with estimates
-- Include portion assumptions in notes
-- If description is vague, use "low" confidence`;
+CRITICAL CALCULATION RULES:
+1. Use EXACT gram amounts when specified by the user
+2. Standard nutrition values per 100g:
+   - Skyr/Greek yogurt: ~10g protein, 4g carbs, 0.2g fat, 60 kcal
+   - Protein powder (whey): ~80g protein, 5g carbs, 3g fat per 100g
+   - Oats: ~13g protein, 66g carbs, 7g fat, 380 kcal
+   - Chicken breast: ~31g protein, 0g carbs, 3.6g fat
+   - Rice (cooked): ~2.7g protein, 28g carbs, 0.3g fat
+   - Eggs: ~13g protein, 1g carbs, 11g fat per 100g
+   - Banana: ~1.1g protein, 23g carbs, 0.3g fat
+
+3. Calculate proportionally: if user says "70g oats", calculate: 70g × (13g protein/100g) = 9.1g protein
+
+4. For protein powder amounts like "28g protein powder" - this means 28 grams of the powder itself (roughly 22-24g actual protein)
+
+5. Add up all ingredients precisely - do NOT round up or estimate higher
+
+6. If no quantity specified, use standard serving sizes and note "low" confidence
+
+Example calculation for "250g skyr with 28g protein powder and 70g oats":
+- 250g skyr: 25g protein, 10g carbs, 0.5g fat
+- 28g protein powder: ~22g protein, 1.4g carbs, 0.8g fat  
+- 70g oats: 9g protein, 46g carbs, 4.9g fat
+- TOTAL: ~56g protein, 57g carbs, 6.2g fat`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
