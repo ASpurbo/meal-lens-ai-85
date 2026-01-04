@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Upload, Camera, X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { Capacitor } from "@capacitor/core";
 
 interface ImageUploadProps {
   onImageSelect: (base64: string) => void;
@@ -13,7 +15,6 @@ export function ImageUpload({ onImageSelect, isAnalyzing }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const processFile = useCallback((file: File) => {
     if (!file.type.startsWith("image/")) return;
@@ -40,10 +41,70 @@ export function ImageUpload({ onImageSelect, isAnalyzing }: ImageUploadProps) {
     if (file) processFile(file);
   };
 
+  const handleCameraCapture = async () => {
+    // Use Capacitor Camera on native platforms for better control
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const image = await CapCamera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Base64,
+          source: CameraSource.Camera, // Forces camera, not gallery
+          saveToGallery: false, // Don't save to phone gallery
+          correctOrientation: true,
+        });
+
+        if (image.base64String) {
+          const base64 = `data:image/${image.format};base64,${image.base64String}`;
+          setPreview(base64);
+          onImageSelect(base64);
+        }
+      } catch (error) {
+        console.log("Camera cancelled or error:", error);
+      }
+    } else {
+      // Fallback for web: use file input with capture
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.capture = "environment";
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) processFile(file);
+      };
+      input.click();
+    }
+  };
+
+  const handleGallerySelect = async () => {
+    // Use Capacitor Camera for gallery on native platforms
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const image = await CapCamera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Base64,
+          source: CameraSource.Photos, // Opens gallery directly
+          correctOrientation: true,
+        });
+
+        if (image.base64String) {
+          const base64 = `data:image/${image.format};base64,${image.base64String}`;
+          setPreview(base64);
+          onImageSelect(base64);
+        }
+      } catch (error) {
+        console.log("Gallery selection cancelled or error:", error);
+      }
+    } else {
+      // Fallback for web
+      fileInputRef.current?.click();
+    }
+  };
+
   const clearImage = () => {
     setPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-    if (cameraInputRef.current) cameraInputRef.current.value = "";
   };
 
   return (
@@ -94,7 +155,7 @@ export function ImageUpload({ onImageSelect, isAnalyzing }: ImageUploadProps) {
                 ? "border-foreground bg-accent"
                 : "border-border hover:border-foreground/50"
             )}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={handleGallerySelect}
           >
             <div className="flex flex-col items-center gap-4 text-center">
               <div className={cn(
@@ -124,7 +185,7 @@ export function ImageUpload({ onImageSelect, isAnalyzing }: ImageUploadProps) {
                   className="rounded-xl"
                   onClick={(e) => {
                     e.stopPropagation();
-                    fileInputRef.current?.click();
+                    handleGallerySelect();
                   }}
                 >
                   <Upload className="w-4 h-4 mr-2" />
@@ -135,7 +196,7 @@ export function ImageUpload({ onImageSelect, isAnalyzing }: ImageUploadProps) {
                   className="rounded-xl"
                   onClick={(e) => {
                     e.stopPropagation();
-                    cameraInputRef.current?.click();
+                    handleCameraCapture();
                   }}
                 >
                   <Camera className="w-4 h-4 mr-2" />
@@ -148,14 +209,6 @@ export function ImageUpload({ onImageSelect, isAnalyzing }: ImageUploadProps) {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              onChange={handleFileChange}
-              className="hidden"
-            />
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
               onChange={handleFileChange}
               className="hidden"
             />
