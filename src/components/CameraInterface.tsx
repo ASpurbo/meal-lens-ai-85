@@ -24,16 +24,68 @@ export function CameraInterface({
 }: CameraInterfaceProps) {
   const [mode, setMode] = useState<Mode>("photo");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const { t } = useTranslation();
+
+  // Start camera stream when opened
+  useEffect(() => {
+    if (open && !Capacitor.isNativePlatform()) {
+      startCameraStream();
+    }
+    return () => {
+      stopCameraStream();
+    };
+  }, [open]);
+
+  const startCameraStream = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (error) {
+      console.error("Camera stream error:", error);
+    }
+  };
+
+  const stopCameraStream = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  };
+
+  const captureFromStream = () => {
+    if (!videoRef.current || !streamRef.current) return;
+    
+    const canvas = document.createElement("canvas");
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.drawImage(videoRef.current, 0, 0);
+      const base64 = canvas.toDataURL("image/jpeg", 0.85);
+      stopCameraStream();
+      onClose();
+      onImageCapture(base64);
+    }
+  };
 
   const handleCapture = async () => {
     if (mode === "barcode") {
+      stopCameraStream();
       onClose();
       onBarcodeSelect();
       return;
     }
     
     if (mode === "manual") {
+      stopCameraStream();
       onClose();
       onManualSelect();
       return;
@@ -58,11 +110,8 @@ export function CameraInterface({
         console.error("Camera error:", error);
       }
     } else {
-      // Web fallback - trigger file input with capture
-      if (fileInputRef.current) {
-        fileInputRef.current.setAttribute("capture", "environment");
-        fileInputRef.current.click();
-      }
+      // Web - capture from video stream
+      captureFromStream();
     }
   };
 
@@ -78,6 +127,7 @@ export function CameraInterface({
         });
 
         if (photo.base64String) {
+          stopCameraStream();
           onClose();
           onImageCapture(`data:image/jpeg;base64,${photo.base64String}`);
         }
@@ -98,6 +148,7 @@ export function CameraInterface({
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64 = reader.result as string;
+        stopCameraStream();
         onClose();
         onImageCapture(base64);
       };
@@ -108,12 +159,19 @@ export function CameraInterface({
   const handleModeChange = (newMode: Mode) => {
     setMode(newMode);
     if (newMode === "barcode") {
+      stopCameraStream();
       onClose();
       onBarcodeSelect();
     } else if (newMode === "manual") {
+      stopCameraStream();
       onClose();
       onManualSelect();
     }
+  };
+
+  const handleClose = () => {
+    stopCameraStream();
+    onClose();
   };
 
   if (!open) return null;
@@ -128,16 +186,14 @@ export function CameraInterface({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 pt-safe">
-          <button className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center">
-            <span className="text-background/70 text-xs">i</span>
-          </button>
+          <div className="w-10" />
           
           <div className="flex items-center gap-2">
             <span className="text-background text-lg font-semibold">NutriMind</span>
           </div>
           
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             className="w-10 h-10 rounded-full flex items-center justify-center"
           >
             <X className="w-6 h-6 text-background" />
@@ -148,14 +204,28 @@ export function CameraInterface({
         <div className="px-4 py-2 flex items-center justify-center gap-2 text-background/70 text-sm overflow-x-auto whitespace-nowrap">
           <Camera className="w-4 h-4 flex-shrink-0" />
           <span>{t.scan.takePhoto}</span>
-          <span className="text-background/40">oder</span>
+          <span className="text-background/40">|</span>
           <Barcode className="w-4 h-4 flex-shrink-0" />
           <span>{t.scan.scanBarcode}</span>
         </div>
 
         {/* Camera viewfinder area */}
-        <div className="flex-1 flex items-center justify-center px-6">
-          <div className="relative w-full max-w-sm aspect-[3/4]">
+        <div className="flex-1 flex items-center justify-center px-6 relative overflow-hidden">
+          {/* Live camera preview (web only) */}
+          {!Capacitor.isNativePlatform() && (
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          )}
+          
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[hsl(350,30%,12%)]/60 via-transparent to-[hsl(350,40%,8%)]/80 pointer-events-none" />
+          
+          <div className="relative w-full max-w-sm aspect-[3/4] z-10">
             {/* Corner brackets */}
             <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-background/80 rounded-tl-lg" />
             <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-background/80 rounded-tr-lg" />
@@ -165,7 +235,7 @@ export function CameraInterface({
         </div>
 
         {/* Capture controls */}
-        <div className="px-6 pb-4">
+        <div className="px-6 pb-4 relative z-20">
           <div className="flex items-center justify-center gap-8">
             {/* Gallery button */}
             <button
@@ -189,7 +259,7 @@ export function CameraInterface({
         </div>
 
         {/* Mode selector tabs */}
-        <div className="px-6 pb-8 pb-safe">
+        <div className="px-6 pb-8 pb-safe relative z-20">
           <div className="flex items-center justify-center gap-2">
             <button
               onClick={() => handleModeChange("manual")}

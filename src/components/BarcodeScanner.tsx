@@ -1,13 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, Loader2, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface BarcodeScannerProps {
   open: boolean;
@@ -48,6 +42,7 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
   const html5QrCodeRef = useRef<any>(null);
   const isStartingRef = useRef(false);
   const isMountedRef = useRef(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -63,7 +58,6 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
   }, [open]);
 
   const startScanner = async () => {
-    // Prevent multiple simultaneous starts
     if (isStartingRef.current || html5QrCodeRef.current) return;
     isStartingRef.current = true;
     
@@ -81,15 +75,15 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
 
       const scannerId = "barcode-scanner-element";
       
-      // Clear existing scanner element
       const existingElement = document.getElementById(scannerId);
       if (existingElement) {
         existingElement.remove();
       }
       
-      // Create fresh scanner element
       const scannerElement = document.createElement("div");
       scannerElement.id = scannerId;
+      scannerElement.style.width = "100%";
+      scannerElement.style.height = "100%";
       scannerRef.current.appendChild(scannerElement);
 
       html5QrCodeRef.current = new Html5Qrcode(scannerId, { verbose: false });
@@ -98,8 +92,7 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
         { facingMode: "environment" },
         {
           fps: 10,
-          qrbox: { width: 250, height: 100 },
-          aspectRatio: 1.333,
+          qrbox: { width: 280, height: 120 },
         },
         async (decodedText: string) => {
           if (isMountedRef.current) {
@@ -129,14 +122,10 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
     if (html5QrCodeRef.current) {
       try {
         await html5QrCodeRef.current.stop();
-      } catch (err) {
-        // Ignore errors when stopping
-      }
+      } catch (err) {}
       try {
         html5QrCodeRef.current.clear();
-      } catch (err) {
-        // Ignore errors when clearing
-      }
+      } catch (err) {}
       html5QrCodeRef.current = null;
     }
     setIsScanning(false);
@@ -145,7 +134,6 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
   };
 
   const handleBarcodeScan = async (barcode: string) => {
-    // Prevent duplicate scans
     if (isLoading) return;
     
     await stopScanner();
@@ -174,7 +162,6 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
       const product: ProductData = data.product;
       const nutriments = product.nutriments || {};
 
-      // Prefer serving size values if available, otherwise use per 100g
       const calories = Math.round(
         nutriments["energy-kcal_serving"] || nutriments["energy-kcal_100g"] || 0
       );
@@ -219,74 +206,110 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
     onOpenChange(false);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
-        <DialogHeader>
-          <DialogTitle className="text-foreground">Scan Barcode</DialogTitle>
-        </DialogHeader>
+  if (!open) return null;
 
-        <div className="space-y-4">
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] bg-gradient-to-b from-[hsl(350,30%,12%)] to-[hsl(350,40%,8%)] flex flex-col"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4 pt-safe">
+          <div className="w-10" />
+          
+          <div className="flex items-center gap-2">
+            <span className="text-background text-lg font-semibold">{t.scan.scanBarcode}</span>
+          </div>
+          
+          <button 
+            onClick={handleClose}
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+          >
+            <X className="w-6 h-6 text-background" />
+          </button>
+        </div>
+
+        {/* Instruction text */}
+        <div className="px-4 py-2 text-center text-background/70 text-sm">
+          Point your camera at a product barcode
+        </div>
+
+        {/* Camera viewfinder area */}
+        <div className="flex-1 flex items-center justify-center px-6 relative overflow-hidden">
+          {/* Scanner container */}
           <div 
             ref={scannerRef}
-            className="relative w-full aspect-[4/3] bg-black rounded-lg overflow-hidden"
-          >
-            {/* Scanning frame overlay */}
-            {isScanning && !isLoading && (
-              <div className="absolute inset-0 z-[5] pointer-events-none flex items-center justify-center">
-                <div className="w-[260px] h-[110px] border-2 border-primary rounded-md relative">
-                  <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-primary -translate-x-0.5 -translate-y-0.5" />
-                  <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-primary translate-x-0.5 -translate-y-0.5" />
-                  <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-primary -translate-x-0.5 translate-y-0.5" />
-                  <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-primary translate-x-0.5 translate-y-0.5" />
-                  <motion.div 
-                    className="absolute left-0 right-0 h-0.5 bg-primary/80"
-                    animate={{ top: ["10%", "90%", "10%"] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                </div>
-              </div>
-            )}
-            
-            {isLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="w-8 h-8 animate-spin text-foreground" />
-                  <span className="text-sm text-muted-foreground">Looking up product...</span>
-                </div>
-              </div>
-            )}
-            
-            {isCameraLoading && (
-              <div className="absolute inset-0 flex items-center justify-center bg-muted z-10">
-                <div className="flex flex-col items-center gap-2">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
-                  <span className="text-sm text-muted-foreground">Starting camera...</span>
-                </div>
-              </div>
-            )}
+            className="absolute inset-0 w-full h-full [&_video]:w-full [&_video]:h-full [&_video]:object-cover"
+          />
+          
+          {/* Overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[hsl(350,30%,12%)]/60 via-transparent to-[hsl(350,40%,8%)]/80 pointer-events-none" />
+          
+          {/* Scanning frame */}
+          <div className="relative w-full max-w-sm z-10">
+            <div className="relative w-full aspect-[2.5/1]">
+              {/* Corner brackets */}
+              <div className="absolute top-0 left-0 w-8 h-8 border-l-4 border-t-4 border-background/80 rounded-tl-lg" />
+              <div className="absolute top-0 right-0 w-8 h-8 border-r-4 border-t-4 border-background/80 rounded-tr-lg" />
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-l-4 border-b-4 border-background/80 rounded-bl-lg" />
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-background/80 rounded-br-lg" />
+              
+              {/* Scanning laser line */}
+              {isScanning && !isLoading && (
+                <motion.div 
+                  className="absolute left-4 right-4 h-0.5 bg-primary"
+                  animate={{ top: ["10%", "90%", "10%"] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                />
+              )}
+            </div>
           </div>
 
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-2 p-3 bg-destructive/10 rounded-lg text-destructive text-sm"
-            >
-              <AlertCircle className="w-4 h-4 flex-shrink-0" />
-              <span>{error}</span>
-            </motion.div>
+          {/* Loading overlays */}
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-20">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="w-8 h-8 animate-spin text-foreground" />
+                <span className="text-sm text-muted-foreground">Looking up product...</span>
+              </div>
+            </div>
           )}
-
-          <p className="text-center text-sm text-muted-foreground">
-            Point your camera at a product barcode
-          </p>
-
-          <Button variant="outline" onClick={handleClose} className="w-full">
-            Cancel
-          </Button>
+          
+          {isCameraLoading && (
+            <div className="absolute inset-0 flex items-center justify-center z-20">
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="w-8 h-8 animate-spin text-background" />
+                <span className="text-sm text-background/70">Starting camera...</span>
+              </div>
+            </div>
+          )}
         </div>
-      </DialogContent>
-    </Dialog>
+
+        {/* Error message */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mx-6 mb-4 flex items-center gap-2 p-3 bg-destructive/20 rounded-lg text-background text-sm"
+          >
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>{error}</span>
+          </motion.div>
+        )}
+
+        {/* Bottom area */}
+        <div className="px-6 pb-8 pb-safe">
+          <button
+            onClick={handleClose}
+            className="w-full py-3 rounded-full bg-background/10 text-background text-sm font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

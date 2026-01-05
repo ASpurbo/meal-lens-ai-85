@@ -1,18 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Sparkles, Loader2, Edit3 } from "lucide-react";
+import { Plus, Sparkles, Loader2, Edit3, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
 
 interface ManualMealEntryProps {
   open: boolean;
@@ -43,6 +38,7 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimation, setEstimation] = useState<EstimatedNutrition | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const { t } = useTranslation();
   
   // Editable values
   const [calories, setCalories] = useState("");
@@ -118,23 +114,43 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
     setIsEditing(false);
   };
 
+  const handleClose = () => {
+    resetForm();
+    onOpenChange(false);
+  };
+
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) resetForm();
-      onOpenChange(isOpen);
-    }}>
-      <DialogContent className="sm:max-w-md bg-card border-border max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-foreground flex items-center gap-2">
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] bg-background flex flex-col"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4 pt-safe border-b border-border">
+          <div className="w-10" />
+          
+          <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            AI Meal Estimation
-          </DialogTitle>
-        </DialogHeader>
-        
-        <div className="space-y-4">
+            <span className="text-foreground text-lg font-semibold">{t.scan.manualEntry}</span>
+          </div>
+          
+          <button 
+            onClick={handleClose}
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+          >
+            <X className="w-6 h-6 text-foreground" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
           {/* Food Description Input */}
           <div className="space-y-2">
-            <Label htmlFor="foodDescription" className="text-foreground">
+            <Label htmlFor="foodDescription" className="text-foreground text-base">
               Describe your meal
             </Label>
             <Textarea
@@ -142,10 +158,10 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
               placeholder="e.g., Bowl of oatmeal with protein powder and banana, or Chicken salad with olive oil dressing..."
               value={foodDescription}
               onChange={(e) => setFoodDescription(e.target.value)}
-              className="bg-background border-border min-h-[80px] resize-none"
+              className="bg-muted border-border min-h-[120px] resize-none text-base"
               disabled={isEstimating}
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Be specific about ingredients for better estimates
             </p>
           </div>
@@ -154,17 +170,17 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
           <Button
             onClick={handleEstimate}
             disabled={!foodDescription.trim() || isEstimating}
-            className="w-full"
+            className="w-full h-12"
             variant="secondary"
           >
             {isEstimating ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                 Estimating...
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 mr-2" />
+                <Sparkles className="w-5 h-5 mr-2" />
                 Estimate Nutrition
               </>
             )}
@@ -178,10 +194,10 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="space-y-3"
+                className="space-y-4"
               >
                 {/* Detected Foods */}
-                <div className="bg-primary/10 rounded-lg p-3">
+                <div className="bg-primary/10 rounded-xl p-4">
                   <p className="text-sm font-medium text-foreground mb-1">Detected Foods:</p>
                   <p className="text-sm text-muted-foreground">
                     {estimation.foods.join(", ")}
@@ -190,73 +206,72 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
 
                 {/* Nutrition Values - Editable */}
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-foreground">Estimated Values:</p>
+                  <p className="text-base font-medium text-foreground">Estimated Values:</p>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsEditing(!isEditing)}
-                    className="text-xs"
                   >
-                    <Edit3 className="w-3 h-3 mr-1" />
+                    <Edit3 className="w-4 h-4 mr-1" />
                     {isEditing ? "Done" : "Adjust"}
                   </Button>
                 </div>
 
                 {isEditing ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Calories</Label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm">Calories</Label>
                       <Input
                         type="number"
                         value={calories}
                         onChange={(e) => setCalories(e.target.value)}
-                        className="bg-background border-border h-9"
+                        className="bg-muted border-border h-12"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Protein (g)</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Protein (g)</Label>
                       <Input
                         type="number"
                         value={protein}
                         onChange={(e) => setProtein(e.target.value)}
-                        className="bg-background border-border h-9"
+                        className="bg-muted border-border h-12"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Carbs (g)</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Carbs (g)</Label>
                       <Input
                         type="number"
                         value={carbs}
                         onChange={(e) => setCarbs(e.target.value)}
-                        className="bg-background border-border h-9"
+                        className="bg-muted border-border h-12"
                       />
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Fat (g)</Label>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Fat (g)</Label>
                       <Input
                         type="number"
                         value={fat}
                         onChange={(e) => setFat(e.target.value)}
-                        className="bg-background border-border h-9"
+                        className="bg-muted border-border h-12"
                       />
                     </div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-4 gap-2">
-                    <div className="bg-background rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-primary">{calories}</p>
+                  <div className="grid grid-cols-4 gap-3">
+                    <div className="bg-muted rounded-xl p-3 text-center">
+                      <p className="text-xl font-bold text-calories">{calories}</p>
                       <p className="text-xs text-muted-foreground">kcal</p>
                     </div>
-                    <div className="bg-background rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-blue-500">{protein}g</p>
+                    <div className="bg-muted rounded-xl p-3 text-center">
+                      <p className="text-xl font-bold text-protein">{protein}g</p>
                       <p className="text-xs text-muted-foreground">Protein</p>
                     </div>
-                    <div className="bg-background rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-amber-500">{carbs}g</p>
+                    <div className="bg-muted rounded-xl p-3 text-center">
+                      <p className="text-xl font-bold text-carbs">{carbs}g</p>
                       <p className="text-xs text-muted-foreground">Carbs</p>
                     </div>
-                    <div className="bg-background rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-rose-500">{fat}g</p>
+                    <div className="bg-muted rounded-xl p-3 text-center">
+                      <p className="text-xl font-bold text-fat">{fat}g</p>
                       <p className="text-xs text-muted-foreground">Fat</p>
                     </div>
                   </div>
@@ -264,9 +279,9 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
 
                 {/* Confidence & Notes */}
                 {estimation.notes && (
-                  <div className="bg-muted/50 rounded-lg p-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  <div className="bg-muted rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
                         estimation.confidence === "high" 
                           ? "bg-green-500/20 text-green-500"
                           : estimation.confidence === "medium"
@@ -276,34 +291,34 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
                         {estimation.confidence} confidence
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">{estimation.notes}</p>
+                    <p className="text-sm text-muted-foreground">{estimation.notes}</p>
                   </div>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSubmit} 
-              className="flex-1"
-              disabled={!estimation && !calories}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Meal
-            </Button>
-          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        {/* Bottom Actions */}
+        <div className="px-6 py-4 pb-safe border-t border-border flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            className="flex-1 h-12"
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            className="flex-1 h-12"
+            disabled={!estimation && !calories}
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Add Meal
+          </Button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
