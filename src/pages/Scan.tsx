@@ -1,12 +1,16 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Camera, Barcode, Pencil, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { Camera, Barcode, PenLine } from "lucide-react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { NutritionResults } from "@/components/NutritionResults";
+import { DailyProgress } from "@/components/DailyProgress";
+import { SmartRecommendations } from "@/components/SmartRecommendations";
 import { FoodScanConfirmation } from "@/components/FoodScanConfirmation";
 import { ManualMealEntry } from "@/components/ManualMealEntry";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { TourGuide } from "@/components/TourGuide";
+import { AppLayout } from "@/components/AppLayout";
+import { Button } from "@/components/ui/button";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -31,7 +35,7 @@ export default function ScanPage() {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [showFab, setShowFab] = useState(false);
+  const [activeMethod, setActiveMethod] = useState<"camera" | "barcode" | "manual">("camera");
   
   const { user } = useAuth();
   const { meals, saveMeal, refetch } = useMealHistory();
@@ -170,18 +174,8 @@ export default function ScanPage() {
     setShowConfirmation(false);
   };
 
-  const handleFabAction = (action: "camera" | "barcode" | "manual") => {
-    setShowFab(false);
-    if (action === "barcode") {
-      setShowBarcodeScanner(true);
-    } else if (action === "manual") {
-      setShowManualEntry(true);
-    }
-    // Camera is handled by ImageUpload component
-  };
-
   return (
-    <div className="min-h-screen bg-background p-4 pb-24">
+    <AppLayout>
       {showTour && <TourGuide onComplete={completeTour} />}
       
       {pendingResults && (
@@ -206,20 +200,70 @@ export default function ScanPage() {
         onProductFound={handleBarcodeProduct}
       />
 
-      <div className="max-w-md mx-auto space-y-6">
+      <div className="space-y-6">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center"
         >
-          <h1 className="text-2xl font-bold">{t.scan.title}</h1>
-          <p className="text-muted-foreground mt-1">{t.scan.subtitle}</p>
+          <DailyProgress meals={meals} />
         </motion.div>
 
-        <ImageUpload
-          onImageSelect={handleImageSelect}
-          isAnalyzing={isAnalyzing}
-        />
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <SmartRecommendations meals={meals} />
+        </motion.div>
+
+        {/* Input Method Selector */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="grid grid-cols-1 gap-2 sm:grid-cols-3"
+        >
+          <Button
+            variant={activeMethod === "camera" ? "default" : "outline"}
+            onClick={() => setActiveMethod("camera")}
+            className="w-full"
+          >
+            <Camera className="w-4 h-4 mr-2" />
+            {t.scan.takePhoto}
+          </Button>
+          <Button
+            variant={activeMethod === "barcode" ? "default" : "outline"}
+            onClick={() => {
+              setActiveMethod("barcode");
+              setShowBarcodeScanner(true);
+            }}
+            className="w-full"
+          >
+            <Barcode className="w-4 h-4 mr-2" />
+            {t.scan.scanBarcode}
+          </Button>
+          <Button
+            variant={activeMethod === "manual" ? "default" : "outline"}
+            onClick={() => {
+              setActiveMethod("manual");
+              setShowManualEntry(true);
+            }}
+            className="w-full"
+          >
+            <PenLine className="w-4 h-4 mr-2" />
+            {t.scan.manualEntry}
+          </Button>
+        </motion.div>
+
+        {activeMethod === "camera" && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <ImageUpload onImageSelect={handleImageSelect} isAnalyzing={isAnalyzing} />
+          </motion.div>
+        )}
 
         {results && (
           <motion.div
@@ -230,54 +274,6 @@ export default function ScanPage() {
           </motion.div>
         )}
       </div>
-
-      {/* Floating Action Button */}
-      <div className="fixed bottom-24 right-4 z-50">
-        <AnimatePresence>
-          {showFab && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.8, y: 20 }}
-              className="absolute bottom-16 right-0 flex flex-col gap-3 items-end"
-            >
-              <motion.button
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                onClick={() => handleFabAction("barcode")}
-                className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-full shadow-lg hover:bg-foreground/90 transition-colors"
-              >
-                <span className="text-sm font-medium">{t.scan.barcode}</span>
-                <Barcode className="w-5 h-5" />
-              </motion.button>
-              <motion.button
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.15 }}
-                onClick={() => handleFabAction("manual")}
-                className="flex items-center gap-2 bg-foreground text-background px-4 py-2 rounded-full shadow-lg hover:bg-foreground/90 transition-colors"
-              >
-                <span className="text-sm font-medium">{t.scan.manualEntry}</span>
-                <Pencil className="w-5 h-5" />
-              </motion.button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setShowFab(!showFab)}
-          className="w-14 h-14 rounded-full bg-foreground text-background flex items-center justify-center shadow-lg hover:bg-foreground/90 transition-colors"
-        >
-          <motion.div
-            animate={{ rotate: showFab ? 45 : 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          >
-            <Plus className="w-6 h-6" />
-          </motion.div>
-        </motion.button>
-      </div>
-    </div>
+    </AppLayout>
   );
 }
