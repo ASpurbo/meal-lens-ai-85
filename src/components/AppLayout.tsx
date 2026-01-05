@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils";
 
 interface AppLayoutProps {
   children: ReactNode;
+  hideMainScroll?: boolean;
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children, hideMainScroll = false }: AppLayoutProps) {
   const { user, loading: authLoading } = useAuth();
   const { needsOnboarding, loading: onboardingLoading } = useOnboarding();
   const { t } = useTranslation();
@@ -23,6 +24,16 @@ export function AppLayout({ children }: AppLayoutProps) {
     { path: "/charts", icon: BarChart3, label: t.nav.charts },
     { path: "/goals", icon: Target, label: t.nav.goals },
   ];
+
+  const isCoachPage = location.pathname === "/coach";
+
+  const handleCoachClick = () => {
+    if (isCoachPage) {
+      navigate("/scan");
+    } else {
+      navigate("/coach");
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -47,40 +58,59 @@ export function AppLayout({ children }: AppLayoutProps) {
   if (!user) return null;
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* Header - Cal AI style minimal */}
-      <header className="flex-shrink-0 bg-background border-b border-border">
+    <div className="h-full flex flex-col overflow-hidden bg-background">
+      {/* Header - Enhanced */}
+      <header className="flex-shrink-0 bg-background/80 backdrop-blur-lg border-b border-border/50 sticky top-0 z-50">
         <div className="container py-4 flex items-center justify-between">
-          <Link to="/scan" className="flex items-center gap-2">
-            <Apple className="w-6 h-6 text-foreground" />
+          <Link to="/scan" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 rounded-xl bg-foreground flex items-center justify-center group-hover:scale-105 transition-transform">
+              <Apple className="w-4 h-4 text-background" />
+            </div>
           </Link>
           
           <div className="flex items-center gap-1">
-            <Link to="/coach">
-              <button className="p-2 rounded-full hover:bg-accent transition-colors">
-                <Sparkles className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </Link>
+            <button 
+              onClick={handleCoachClick}
+              className={cn(
+                "p-2.5 rounded-xl transition-all",
+                isCoachPage 
+                  ? "bg-foreground text-background" 
+                  : "hover:bg-accent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Sparkles className="w-5 h-5" />
+            </button>
             <Link to="/settings">
-              <button className="p-2 rounded-full hover:bg-accent transition-colors">
-                <Settings className="w-5 h-5 text-muted-foreground" />
+              <button className={cn(
+                "p-2.5 rounded-xl transition-all",
+                location.pathname === "/settings"
+                  ? "bg-foreground text-background"
+                  : "hover:bg-accent text-muted-foreground hover:text-foreground"
+              )}>
+                <Settings className="w-5 h-5" />
               </button>
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Main Content - Scrollable */}
-      <main className="flex-1 overflow-y-auto overscroll-none">
-        <div className="container py-6 pb-24">
+      {/* Main Content */}
+      <main className={cn(
+        "flex-1",
+        hideMainScroll ? "overflow-hidden" : "overflow-y-auto overscroll-none"
+      )}>
+        <div className={cn(
+          "container",
+          hideMainScroll ? "h-full py-4" : "py-6 pb-24"
+        )}>
           {children}
         </div>
       </main>
 
-      {/* Bottom Navigation - Cal AI style */}
-      <nav className="flex-shrink-0 bg-background border-t border-border">
+      {/* Bottom Navigation - Enhanced */}
+      <nav className="flex-shrink-0 bg-background/80 backdrop-blur-lg border-t border-border/50">
         <div className="container">
-          <div className="flex items-center justify-around py-3">
+          <div className="flex items-center justify-around py-2">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
               return (
@@ -88,13 +118,21 @@ export function AppLayout({ children }: AppLayoutProps) {
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    "flex flex-col items-center gap-1 px-6 py-1 transition-colors",
+                    "flex flex-col items-center gap-1 px-6 py-2 rounded-xl transition-all",
                     isActive 
                       ? "text-foreground" 
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
                   )}
                 >
-                  <item.icon className={cn("w-5 h-5", isActive && "text-foreground")} />
+                  <div className={cn(
+                    "p-1.5 rounded-lg transition-colors",
+                    isActive && "bg-foreground"
+                  )}>
+                    <item.icon className={cn(
+                      "w-5 h-5 transition-colors",
+                      isActive ? "text-background" : ""
+                    )} />
+                  </div>
                   <span className={cn(
                     "text-[10px] font-medium uppercase tracking-wider",
                     isActive && "font-semibold"

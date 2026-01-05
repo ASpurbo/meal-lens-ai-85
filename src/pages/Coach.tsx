@@ -151,10 +151,10 @@ export default function Coach() {
   };
 
   return (
-    <AppLayout>
-      <div className="flex flex-col h-[calc(100vh-180px)]">
-        {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto mb-4">
+    <AppLayout hideMainScroll>
+      <div className="flex flex-col h-full">
+        {/* Messages Area - Scrollable */}
+        <div className="flex-1 overflow-y-auto overscroll-none px-1">
           <AnimatePresence mode="wait">
             {messages.length === 0 ? (
               <motion.div
@@ -162,7 +162,7 @@ export default function Coach() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="flex flex-col h-full"
+                className="flex flex-col h-full min-h-[60vh]"
               >
                 {/* Hero Section */}
                 <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
@@ -278,33 +278,29 @@ export default function Coach() {
           </AnimatePresence>
         </div>
 
-        {/* Input Area */}
-        <motion.form 
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          onSubmit={handleSubmit} 
-          className="flex gap-2 bg-background pt-2 border-t border-border/50"
-        >
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={t.coach.placeholder}
-            className="flex-1 h-12 rounded-xl bg-accent/50 border-border/50 focus:border-primary/50"
-            disabled={isLoading}
-          />
-          <Button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            className="h-12 w-12 rounded-xl bg-foreground hover:bg-foreground/90"
-          >
-            {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
-          </Button>
-        </motion.form>
+        {/* Fixed Input Area */}
+        <div className="flex-shrink-0 bg-background border-t border-border/50 p-4 pb-6">
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={t.coach.placeholder}
+              className="flex-1 h-12 rounded-xl bg-accent/50 border-border/50 focus:border-primary/50"
+              disabled={isLoading}
+            />
+            <Button
+              type="submit"
+              disabled={!input.trim() || isLoading}
+              className="h-12 w-12 rounded-xl bg-foreground hover:bg-foreground/90"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
+            </Button>
+          </form>
+        </div>
       </div>
     </AppLayout>
   );
