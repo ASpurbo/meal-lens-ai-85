@@ -1,16 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Camera, Barcode, PenLine } from "lucide-react";
-import { ImageUpload } from "@/components/ImageUpload";
+import { CameraInterface } from "@/components/CameraInterface";
 import { NutritionResults } from "@/components/NutritionResults";
-import { DailyProgress } from "@/components/DailyProgress";
-import { SmartRecommendations } from "@/components/SmartRecommendations";
 import { FoodScanConfirmation } from "@/components/FoodScanConfirmation";
 import { ManualMealEntry } from "@/components/ManualMealEntry";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { TourGuide } from "@/components/TourGuide";
-import { AppLayout } from "@/components/AppLayout";
-import { Button } from "@/components/ui/button";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -175,7 +170,7 @@ export default function ScanPage() {
   };
 
   return (
-    <AppLayout>
+    <>
       {showTour && <TourGuide onComplete={completeTour} />}
       
       {pendingResults && (
@@ -200,80 +195,25 @@ export default function ScanPage() {
         onProductFound={handleBarcodeProduct}
       />
 
-      <div className="space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <DailyProgress meals={meals} />
-        </motion.div>
+      <CameraInterface
+        onImageSelect={handleImageSelect}
+        onBarcodeClick={() => setShowBarcodeScanner(true)}
+        onManualClick={() => setShowManualEntry(true)}
+        isAnalyzing={isAnalyzing}
+        activeMethod={activeMethod}
+        setActiveMethod={setActiveMethod}
+      />
 
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <SmartRecommendations meals={meals} />
-        </motion.div>
-
-        {/* Input Method Selector */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="grid grid-cols-1 gap-2 sm:grid-cols-3"
-        >
-          <Button
-            variant={activeMethod === "camera" ? "default" : "outline"}
-            onClick={() => setActiveMethod("camera")}
-            className="w-full"
-          >
-            <Camera className="w-4 h-4 mr-2" />
-            {t.scan.takePhoto}
-          </Button>
-          <Button
-            variant={activeMethod === "barcode" ? "default" : "outline"}
-            onClick={() => {
-              setActiveMethod("barcode");
-              setShowBarcodeScanner(true);
-            }}
-            className="w-full"
-          >
-            <Barcode className="w-4 h-4 mr-2" />
-            {t.scan.scanBarcode}
-          </Button>
-          <Button
-            variant={activeMethod === "manual" ? "default" : "outline"}
-            onClick={() => {
-              setActiveMethod("manual");
-              setShowManualEntry(true);
-            }}
-            className="w-full"
-          >
-            <PenLine className="w-4 h-4 mr-2" />
-            {t.scan.manualEntry}
-          </Button>
-        </motion.div>
-
-        {activeMethod === "camera" && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <ImageUpload onImageSelect={handleImageSelect} isAnalyzing={isAnalyzing} />
-          </motion.div>
-        )}
-
-        {results && (
+      {results && (
+        <div className="fixed inset-0 z-[60] bg-background p-4 overflow-auto">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <NutritionResults data={results} />
           </motion.div>
-        )}
-      </div>
-    </AppLayout>
+        </div>
+      )}
+    </>
   );
 }
