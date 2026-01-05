@@ -6,8 +6,8 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const serverUrl = process.env.CAPACITOR_SERVER_URL;
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.94968ed97f2f456a8bbf8575558c7e43',
-  appName: 'meal-lens-ai-85',
+  appId: 'com.apu25.nutrimind',
+  appName: 'NutriMind',
   webDir: 'dist',
   ...(serverUrl
     ? {
