@@ -464,87 +464,83 @@ export function CameraInterface({
 
         {/* RESULTS VIEW */}
         {viewState === "results" && analysisResults && (
-          <div className="flex-1 flex flex-col relative z-20 px-4 overflow-y-auto">
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="flex-1 flex flex-col justify-end pb-safe"
-            >
-              {/* Results card */}
-              <div className="bg-background/95 backdrop-blur-xl rounded-t-3xl p-6 space-y-4">
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold text-foreground">Meal Detected</h2>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    Found {analysisResults.foods.length} food item(s)
-                  </p>
-                </div>
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-safe"
+          >
+            {/* Results card */}
+            <div className="bg-background/95 backdrop-blur-xl rounded-t-3xl p-6 space-y-4">
+              <div className="text-center">
+                <h2 className="text-xl font-semibold text-foreground">Meal Detected</h2>
+                <p className="text-muted-foreground text-sm mt-1">
+                  Found {analysisResults.foods.length} food item(s)
+                </p>
+              </div>
 
-                {/* Foods list */}
-                <div className="bg-muted/50 rounded-xl p-4">
-                  <h4 className="text-sm font-medium mb-2 text-foreground">Detected Foods:</h4>
-                  <ul className="space-y-1">
-                    {analysisResults.foods.map((food, i) => (
-                      <motion.li
-                        key={i}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="text-sm text-muted-foreground flex items-center gap-2"
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        {food}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Nutrition overview */}
-                <div className="grid grid-cols-4 gap-2">
-                  <div className="text-center p-3 bg-calories/10 rounded-xl">
-                    <div className="text-lg font-bold text-calories">{analysisResults.calories}</div>
-                    <div className="text-xs text-muted-foreground">kcal</div>
-                  </div>
-                  <div className="text-center p-3 bg-protein/10 rounded-xl">
-                    <div className="text-lg font-bold text-protein">{analysisResults.protein}g</div>
-                    <div className="text-xs text-muted-foreground">protein</div>
-                  </div>
-                  <div className="text-center p-3 bg-carbs/10 rounded-xl">
-                    <div className="text-lg font-bold text-carbs">{analysisResults.carbs}g</div>
-                    <div className="text-xs text-muted-foreground">carbs</div>
-                  </div>
-                  <div className="text-center p-3 bg-fat/10 rounded-xl">
-                    <div className="text-lg font-bold text-fat">{analysisResults.fat}g</div>
-                    <div className="text-xs text-muted-foreground">fat</div>
-                  </div>
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={handleRetake}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full border border-border text-foreground font-medium"
-                  >
-                    <RotateCcw className="w-4 h-4" />
-                    Retake
-                  </button>
-                  <button
-                    onClick={handleDecline}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full border border-border text-foreground font-medium"
-                  >
-                    <X className="w-4 h-4" />
-                    Just View
-                  </button>
-                  <button
-                    onClick={handleConfirm}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-primary text-primary-foreground font-medium"
-                  >
-                    <Check className="w-4 h-4" />
-                    Add
-                  </button>
+              {/* Foods list */}
+              <div className="bg-muted/50 rounded-xl p-3">
+                <div className="flex flex-wrap gap-2">
+                  {analysisResults.foods.map((food, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="text-sm text-foreground bg-background/80 px-3 py-1 rounded-full"
+                    >
+                      {food}
+                    </motion.span>
+                  ))}
                 </div>
               </div>
-            </motion.div>
-          </div>
+
+              {/* Nutrition overview */}
+              <div className="grid grid-cols-4 gap-2">
+                <div className="text-center p-2 bg-calories/10 rounded-xl">
+                  <div className="text-base font-bold text-calories">{analysisResults.calories}</div>
+                  <div className="text-xs text-muted-foreground">kcal</div>
+                </div>
+                <div className="text-center p-2 bg-protein/10 rounded-xl">
+                  <div className="text-base font-bold text-protein">{analysisResults.protein}g</div>
+                  <div className="text-xs text-muted-foreground">protein</div>
+                </div>
+                <div className="text-center p-2 bg-carbs/10 rounded-xl">
+                  <div className="text-base font-bold text-carbs">{analysisResults.carbs}g</div>
+                  <div className="text-xs text-muted-foreground">carbs</div>
+                </div>
+                <div className="text-center p-2 bg-fat/10 rounded-xl">
+                  <div className="text-base font-bold text-fat">{analysisResults.fat}g</div>
+                  <div className="text-xs text-muted-foreground">fat</div>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleRetake}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-full border border-border text-foreground font-medium text-sm"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Retake
+                </button>
+                <button
+                  onClick={handleDecline}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-full border border-border text-foreground font-medium text-sm"
+                >
+                  <X className="w-4 h-4" />
+                  View
+                </button>
+                <button
+                  onClick={handleConfirm}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-full bg-primary text-primary-foreground font-medium text-sm"
+                >
+                  <Check className="w-4 h-4" />
+                  Add
+                </button>
+              </div>
+            </div>
+          </motion.div>
         )}
 
         {/* Hidden file input */}
