@@ -49,11 +49,11 @@
     --shadow-card: 0 4px 16px -4px hsl(0 0% 0% / 0.1);
     --shadow-glow: 0 0 20px hsl(0 0% 0% / 0.1);
 
-    /* Macro colors - Monochrome inspired */
-    --protein: 0 0% 20%;
-    --carbs: 0 0% 40%;
-    --fat: 0 0% 60%;
-    --calories: 0 0% 8%;
+    /* Macro colors - Vibrant accents */
+    --protein: 340 82% 52%;
+    --carbs: 45 93% 47%;
+    --fat: 199 89% 48%;
+    --calories: 24 95% 53%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 0 0% 8%;
@@ -102,11 +102,11 @@
     --shadow-card: 0 4px 16px -4px hsl(0 0% 0% / 0.4);
     --shadow-glow: 0 0 20px hsl(0 0% 100% / 0.05);
 
-    /* Macro colors - Dark mode */
-    --protein: 0 0% 80%;
-    --carbs: 0 0% 60%;
-    --fat: 0 0% 45%;
-    --calories: 0 0% 96%;
+    /* Macro colors - Vibrant accents (dark mode) */
+    --protein: 340 82% 62%;
+    --carbs: 45 93% 57%;
+    --fat: 199 89% 58%;
+    --calories: 24 95% 58%;
 
     --sidebar-background: 0 0% 8%;
     --sidebar-foreground: 0 0% 96%;
