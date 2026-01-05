@@ -4,6 +4,7 @@ import { X, Camera, Barcode, PenLine, Image as ImageIcon } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { useTranslation } from "@/hooks/useTranslation";
+import { toast } from "sonner";
 
 interface CameraInterfaceProps {
   open: boolean;
@@ -23,23 +24,50 @@ export function CameraInterface({
   onManualSelect,
 }: CameraInterfaceProps) {
   const [mode, setMode] = useState<Mode>("photo");
+  const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { t } = useTranslation();
 
-  // Start camera stream when opened
+  // Request camera permission and start stream when opened
   useEffect(() => {
-    if (open && !Capacitor.isNativePlatform()) {
-      startCameraStream();
+    if (open) {
+      requestCameraPermission();
     }
     return () => {
       stopCameraStream();
     };
   }, [open]);
 
+  const requestCameraPermission = async () => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // Request permission on native platforms
+        const permission = await CapCamera.requestPermissions();
+        if (permission.camera === 'granted') {
+          setPermissionGranted(true);
+          // Start native camera stream using getUserMedia (works on Android WebView)
+          await startCameraStream();
+        } else {
+          setPermissionGranted(false);
+          toast.error("Camera permission is required to scan food");
+        }
+      } else {
+        // Web - just start the stream (will prompt for permission)
+        await startCameraStream();
+        setPermissionGranted(true);
+      }
+    } catch (error) {
+      console.error("Permission error:", error);
+      setPermissionGranted(false);
+      toast.error("Could not access camera");
+    }
+  };
+
   const startCameraStream = async () => {
     try {
+      // Use getUserMedia for both web and native (works in Android WebView)
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
@@ -47,9 +75,14 @@ export function CameraInterface({
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        await videoRef.current.play();
       }
     } catch (error) {
       console.error("Camera stream error:", error);
+      // On native, fall back to native camera capture
+      if (Capacitor.isNativePlatform()) {
+        console.log("Falling back to native camera capture");
+      }
     }
   };
 
@@ -91,7 +124,13 @@ export function CameraInterface({
       return;
     }
 
-    // Photo mode
+    // Photo mode - try to capture from stream first (works on both web and native)
+    if (streamRef.current && videoRef.current && videoRef.current.videoWidth > 0) {
+      captureFromStream();
+      return;
+    }
+
+    // Fallback to native camera API if stream not available
     if (Capacitor.isNativePlatform()) {
       try {
         const photo = await CapCamera.getPhoto({
@@ -103,15 +142,14 @@ export function CameraInterface({
         });
 
         if (photo.base64String) {
+          stopCameraStream();
           onClose();
           onImageCapture(`data:image/jpeg;base64,${photo.base64String}`);
         }
       } catch (error) {
         console.error("Camera error:", error);
+        toast.error("Could not capture photo");
       }
-    } else {
-      // Web - capture from video stream
-      captureFromStream();
     }
   };
 
@@ -211,15 +249,24 @@ export function CameraInterface({
 
         {/* Camera viewfinder area */}
         <div className="flex-1 flex items-center justify-center px-6 relative overflow-hidden">
-          {/* Live camera preview (web only) */}
-          {!Capacitor.isNativePlatform() && (
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              muted
-              className="absolute inset-0 w-full h-full object-cover"
-            />
+          {/* Live camera preview - works on both web and native */}
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          
+          {/* Permission denied message */}
+          {permissionGranted === false && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
+              <div className="text-center p-6">
+                <Camera className="w-12 h-12 text-white/50 mx-auto mb-4" />
+                <p className="text-white/80 mb-2">Camera access required</p>
+                <p className="text-white/50 text-sm">Please grant camera permission in your device settings</p>
+              </div>
+            </div>
           )}
           
           {/* Overlay gradient */}
