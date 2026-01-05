@@ -37,21 +37,42 @@ export function CameraInterface({
     if (open) {
       startCamera();
     }
+
     return () => {
       stopCamera();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
+
+  const setDocumentTransparent = (enabled: boolean) => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const html = document.documentElement;
+    const body = document.body;
+
+    if (enabled) {
+      html.style.backgroundColor = "transparent";
+      body.style.backgroundColor = "transparent";
+    } else {
+      html.style.backgroundColor = "";
+      body.style.backgroundColor = "";
+    }
+  };
 
   const startCamera = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
-        // Use native camera-preview plugin for live viewfinder
+        setDocumentTransparent(true);
+
+        // Ensure the container is mounted before starting the preview
+        await new Promise((r) => setTimeout(r, 0));
+
         const cameraPreviewOptions: CameraPreviewOptions = {
           position: "rear",
           parent: "cameraPreviewContainer",
           toBack: true,
-          width: window.innerWidth,
-          height: window.innerHeight,
+          width: window.screen.width,
+          height: window.screen.height,
           disableAudio: true,
         };
 
@@ -86,6 +107,7 @@ export function CameraInterface({
       } catch (e) {
         // Camera may not be running
       }
+      setDocumentTransparent(false);
     }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -216,7 +238,9 @@ export function CameraInterface({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100] flex flex-col"
-        style={{ backgroundColor: Capacitor.isNativePlatform() ? "transparent" : "hsl(350, 30%, 12%)" }}
+        style={{
+          backgroundColor: Capacitor.isNativePlatform() ? "transparent" : "hsl(var(--background))",
+        }}
       >
         {/* Native camera preview container - renders behind WebView */}
         <div id="cameraPreviewContainer" className="absolute inset-0" />
