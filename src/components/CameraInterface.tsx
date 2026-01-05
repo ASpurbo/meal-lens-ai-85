@@ -1,0 +1,238 @@
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Camera, Barcode, PenLine, Image as ImageIcon } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { useTranslation } from "@/hooks/useTranslation";
+
+interface CameraInterfaceProps {
+  open: boolean;
+  onClose: () => void;
+  onImageCapture: (base64: string) => void;
+  onBarcodeSelect: () => void;
+  onManualSelect: () => void;
+}
+
+type Mode = "photo" | "barcode" | "manual";
+
+export function CameraInterface({
+  open,
+  onClose,
+  onImageCapture,
+  onBarcodeSelect,
+  onManualSelect,
+}: CameraInterfaceProps) {
+  const [mode, setMode] = useState<Mode>("photo");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
+
+  const handleCapture = async () => {
+    if (mode === "barcode") {
+      onClose();
+      onBarcodeSelect();
+      return;
+    }
+    
+    if (mode === "manual") {
+      onClose();
+      onManualSelect();
+      return;
+    }
+
+    // Photo mode
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const photo = await CapCamera.getPhoto({
+          quality: 85,
+          allowEditing: false,
+          resultType: CameraResultType.Base64,
+          source: CameraSource.Camera,
+          saveToGallery: false,
+        });
+
+        if (photo.base64String) {
+          onClose();
+          onImageCapture(`data:image/jpeg;base64,${photo.base64String}`);
+        }
+      } catch (error) {
+        console.error("Camera error:", error);
+      }
+    } else {
+      // Web fallback - trigger file input with capture
+      if (fileInputRef.current) {
+        fileInputRef.current.setAttribute("capture", "environment");
+        fileInputRef.current.click();
+      }
+    }
+  };
+
+  const handleGallerySelect = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const photo = await CapCamera.getPhoto({
+          quality: 85,
+          allowEditing: false,
+          resultType: CameraResultType.Base64,
+          source: CameraSource.Photos,
+          saveToGallery: false,
+        });
+
+        if (photo.base64String) {
+          onClose();
+          onImageCapture(`data:image/jpeg;base64,${photo.base64String}`);
+        }
+      } catch (error) {
+        console.error("Gallery error:", error);
+      }
+    } else {
+      if (fileInputRef.current) {
+        fileInputRef.current.removeAttribute("capture");
+        fileInputRef.current.click();
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        onClose();
+        onImageCapture(base64);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleModeChange = (newMode: Mode) => {
+    setMode(newMode);
+    if (newMode === "barcode") {
+      onClose();
+      onBarcodeSelect();
+    } else if (newMode === "manual") {
+      onClose();
+      onManualSelect();
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] bg-gradient-to-b from-[hsl(350,30%,12%)] to-[hsl(350,40%,8%)] flex flex-col"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4 pt-safe">
+          <button className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center">
+            <span className="text-background/70 text-xs">i</span>
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-background text-lg font-semibold">NutriMind</span>
+          </div>
+          
+          <button 
+            onClick={onClose}
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+          >
+            <X className="w-6 h-6 text-background" />
+          </button>
+        </div>
+
+        {/* Instruction text */}
+        <div className="px-4 py-2 flex items-center justify-center gap-2 text-background/70 text-sm overflow-x-auto whitespace-nowrap">
+          <Camera className="w-4 h-4 flex-shrink-0" />
+          <span>{t.scan.takePhoto}</span>
+          <span className="text-background/40">oder</span>
+          <Barcode className="w-4 h-4 flex-shrink-0" />
+          <span>{t.scan.scanBarcode}</span>
+        </div>
+
+        {/* Camera viewfinder area */}
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="relative w-full max-w-sm aspect-[3/4]">
+            {/* Corner brackets */}
+            <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-background/80 rounded-tl-lg" />
+            <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-background/80 rounded-tr-lg" />
+            <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-background/80 rounded-bl-lg" />
+            <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-background/80 rounded-br-lg" />
+          </div>
+        </div>
+
+        {/* Capture controls */}
+        <div className="px-6 pb-4">
+          <div className="flex items-center justify-center gap-8">
+            {/* Gallery button */}
+            <button
+              onClick={handleGallerySelect}
+              className="w-12 h-12 rounded-full bg-foreground flex items-center justify-center"
+            >
+              <ImageIcon className="w-5 h-5 text-background" />
+            </button>
+
+            {/* Capture button */}
+            <button
+              onClick={handleCapture}
+              className="w-20 h-20 rounded-full border-4 border-background flex items-center justify-center"
+            >
+              <div className="w-16 h-16 rounded-full bg-background" />
+            </button>
+
+            {/* Spacer for alignment */}
+            <div className="w-12 h-12" />
+          </div>
+        </div>
+
+        {/* Mode selector tabs */}
+        <div className="px-6 pb-8 pb-safe">
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => handleModeChange("manual")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                mode === "manual"
+                  ? "bg-background text-foreground"
+                  : "text-background/70"
+              }`}
+            >
+              {t.scan.manualEntry}
+            </button>
+            <button
+              onClick={() => setMode("photo")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                mode === "photo"
+                  ? "bg-background text-foreground"
+                  : "text-background/70"
+              }`}
+            >
+              {t.scan.takePhoto}
+            </button>
+            <button
+              onClick={() => handleModeChange("barcode")}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                mode === "barcode"
+                  ? "bg-background text-foreground"
+                  : "text-background/70"
+              }`}
+            >
+              {t.scan.scanBarcode}
+            </button>
+          </div>
+        </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+          className="hidden"
+        />
+      </motion.div>
+    </AnimatePresence>
+  );
+}
