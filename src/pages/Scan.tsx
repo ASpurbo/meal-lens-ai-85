@@ -200,19 +200,22 @@ export default function ScanPage() {
   const handleSwitchToCamera = () => {
     setShowManualEntry(false);
     setShowBarcodeScanner(false);
-    setShowCameraInterface(true);
+    // Small delay to allow previous modal to unmount
+    setTimeout(() => setShowCameraInterface(true), 50);
   };
 
   const handleSwitchToBarcode = () => {
     setShowManualEntry(false);
     setShowCameraInterface(false);
-    setShowBarcodeScanner(true);
+    // Small delay to allow previous modal to unmount
+    setTimeout(() => setShowBarcodeScanner(true), 50);
   };
 
   const handleSwitchToManual = () => {
     setShowCameraInterface(false);
     setShowBarcodeScanner(false);
-    setShowManualEntry(true);
+    // Small delay to allow previous modal to unmount
+    setTimeout(() => setShowManualEntry(true), 50);
   };
 
   return (

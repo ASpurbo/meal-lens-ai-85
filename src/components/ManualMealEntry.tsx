@@ -121,6 +121,18 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit, onSwitchToCamera
     onOpenChange(false);
   };
 
+  const handleSwitchCamera = () => {
+    resetForm();
+    onOpenChange(false);
+    onSwitchToCamera?.();
+  };
+
+  const handleSwitchBarcode = () => {
+    resetForm();
+    onOpenChange(false);
+    onSwitchToBarcode?.();
+  };
+
   if (!open) return null;
 
   return (
@@ -301,11 +313,10 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit, onSwitchToCamera
           </AnimatePresence>
         </div>
 
-        {/* Mode Switcher */}
         <div className="px-6 py-3 border-t border-border">
           <div className="flex items-center justify-center gap-2">
             <button
-              onClick={onSwitchToCamera}
+              onClick={handleSwitchCamera}
               className="px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-2"
             >
               <Camera className="w-4 h-4" />
@@ -318,7 +329,7 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit, onSwitchToCamera
               {t.scan.manualEntry}
             </button>
             <button
-              onClick={onSwitchToBarcode}
+              onClick={handleSwitchBarcode}
               className="px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-2"
             >
               <Barcode className="w-4 h-4" />
