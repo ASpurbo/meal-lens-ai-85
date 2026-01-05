@@ -136,13 +136,12 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit, onSwitchToCamera
   if (!open) return null;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-background flex flex-col"
-      >
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-background flex flex-col"
+    >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-4 pt-safe border-b border-border">
           <div className="w-10" />
@@ -357,7 +356,6 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit, onSwitchToCamera
             Add Meal
           </Button>
         </div>
-      </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 }
