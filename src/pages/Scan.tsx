@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
-import { Camera, Barcode, PenLine } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Camera, Barcode, PenLine, X } from "lucide-react";
 import { ImageUpload } from "@/components/ImageUpload";
 import { NutritionResults } from "@/components/NutritionResults";
 import { DailyProgress } from "@/components/DailyProgress";
@@ -10,7 +10,6 @@ import { ManualMealEntry } from "@/components/ManualMealEntry";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { TourGuide } from "@/components/TourGuide";
 import { AppLayout } from "@/components/AppLayout";
-import { Button } from "@/components/ui/button";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -34,8 +33,9 @@ export default function ScanPage() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [showImageUpload, setShowImageUpload] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [activeMethod, setActiveMethod] = useState<"camera" | "barcode" | "manual">("camera");
+  const [fabOpen, setFabOpen] = useState(false);
   
   const { user } = useAuth();
   const { meals, saveMeal, refetch } = useMealHistory();
@@ -174,6 +174,23 @@ export default function ScanPage() {
     setShowConfirmation(false);
   };
 
+  const handleFabAction = (action: "camera" | "barcode" | "manual") => {
+    setFabOpen(false);
+    if (action === "camera") {
+      setShowImageUpload(true);
+    } else if (action === "barcode") {
+      setShowBarcodeScanner(true);
+    } else {
+      setShowManualEntry(true);
+    }
+  };
+
+  const fabActions = [
+    { id: "camera" as const, icon: Camera, label: t.scan.takePhoto },
+    { id: "barcode" as const, icon: Barcode, label: t.scan.scanBarcode },
+    { id: "manual" as const, icon: PenLine, label: t.scan.manualEntry },
+  ];
+
   return (
     <AppLayout>
       {showTour && <TourGuide onComplete={completeTour} />}
@@ -200,7 +217,7 @@ export default function ScanPage() {
         onProductFound={handleBarcodeProduct}
       />
 
-      <div className="space-y-6">
+      <div className="space-y-6 pb-24">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -216,50 +233,11 @@ export default function ScanPage() {
           <SmartRecommendations meals={meals} />
         </motion.div>
 
-        {/* Input Method Selector */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="grid grid-cols-1 gap-2 sm:grid-cols-3"
-        >
-          <Button
-            variant={activeMethod === "camera" ? "default" : "outline"}
-            onClick={() => setActiveMethod("camera")}
-            className="w-full"
-          >
-            <Camera className="w-4 h-4 mr-2" />
-            {t.scan.takePhoto}
-          </Button>
-          <Button
-            variant={activeMethod === "barcode" ? "default" : "outline"}
-            onClick={() => {
-              setActiveMethod("barcode");
-              setShowBarcodeScanner(true);
-            }}
-            className="w-full"
-          >
-            <Barcode className="w-4 h-4 mr-2" />
-            {t.scan.scanBarcode}
-          </Button>
-          <Button
-            variant={activeMethod === "manual" ? "default" : "outline"}
-            onClick={() => {
-              setActiveMethod("manual");
-              setShowManualEntry(true);
-            }}
-            className="w-full"
-          >
-            <PenLine className="w-4 h-4 mr-2" />
-            {t.scan.manualEntry}
-          </Button>
-        </motion.div>
-
-        {activeMethod === "camera" && (
+        {showImageUpload && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: 0.15 }}
           >
             <ImageUpload onImageSelect={handleImageSelect} isAnalyzing={isAnalyzing} />
           </motion.div>
@@ -273,6 +251,55 @@ export default function ScanPage() {
             <NutritionResults data={results} />
           </motion.div>
         )}
+      </div>
+
+      {/* Floating Action Button */}
+      <div className="fixed bottom-24 right-6 z-50 flex flex-col-reverse items-end gap-3">
+        <AnimatePresence>
+          {fabOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 bg-background/60 backdrop-blur-sm -z-10"
+                onClick={() => setFabOpen(false)}
+              />
+              
+              {/* Action buttons */}
+              {fabActions.map((action, index) => (
+                <motion.button
+                  key={action.id}
+                  initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                  transition={{ delay: index * 0.05, type: "spring", stiffness: 300, damping: 25 }}
+                  onClick={() => handleFabAction(action.id)}
+                  className="flex items-center gap-3 group"
+                >
+                  <span className="px-3 py-2 rounded-full bg-muted text-foreground text-sm font-medium shadow-md">
+                    {action.label}
+                  </span>
+                  <div className="w-12 h-12 rounded-full bg-foreground text-background flex items-center justify-center shadow-lg">
+                    <action.icon className="w-5 h-5" />
+                  </div>
+                </motion.button>
+              ))}
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* Main FAB */}
+        <motion.button
+          onClick={() => setFabOpen(!fabOpen)}
+          className="w-14 h-14 rounded-full bg-foreground text-background flex items-center justify-center shadow-xl border-2 border-border"
+          whileTap={{ scale: 0.95 }}
+          animate={{ rotate: fabOpen ? 45 : 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          {fabOpen ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+        </motion.button>
       </div>
     </AppLayout>
   );
