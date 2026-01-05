@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, X } from "lucide-react";
 import { NutritionResults } from "@/components/NutritionResults";
@@ -9,6 +9,7 @@ import { ManualMealEntry } from "@/components/ManualMealEntry";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { CameraInterface } from "@/components/CameraInterface";
 import { TourGuide } from "@/components/TourGuide";
+import { WeeklyCalendarStrip } from "@/components/WeeklyCalendarStrip";
 import { AppLayout } from "@/components/AppLayout";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useAuth } from "@/hooks/useAuth";
@@ -35,12 +36,21 @@ export default function ScanPage() {
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [showCameraInterface, setShowCameraInterface] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showFab, setShowFab] = useState(false);
   
   const { user } = useAuth();
   const { meals, saveMeal, refetch } = useMealHistory();
   const { showTour, completeTour } = useTour();
   const { toast } = useToast();
   const { t } = useTranslation();
+
+  // Show FAB after a delay (simulating splash screen completion)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowFab(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleImageSelect = async (base64: string) => {
     setIsAnalyzing(true);
@@ -173,6 +183,25 @@ export default function ScanPage() {
     setShowConfirmation(false);
   };
 
+  // Handlers for switching modes from ManualMealEntry or BarcodeScanner
+  const handleSwitchToCamera = () => {
+    setShowManualEntry(false);
+    setShowBarcodeScanner(false);
+    setShowCameraInterface(true);
+  };
+
+  const handleSwitchToBarcode = () => {
+    setShowManualEntry(false);
+    setShowCameraInterface(false);
+    setShowBarcodeScanner(true);
+  };
+
+  const handleSwitchToManual = () => {
+    setShowCameraInterface(false);
+    setShowBarcodeScanner(false);
+    setShowManualEntry(true);
+  };
+
   return (
     <AppLayout>
       {showTour && <TourGuide onComplete={completeTour} />}
@@ -191,12 +220,16 @@ export default function ScanPage() {
         open={showManualEntry}
         onOpenChange={setShowManualEntry}
         onSubmit={handleManualSubmit}
+        onSwitchToCamera={handleSwitchToCamera}
+        onSwitchToBarcode={handleSwitchToBarcode}
       />
 
       <BarcodeScanner
         open={showBarcodeScanner}
         onOpenChange={setShowBarcodeScanner}
         onProductFound={handleBarcodeProduct}
+        onSwitchToCamera={handleSwitchToCamera}
+        onSwitchToManual={handleSwitchToManual}
       />
 
       <CameraInterface
@@ -207,7 +240,15 @@ export default function ScanPage() {
         onManualSelect={() => setShowManualEntry(true)}
       />
 
-      <div className="space-y-6 pb-24">
+      <div className="space-y-4 pb-24">
+        {/* Weekly Calendar Strip */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <WeeklyCalendarStrip meals={meals} />
+        </motion.div>
+
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -233,14 +274,21 @@ export default function ScanPage() {
         )}
       </div>
 
-      {/* Floating Action Button */}
-      <motion.button
-        onClick={() => setShowCameraInterface(true)}
-        className="fixed bottom-24 right-6 z-50 w-14 h-14 rounded-full bg-foreground text-background flex items-center justify-center shadow-xl border-2 border-border"
-        whileTap={{ scale: 0.95 }}
-      >
-        <Plus className="w-6 h-6" />
-      </motion.button>
+      {/* Floating Action Button - only show after splash */}
+      <AnimatePresence>
+        {showFab && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.5 }}
+            onClick={() => setShowCameraInterface(true)}
+            className="fixed bottom-24 right-6 z-50 w-14 h-14 rounded-full bg-foreground text-background flex items-center justify-center shadow-xl border-2 border-border"
+            whileTap={{ scale: 0.95 }}
+          >
+            <Plus className="w-6 h-6" />
+          </motion.button>
+        )}
+      </AnimatePresence>
     </AppLayout>
   );
 }
