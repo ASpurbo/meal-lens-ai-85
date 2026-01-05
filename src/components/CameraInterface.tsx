@@ -258,15 +258,15 @@ export function CameraInterface({
           </div>
         </div>
 
-        {/* Mode selector tabs */}
+        {/* Mode selector tabs - fixed order */}
         <div className="px-6 pb-8 pb-safe relative z-20">
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-full p-1">
             <button
               onClick={() => handleModeChange("manual")}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 mode === "manual"
-                  ? "bg-background text-foreground"
-                  : "text-background/70"
+                  ? "bg-white text-black"
+                  : "text-white/80 hover:text-white"
               }`}
             >
               {t.scan.manualEntry}
@@ -275,8 +275,8 @@ export function CameraInterface({
               onClick={() => setMode("photo")}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 mode === "photo"
-                  ? "bg-background text-foreground"
-                  : "text-background/70"
+                  ? "bg-white text-black"
+                  : "text-white/80 hover:text-white"
               }`}
             >
               {t.scan.takePhoto}
@@ -285,8 +285,8 @@ export function CameraInterface({
               onClick={() => handleModeChange("barcode")}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 mode === "barcode"
-                  ? "bg-background text-foreground"
-                  : "text-background/70"
+                  ? "bg-white text-black"
+                  : "text-white/80 hover:text-white"
               }`}
             >
               {t.scan.scanBarcode}
