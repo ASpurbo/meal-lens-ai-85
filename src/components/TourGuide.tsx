@@ -30,8 +30,8 @@ export function TourGuide({ onComplete }: TourGuideProps) {
     },
     {
       id: "scan",
-      title: t.tour?.scanTitle || "Scan Your Meals",
-      description: t.tour?.scanDesc || "Take a photo of your food, scan a barcode, or enter meals manually. Our AI will analyze the nutrition instantly.",
+      title: t.tour?.scanTitle || "Add Your Meals",
+      description: t.tour?.scanDesc || "Tap the + button to open the camera. Take a photo, upload from gallery, scan a barcode, or enter meals manually. Switch between modes anytime!",
       icon: <Camera className="w-8 h-8" />,
       position: "bottom",
     },

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Sparkles, Loader2, Edit3, X } from "lucide-react";
+import { Plus, Sparkles, Loader2, Edit3, X, Camera, Barcode, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,8 @@ interface ManualMealEntryProps {
     confidence?: string;
     notes?: string;
   }) => void;
+  onSwitchToCamera?: () => void;
+  onSwitchToBarcode?: () => void;
 }
 
 interface EstimatedNutrition {
@@ -33,7 +35,7 @@ interface EstimatedNutrition {
   notes: string;
 }
 
-export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntryProps) {
+export function ManualMealEntry({ open, onOpenChange, onSubmit, onSwitchToCamera, onSwitchToBarcode }: ManualMealEntryProps) {
   const [foodDescription, setFoodDescription] = useState("");
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimation, setEstimation] = useState<EstimatedNutrition | null>(null);
@@ -297,6 +299,32 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit }: ManualMealEntr
               </motion.div>
             )}
           </AnimatePresence>
+        </div>
+
+        {/* Mode Switcher */}
+        <div className="px-6 py-3 border-t border-border">
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={onSwitchToCamera}
+              className="px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-2"
+            >
+              <Camera className="w-4 h-4" />
+              {t.scan.takePhoto}
+            </button>
+            <button
+              className="px-4 py-2 rounded-full text-sm font-medium bg-foreground text-background flex items-center gap-2"
+            >
+              <PenLine className="w-4 h-4" />
+              {t.scan.manualEntry}
+            </button>
+            <button
+              onClick={onSwitchToBarcode}
+              className="px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:bg-muted transition-colors flex items-center gap-2"
+            >
+              <Barcode className="w-4 h-4" />
+              {t.scan.scanBarcode}
+            </button>
+          </div>
         </div>
 
         {/* Bottom Actions */}

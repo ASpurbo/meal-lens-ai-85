@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2, AlertCircle } from "lucide-react";
+import { X, Loader2, AlertCircle, Camera, PenLine, Barcode } from "lucide-react";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface BarcodeScannerProps {
@@ -15,6 +15,8 @@ interface BarcodeScannerProps {
     confidence: "low" | "medium" | "high";
     notes: string;
   }) => void;
+  onSwitchToCamera?: () => void;
+  onSwitchToManual?: () => void;
 }
 
 interface ProductData {
@@ -33,7 +35,7 @@ interface ProductData {
   serving_size?: string;
 }
 
-export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeScannerProps) {
+export function BarcodeScanner({ open, onOpenChange, onProductFound, onSwitchToCamera, onSwitchToManual }: BarcodeScannerProps) {
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
@@ -299,6 +301,32 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound }: BarcodeSc
             <span>{error}</span>
           </motion.div>
         )}
+
+        {/* Mode Switcher */}
+        <div className="px-6 py-3">
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={() => { stopScanner(); onSwitchToCamera?.(); }}
+              className="px-4 py-2 rounded-full text-sm font-medium text-background/70 hover:bg-background/10 transition-colors flex items-center gap-2"
+            >
+              <Camera className="w-4 h-4" />
+              {t.scan.takePhoto}
+            </button>
+            <button
+              className="px-4 py-2 rounded-full text-sm font-medium bg-background text-foreground flex items-center gap-2"
+            >
+              <Barcode className="w-4 h-4" />
+              {t.scan.scanBarcode}
+            </button>
+            <button
+              onClick={() => { stopScanner(); onSwitchToManual?.(); }}
+              className="px-4 py-2 rounded-full text-sm font-medium text-background/70 hover:bg-background/10 transition-colors flex items-center gap-2"
+            >
+              <PenLine className="w-4 h-4" />
+              {t.scan.manualEntry}
+            </button>
+          </div>
+        </div>
 
         {/* Bottom area */}
         <div className="px-6 pb-8 pb-safe">
