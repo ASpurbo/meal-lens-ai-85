@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Send, Loader2, Bot, User, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Send, Loader2, Bot, User, Sparkles, Brain, Utensils, Target, Lightbulb, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppLayout } from "@/components/AppLayout";
@@ -19,10 +19,10 @@ interface Message {
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach`;
 
 const STARTER_PROMPTS = [
-  "What should my daily calories be?",
-  "Suggest a high-protein breakfast",
-  "How do I hit my macro goals?",
-  "Tips for meal prepping",
+  { icon: Target, text: "What should my daily calories be?", color: "from-orange-500 to-amber-500" },
+  { icon: Utensils, text: "Suggest a high-protein breakfast", color: "from-pink-500 to-rose-500" },
+  { icon: Brain, text: "How do I hit my macro goals?", color: "from-blue-500 to-cyan-500" },
+  { icon: Lightbulb, text: "Tips for meal prepping", color: "from-emerald-500 to-teal-500" },
 ];
 
 export default function Coach() {
@@ -153,96 +153,150 @@ export default function Coach() {
   return (
     <AppLayout>
       <div className="flex flex-col h-[calc(100vh-180px)]">
-        {/* Header */}
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" />
-            {t.coach.title}
-          </h1>
-          <p className="text-muted-foreground text-sm">
-            {profile?.diet_goal
-              ? `${getDietGoalLabel(profile.diet_goal)}`
-              : t.coach.subtitle}
-          </p>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto space-y-4 mb-4">
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full space-y-6 text-center px-4">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                <Bot className="w-8 h-8 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold mb-2">
-                  {t.coach.subtitle}
-                </h2>
-                <p className="text-muted-foreground text-sm max-w-xs">
-                  {t.coach.askAnything}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-2 w-full max-w-sm">
-                {STARTER_PROMPTS.map((prompt) => (
-                  <button
-                    key={prompt}
-                    onClick={() => sendMessage(prompt)}
-                    className="p-3 text-xs text-left rounded-xl border border-border hover:bg-accent transition-colors"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : (
-            messages.map((message, i) => (
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto mb-4">
+          <AnimatePresence mode="wait">
+            {messages.length === 0 ? (
               <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex gap-3 ${
-                  message.role === "user" ? "justify-end" : "justify-start"
-                }`}
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col h-full"
               >
-                {message.role === "assistant" && (
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-4 h-4 text-primary" />
-                  </div>
-                )}
-                <div
-                  className={`max-w-[80%] p-3 rounded-2xl text-sm whitespace-pre-wrap ${
-                    message.role === "user"
-                      ? "bg-foreground text-background rounded-br-md"
-                      : "bg-accent rounded-bl-md"
-                  }`}
-                >
-                  {message.content || (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  )}
+                {/* Hero Section */}
+                <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+                  {/* Animated Bot Avatar */}
+                  <motion.div
+                    initial={{ scale: 0.8, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", duration: 0.8 }}
+                    className="relative mb-6"
+                  >
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/20 via-primary/10 to-transparent flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg shadow-primary/25">
+                        <Sparkles className="w-8 h-8 text-primary-foreground" />
+                      </div>
+                    </div>
+                    {/* Decorative rings */}
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.1, 0.3] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="absolute inset-0 rounded-full border-2 border-primary/20"
+                    />
+                  </motion.div>
+
+                  {/* Welcome Text */}
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-center mb-8"
+                  >
+                    <h1 className="text-2xl font-bold mb-2">{t.coach.title}</h1>
+                    <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                      {profile?.diet_goal
+                        ? `Personalized for ${getDietGoalLabel(profile.diet_goal).toLowerCase()}`
+                        : t.coach.askAnything}
+                    </p>
+                  </motion.div>
+
+                  {/* Starter Prompts */}
+                  <motion.div
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="w-full max-w-sm space-y-3"
+                  >
+                    <p className="text-xs text-muted-foreground text-center mb-4">
+                      Try asking...
+                    </p>
+                    {STARTER_PROMPTS.map((prompt, index) => (
+                      <motion.button
+                        key={prompt.text}
+                        initial={{ x: -20, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: 0.5 + index * 0.1 }}
+                        onClick={() => sendMessage(prompt.text)}
+                        className="w-full flex items-center gap-3 p-4 rounded-2xl bg-accent/50 hover:bg-accent border border-border/50 transition-all group"
+                      >
+                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${prompt.color} flex items-center justify-center flex-shrink-0`}>
+                          <prompt.icon className="w-5 h-5 text-white" />
+                        </div>
+                        <span className="text-sm text-left flex-1">{prompt.text}</span>
+                        <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </motion.button>
+                    ))}
+                  </motion.div>
                 </div>
-                {message.role === "user" && (
-                  <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center flex-shrink-0">
-                    <User className="w-4 h-4 text-background" />
-                  </div>
-                )}
               </motion.div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
+            ) : (
+              <motion.div
+                key="messages"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-4 py-4"
+              >
+                {messages.map((message, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`flex gap-3 ${
+                      message.role === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    {message.role === "assistant" && (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center flex-shrink-0 shadow-sm">
+                        <Sparkles className="w-4 h-4 text-primary-foreground" />
+                      </div>
+                    )}
+                    <div
+                      className={`max-w-[80%] p-4 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed ${
+                        message.role === "user"
+                          ? "bg-foreground text-background rounded-br-md"
+                          : "bg-accent border border-border/50 rounded-bl-md"
+                      }`}
+                    >
+                      {message.content || (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span className="text-muted-foreground">Thinking...</span>
+                        </div>
+                      )}
+                    </div>
+                    {message.role === "user" && (
+                      <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center flex-shrink-0">
+                        <User className="w-4 h-4 text-background" />
+                      </div>
+                    )}
+                  </motion.div>
+                ))}
+                <div ref={messagesEndRef} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* Input */}
-        <form onSubmit={handleSubmit} className="flex gap-2">
+        {/* Input Area */}
+        <motion.form 
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          onSubmit={handleSubmit} 
+          className="flex gap-2 bg-background pt-2 border-t border-border/50"
+        >
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder={t.coach.placeholder}
-            className="flex-1 h-12 rounded-xl"
+            className="flex-1 h-12 rounded-xl bg-accent/50 border-border/50 focus:border-primary/50"
             disabled={isLoading}
           />
           <Button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="h-12 w-12 rounded-xl"
+            className="h-12 w-12 rounded-xl bg-foreground hover:bg-foreground/90"
           >
             {isLoading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
@@ -250,7 +304,7 @@ export default function Coach() {
               <Send className="w-5 h-5" />
             )}
           </Button>
-        </form>
+        </motion.form>
       </div>
     </AppLayout>
   );
