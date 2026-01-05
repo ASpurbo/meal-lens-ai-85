@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Camera, Barcode, PenLine, Image as ImageIcon } from "lucide-react";
+import { X, Camera, Barcode, Image as ImageIcon } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { CameraPreview, CameraPreviewOptions } from "@capacitor-community/camera-preview";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
 
@@ -25,76 +26,76 @@ export function CameraInterface({
 }: CameraInterfaceProps) {
   const [mode, setMode] = useState<Mode>("photo");
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
+  const [cameraStarted, setCameraStarted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { t } = useTranslation();
 
-  // Request camera permission and start stream when opened
+  // Start camera when opened
   useEffect(() => {
     if (open) {
-      requestCameraPermission();
+      startCamera();
     }
     return () => {
-      stopCameraStream();
+      stopCamera();
     };
   }, [open]);
 
-  const requestCameraPermission = async () => {
+  const startCamera = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
-        // Request permission on native platforms
-        const permission = await CapCamera.requestPermissions();
-        if (permission.camera === 'granted') {
-          setPermissionGranted(true);
-          // Start native camera stream using getUserMedia (works on Android WebView)
-          await startCameraStream();
-        } else {
-          setPermissionGranted(false);
-          toast.error("Camera permission is required to scan food");
-        }
+        // Use native camera-preview plugin for live viewfinder
+        const cameraPreviewOptions: CameraPreviewOptions = {
+          position: "rear",
+          parent: "cameraPreviewContainer",
+          toBack: true,
+          width: window.innerWidth,
+          height: window.innerHeight,
+          disableAudio: true,
+        };
+
+        await CameraPreview.start(cameraPreviewOptions);
+        setCameraStarted(true);
+        setPermissionGranted(true);
       } else {
-        // Web - just start the stream (will prompt for permission)
-        await startCameraStream();
+        // Web - use getUserMedia
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+        setCameraStarted(true);
         setPermissionGranted(true);
       }
     } catch (error) {
-      console.error("Permission error:", error);
+      console.error("Camera start error:", error);
       setPermissionGranted(false);
       toast.error("Could not access camera");
     }
   };
 
-  const startCameraStream = async () => {
-    try {
-      // Use getUserMedia for both web and native (works in Android WebView)
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-    } catch (error) {
-      console.error("Camera stream error:", error);
-      // On native, fall back to native camera capture
-      if (Capacitor.isNativePlatform()) {
-        console.log("Falling back to native camera capture");
+  const stopCamera = async () => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await CameraPreview.stop();
+      } catch (e) {
+        // Camera may not be running
       }
     }
-  };
-
-  const stopCameraStream = () => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+    setCameraStarted(false);
   };
 
-  const captureFromStream = () => {
-    if (!videoRef.current || !streamRef.current) return;
+  const captureFromWebStream = () => {
+    if (!videoRef.current || !streamRef.current) return null;
     
     const canvas = document.createElement("canvas");
     canvas.width = videoRef.current.videoWidth;
@@ -102,53 +103,47 @@ export function CameraInterface({
     const ctx = canvas.getContext("2d");
     if (ctx) {
       ctx.drawImage(videoRef.current, 0, 0);
-      const base64 = canvas.toDataURL("image/jpeg", 0.85);
-      stopCameraStream();
-      onClose();
-      onImageCapture(base64);
+      return canvas.toDataURL("image/jpeg", 0.85);
     }
+    return null;
   };
 
   const handleCapture = async () => {
     if (mode === "barcode") {
-      stopCameraStream();
+      await stopCamera();
       onClose();
       onBarcodeSelect();
       return;
     }
     
     if (mode === "manual") {
-      stopCameraStream();
+      await stopCamera();
       onClose();
       onManualSelect();
       return;
     }
 
-    // Photo mode - try to capture from stream first (works on both web and native)
-    if (streamRef.current && videoRef.current && videoRef.current.videoWidth > 0) {
-      captureFromStream();
-      return;
-    }
-
-    // Fallback to native camera API if stream not available
-    if (Capacitor.isNativePlatform()) {
+    // Photo mode
+    if (Capacitor.isNativePlatform() && cameraStarted) {
       try {
-        const photo = await CapCamera.getPhoto({
-          quality: 85,
-          allowEditing: false,
-          resultType: CameraResultType.Base64,
-          source: CameraSource.Camera,
-          saveToGallery: false,
-        });
-
-        if (photo.base64String) {
-          stopCameraStream();
+        // Capture from native camera preview
+        const result = await CameraPreview.capture({ quality: 85 });
+        if (result.value) {
+          await stopCamera();
           onClose();
-          onImageCapture(`data:image/jpeg;base64,${photo.base64String}`);
+          onImageCapture(`data:image/jpeg;base64,${result.value}`);
         }
       } catch (error) {
-        console.error("Camera error:", error);
+        console.error("Capture error:", error);
         toast.error("Could not capture photo");
+      }
+    } else if (streamRef.current && videoRef.current && videoRef.current.videoWidth > 0) {
+      // Web capture
+      const base64 = captureFromWebStream();
+      if (base64) {
+        await stopCamera();
+        onClose();
+        onImageCapture(base64);
       }
     }
   };
@@ -165,7 +160,7 @@ export function CameraInterface({
         });
 
         if (photo.base64String) {
-          stopCameraStream();
+          await stopCamera();
           onClose();
           onImageCapture(`data:image/jpeg;base64,${photo.base64String}`);
         }
@@ -180,13 +175,13 @@ export function CameraInterface({
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
         const base64 = reader.result as string;
-        stopCameraStream();
+        await stopCamera();
         onClose();
         onImageCapture(base64);
       };
@@ -194,21 +189,21 @@ export function CameraInterface({
     }
   };
 
-  const handleModeChange = (newMode: Mode) => {
+  const handleModeChange = async (newMode: Mode) => {
     setMode(newMode);
     if (newMode === "barcode") {
-      stopCameraStream();
+      await stopCamera();
       onClose();
       onBarcodeSelect();
     } else if (newMode === "manual") {
-      stopCameraStream();
+      await stopCamera();
       onClose();
       onManualSelect();
     }
   };
 
-  const handleClose = () => {
-    stopCameraStream();
+  const handleClose = async () => {
+    await stopCamera();
     onClose();
   };
 
@@ -220,36 +215,14 @@ export function CameraInterface({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-gradient-to-b from-[hsl(350,30%,12%)] to-[hsl(350,40%,8%)] flex flex-col"
+        className="fixed inset-0 z-[100] flex flex-col"
+        style={{ backgroundColor: Capacitor.isNativePlatform() ? "transparent" : "hsl(350, 30%, 12%)" }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 py-4 pt-safe">
-          <div className="w-10" />
-          
-          <div className="flex items-center gap-2">
-            <span className="text-background text-lg font-semibold">NutriMind</span>
-          </div>
-          
-          <button 
-            onClick={handleClose}
-            className="w-10 h-10 rounded-full flex items-center justify-center"
-          >
-            <X className="w-6 h-6 text-background" />
-          </button>
-        </div>
+        {/* Native camera preview container - renders behind WebView */}
+        <div id="cameraPreviewContainer" className="absolute inset-0" />
 
-        {/* Instruction text */}
-        <div className="px-4 py-2 flex items-center justify-center gap-2 text-background/70 text-sm overflow-x-auto whitespace-nowrap">
-          <Camera className="w-4 h-4 flex-shrink-0" />
-          <span>{t.scan.takePhoto}</span>
-          <span className="text-background/40">|</span>
-          <Barcode className="w-4 h-4 flex-shrink-0" />
-          <span>{t.scan.scanBarcode}</span>
-        </div>
-
-        {/* Camera viewfinder area */}
-        <div className="flex-1 flex items-center justify-center px-6 relative overflow-hidden">
-          {/* Live camera preview - works on both web and native */}
+        {/* Web video preview */}
+        {!Capacitor.isNativePlatform() && (
           <video
             ref={videoRef}
             autoPlay
@@ -257,47 +230,75 @@ export function CameraInterface({
             muted
             className="absolute inset-0 w-full h-full object-cover"
           />
-          
-          {/* Permission denied message */}
-          {permissionGranted === false && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
-              <div className="text-center p-6">
-                <Camera className="w-12 h-12 text-white/50 mx-auto mb-4" />
-                <p className="text-white/80 mb-2">Camera access required</p>
-                <p className="text-white/50 text-sm">Please grant camera permission in your device settings</p>
-              </div>
+        )}
+
+        {/* Permission denied message */}
+        {permissionGranted === false && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
+            <div className="text-center p-6">
+              <Camera className="w-12 h-12 text-white/50 mx-auto mb-4" />
+              <p className="text-white/80 mb-2">Camera access required</p>
+              <p className="text-white/50 text-sm">Please grant camera permission in your device settings</p>
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none z-10" />
+
+        {/* Header */}
+        <div className="relative z-20 flex items-center justify-between px-4 py-4 pt-safe">
+          <div className="w-10" />
           
-          {/* Overlay gradient */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[hsl(350,30%,12%)]/60 via-transparent to-[hsl(350,40%,8%)]/80 pointer-events-none" />
+          <div className="flex items-center gap-2">
+            <span className="text-white text-lg font-semibold drop-shadow-lg">NutriMind</span>
+          </div>
           
-          <div className="relative w-full max-w-sm aspect-[3/4] z-10">
+          <button 
+            onClick={handleClose}
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+          >
+            <X className="w-6 h-6 text-white drop-shadow-lg" />
+          </button>
+        </div>
+
+        {/* Instruction text */}
+        <div className="relative z-20 px-4 py-2 flex items-center justify-center gap-2 text-white/80 text-sm overflow-x-auto whitespace-nowrap">
+          <Camera className="w-4 h-4 flex-shrink-0" />
+          <span>{t.scan.takePhoto}</span>
+          <span className="text-white/40">|</span>
+          <Barcode className="w-4 h-4 flex-shrink-0" />
+          <span>{t.scan.scanBarcode}</span>
+        </div>
+
+        {/* Camera viewfinder area */}
+        <div className="flex-1 flex items-center justify-center px-6 relative z-20">
+          <div className="relative w-full max-w-sm aspect-[3/4]">
             {/* Corner brackets */}
-            <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-background/80 rounded-tl-lg" />
-            <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-background/80 rounded-tr-lg" />
-            <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-background/80 rounded-bl-lg" />
-            <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-background/80 rounded-br-lg" />
+            <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-white/80 rounded-tl-lg" />
+            <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-white/80 rounded-tr-lg" />
+            <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-white/80 rounded-bl-lg" />
+            <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-white/80 rounded-br-lg" />
           </div>
         </div>
 
         {/* Capture controls */}
-        <div className="px-6 pb-4 relative z-20">
+        <div className="relative z-20 px-6 pb-4">
           <div className="flex items-center justify-center gap-8">
             {/* Gallery button */}
             <button
               onClick={handleGallerySelect}
-              className="w-12 h-12 rounded-full bg-foreground flex items-center justify-center"
+              className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
             >
-              <ImageIcon className="w-5 h-5 text-background" />
+              <ImageIcon className="w-5 h-5 text-white" />
             </button>
 
             {/* Capture button */}
             <button
               onClick={handleCapture}
-              className="w-20 h-20 rounded-full border-4 border-background flex items-center justify-center"
+              className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center"
             >
-              <div className="w-16 h-16 rounded-full bg-background" />
+              <div className="w-16 h-16 rounded-full bg-white" />
             </button>
 
             {/* Spacer for alignment */}
@@ -305,8 +306,8 @@ export function CameraInterface({
           </div>
         </div>
 
-        {/* Mode selector tabs - fixed order */}
-        <div className="px-6 pb-8 pb-safe relative z-20">
+        {/* Mode selector tabs */}
+        <div className="relative z-20 px-6 pb-8 pb-safe">
           <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-full p-1">
             <button
               onClick={() => handleModeChange("manual")}
