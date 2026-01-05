@@ -54,14 +54,14 @@ export default function ScanPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleImageSelect = async (base64: string) => {
+  const handleImageSelect = async (base64: string): Promise<NutritionData | null> => {
     if (isOffline) {
       toast({
         title: "You're offline",
         description: "Photo analysis requires an internet connection",
         variant: "destructive",
       });
-      return;
+      return null;
     }
 
     setIsAnalyzing(true);
@@ -76,14 +76,13 @@ export default function ScanPage() {
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
 
-      setPendingResults(data);
-      setShowConfirmation(true);
-
       toast({
         title: t.scan.mealAnalyzed,
         description: `Found ${data.foods.length} food item(s)`,
         duration: 3000,
       });
+
+      return data as NutritionData;
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
@@ -91,6 +90,7 @@ export default function ScanPage() {
         description: error instanceof Error ? error.message : t.common.error,
         variant: "destructive",
       });
+      return null;
     } finally {
       setIsAnalyzing(false);
     }
@@ -160,17 +160,18 @@ export default function ScanPage() {
     }
   };
 
-  const handleConfirmAdd = async () => {
-    if (!pendingResults) return;
+  const handleConfirmAdd = async (data?: NutritionData) => {
+    const mealData = data || pendingResults;
+    if (!mealData) return;
 
     const saved = await saveMeal({
-      foods: pendingResults.foods,
-      calories: pendingResults.calories,
-      protein: pendingResults.protein,
-      carbs: pendingResults.carbs,
-      fat: pendingResults.fat,
-      confidence: pendingResults.confidence,
-      notes: pendingResults.notes,
+      foods: mealData.foods,
+      calories: mealData.calories,
+      protein: mealData.protein,
+      carbs: mealData.carbs,
+      fat: mealData.fat,
+      confidence: mealData.confidence,
+      notes: mealData.notes,
     });
 
     if (saved) {
@@ -183,13 +184,14 @@ export default function ScanPage() {
       });
     }
 
-    setResults(pendingResults);
+    setResults(mealData);
     setPendingResults(null);
     setShowConfirmation(false);
   };
 
-  const handleDeclineAdd = () => {
-    setResults(pendingResults);
+  const handleDeclineAdd = (data?: NutritionData) => {
+    const mealData = data || pendingResults;
+    setResults(mealData || null);
     setPendingResults(null);
     setShowConfirmation(false);
   };
@@ -249,6 +251,8 @@ export default function ScanPage() {
         onImageCapture={handleImageSelect}
         onBarcodeSelect={() => setShowBarcodeScanner(true)}
         onManualSelect={() => setShowManualEntry(true)}
+        onConfirmMeal={handleConfirmAdd}
+        onDeclineMeal={handleDeclineAdd}
       />
 
       <div className="space-y-4 pb-24">
