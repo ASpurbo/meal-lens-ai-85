@@ -65,58 +65,98 @@ export function NutritionCharts({ meals }: NutritionChartsProps) {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.8, y: 20 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring" as const,
+        stiffness: 300,
+        damping: 20,
+      },
+    },
+  };
+
+  const chartVariants = {
+    hidden: { opacity: 0, scale: 0.9, y: 30 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      y: 0,
+      transition: {
+        type: "spring" as const,
+        stiffness: 200,
+        damping: 20,
+      },
+    },
+  };
+
   return (
     <div className="space-y-6">
       {/* Weekly Summary Cards */}
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
         className="grid grid-cols-2 md:grid-cols-4 gap-4"
       >
-        <div className="bg-card rounded-2xl p-4 border border-border shadow-soft">
+        <motion.div variants={cardVariants} className="bg-card rounded-2xl p-4 border border-border shadow-soft">
           <div className="flex items-center gap-2 mb-2">
             <Flame className="w-5 h-5 text-primary" />
             <span className="text-sm text-muted-foreground">Calories</span>
           </div>
           <p className="text-2xl font-bold text-foreground">{weeklyTotals.calories.toLocaleString()}</p>
           <p className="text-xs text-muted-foreground">This week</p>
-        </div>
+        </motion.div>
         
-        <div className="bg-card rounded-2xl p-4 border border-border shadow-soft">
+        <motion.div variants={cardVariants} className="bg-card rounded-2xl p-4 border border-border shadow-soft">
           <div className="flex items-center gap-2 mb-2">
             <Beef className="w-5 h-5 text-protein" />
             <span className="text-sm text-muted-foreground">Protein</span>
           </div>
           <p className="text-2xl font-bold text-protein">{weeklyTotals.protein}g</p>
           <p className="text-xs text-muted-foreground">This week</p>
-        </div>
+        </motion.div>
         
-        <div className="bg-card rounded-2xl p-4 border border-border shadow-soft">
+        <motion.div variants={cardVariants} className="bg-card rounded-2xl p-4 border border-border shadow-soft">
           <div className="flex items-center gap-2 mb-2">
             <Wheat className="w-5 h-5 text-carbs" />
             <span className="text-sm text-muted-foreground">Carbs</span>
           </div>
           <p className="text-2xl font-bold text-carbs">{weeklyTotals.carbs}g</p>
           <p className="text-xs text-muted-foreground">This week</p>
-        </div>
+        </motion.div>
         
-        <div className="bg-card rounded-2xl p-4 border border-border shadow-soft">
+        <motion.div variants={cardVariants} className="bg-card rounded-2xl p-4 border border-border shadow-soft">
           <div className="flex items-center gap-2 mb-2">
             <Droplet className="w-5 h-5 text-fat" />
             <span className="text-sm text-muted-foreground">Fat</span>
           </div>
           <p className="text-2xl font-bold text-fat">{weeklyTotals.fat}g</p>
           <p className="text-xs text-muted-foreground">This week</p>
-        </div>
+        </motion.div>
       </motion.div>
 
       {/* Charts Row */}
       <div className="grid md:grid-cols-2 gap-6">
         {/* Daily Calories Bar Chart */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          variants={chartVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.3 }}
           className="bg-card rounded-2xl p-6 border border-border shadow-soft"
         >
           <h3 className="text-lg font-semibold text-foreground mb-4">Daily Calories</h3>
@@ -160,9 +200,10 @@ export function NutritionCharts({ meals }: NutritionChartsProps) {
 
         {/* Macro Breakdown Pie Chart */}
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          variants={chartVariants}
+          initial="hidden"
+          animate="visible"
+          transition={{ delay: 0.45 }}
           className="bg-card rounded-2xl p-6 border border-border shadow-soft"
         >
           <h3 className="text-lg font-semibold text-foreground mb-4">Macro Breakdown</h3>
