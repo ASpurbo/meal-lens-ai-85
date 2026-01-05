@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Loader2, Bot, User, Sparkles, Brain, Utensils, Target, Lightbulb, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export default function Coach() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const isOffline = useOfflineStatus();
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -59,6 +61,15 @@ export default function Coach() {
 
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || isLoading) return;
+
+    if (isOffline) {
+      toast({
+        title: "You're offline",
+        description: "AI Coach requires an internet connection",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const userMessage: Message = { role: "user", content: messageText.trim() };
     setMessages((prev) => [...prev, userMessage]);

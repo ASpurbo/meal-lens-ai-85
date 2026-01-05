@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X } from "lucide-react";
+import { Plus, Camera } from "lucide-react";
 import { NutritionResults } from "@/components/NutritionResults";
 import { DailyProgress } from "@/components/DailyProgress";
 import { SmartRecommendations } from "@/components/SmartRecommendations";
@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
+import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { supabase } from "@/integrations/supabase/client";
 
 interface NutritionData {
@@ -43,6 +44,7 @@ export default function ScanPage() {
   const { showTour, completeTour } = useTour();
   const { toast } = useToast();
   const { t } = useTranslation();
+  const isOffline = useOfflineStatus();
 
   // Show FAB after a delay (simulating splash screen completion)
   useEffect(() => {
@@ -53,6 +55,15 @@ export default function ScanPage() {
   }, []);
 
   const handleImageSelect = async (base64: string) => {
+    if (isOffline) {
+      toast({
+        title: "You're offline",
+        description: "Photo analysis requires an internet connection",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsAnalyzing(true);
     setResults(null);
     setPendingResults(null);
@@ -274,18 +285,37 @@ export default function ScanPage() {
         )}
       </div>
 
-      {/* Floating Action Button - only show after splash */}
+      {/* Floating Action Button with subtle animation */}
       <AnimatePresence>
         {showFab && (
           <motion.button
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
+            initial={{ opacity: 0, scale: 0.5, y: 20 }}
+            animate={{ 
+              opacity: 1, 
+              scale: 1, 
+              y: 0,
+            }}
+            exit={{ opacity: 0, scale: 0.5, y: 20 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={() => setShowCameraInterface(true)}
-            className="fixed bottom-24 right-6 z-50 w-14 h-14 rounded-full bg-foreground text-background flex items-center justify-center shadow-xl border-2 border-border"
+            className="fixed bottom-24 right-6 z-50 w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl group"
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Plus className="w-6 h-6" />
+            {/* Pulse ring animation */}
+            <motion.span
+              className="absolute inset-0 rounded-full bg-primary/30"
+              animate={{
+                scale: [1, 1.3, 1],
+                opacity: [0.6, 0, 0.6],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+            <Camera className="w-7 h-7 relative z-10" />
           </motion.button>
         )}
       </AnimatePresence>
