@@ -1,21 +1,34 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Camera, Barcode, Image as ImageIcon } from "lucide-react";
+import { X, Camera, Barcode, Image as ImageIcon, Check, Loader2, RotateCcw } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { CameraPreview, CameraPreviewOptions } from "@capacitor-community/camera-preview";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
 
+interface NutritionData {
+  foods: string[];
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  confidence: "low" | "medium" | "high";
+  notes: string;
+}
+
 interface CameraInterfaceProps {
   open: boolean;
   onClose: () => void;
-  onImageCapture: (base64: string) => void;
+  onImageCapture: (base64: string) => Promise<NutritionData | null>;
   onBarcodeSelect: () => void;
   onManualSelect: () => void;
+  onConfirmMeal: (data: NutritionData) => void;
+  onDeclineMeal: (data: NutritionData) => void;
 }
 
 type Mode = "photo" | "barcode" | "manual";
+type ViewState = "camera" | "analyzing" | "results";
 
 export function CameraInterface({
   open,
@@ -23,18 +36,26 @@ export function CameraInterface({
   onImageCapture,
   onBarcodeSelect,
   onManualSelect,
+  onConfirmMeal,
+  onDeclineMeal,
 }: CameraInterfaceProps) {
   const [mode, setMode] = useState<Mode>("photo");
+  const [viewState, setViewState] = useState<ViewState>("camera");
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
   const [cameraStarted, setCameraStarted] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [analysisResults, setAnalysisResults] = useState<NutritionData | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { t } = useTranslation();
 
-  // Start camera when opened
+  // Reset state when opened
   useEffect(() => {
     if (open) {
+      setViewState("camera");
+      setCapturedImage(null);
+      setAnalysisResults(null);
       startCamera();
     }
 
@@ -130,6 +151,30 @@ export function CameraInterface({
     return null;
   };
 
+  const processImage = async (base64: string) => {
+    setCapturedImage(base64);
+    setViewState("analyzing");
+    await stopCamera();
+
+    try {
+      const results = await onImageCapture(base64);
+      if (results) {
+        setAnalysisResults(results);
+        setViewState("results");
+      } else {
+        // Analysis failed, go back to camera
+        setViewState("camera");
+        setCapturedImage(null);
+        await startCamera();
+      }
+    } catch (error) {
+      console.error("Analysis error:", error);
+      setViewState("camera");
+      setCapturedImage(null);
+      await startCamera();
+    }
+  };
+
   const handleCapture = async () => {
     if (mode === "barcode") {
       await stopCamera();
@@ -148,24 +193,18 @@ export function CameraInterface({
     // Photo mode
     if (Capacitor.isNativePlatform() && cameraStarted) {
       try {
-        // Capture from native camera preview
         const result = await CameraPreview.capture({ quality: 85 });
         if (result.value) {
-          await stopCamera();
-          onClose();
-          onImageCapture(`data:image/jpeg;base64,${result.value}`);
+          await processImage(`data:image/jpeg;base64,${result.value}`);
         }
       } catch (error) {
         console.error("Capture error:", error);
         toast.error("Could not capture photo");
       }
     } else if (streamRef.current && videoRef.current && videoRef.current.videoWidth > 0) {
-      // Web capture
       const base64 = captureFromWebStream();
       if (base64) {
-        await stopCamera();
-        onClose();
-        onImageCapture(base64);
+        await processImage(base64);
       }
     }
   };
@@ -182,9 +221,7 @@ export function CameraInterface({
         });
 
         if (photo.base64String) {
-          await stopCamera();
-          onClose();
-          onImageCapture(`data:image/jpeg;base64,${photo.base64String}`);
+          await processImage(`data:image/jpeg;base64,${photo.base64String}`);
         }
       } catch (error) {
         console.error("Gallery error:", error);
@@ -203,9 +240,7 @@ export function CameraInterface({
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64 = reader.result as string;
-        await stopCamera();
-        onClose();
-        onImageCapture(base64);
+        await processImage(base64);
       };
       reader.readAsDataURL(file);
     }
@@ -229,6 +264,27 @@ export function CameraInterface({
     onClose();
   };
 
+  const handleRetake = async () => {
+    setCapturedImage(null);
+    setAnalysisResults(null);
+    setViewState("camera");
+    await startCamera();
+  };
+
+  const handleConfirm = () => {
+    if (analysisResults) {
+      onConfirmMeal(analysisResults);
+      handleClose();
+    }
+  };
+
+  const handleDecline = () => {
+    if (analysisResults) {
+      onDeclineMeal(analysisResults);
+      handleClose();
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -239,14 +295,18 @@ export function CameraInterface({
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[100] flex flex-col"
         style={{
-          backgroundColor: Capacitor.isNativePlatform() ? "transparent" : "hsl(var(--background))",
+          backgroundColor: viewState === "camera" && Capacitor.isNativePlatform() 
+            ? "transparent" 
+            : "hsl(var(--background))",
         }}
       >
         {/* Native camera preview container - renders behind WebView */}
-        <div id="cameraPreviewContainer" className="absolute inset-0" />
+        {viewState === "camera" && (
+          <div id="cameraPreviewContainer" className="absolute inset-0" />
+        )}
 
         {/* Web video preview */}
-        {!Capacitor.isNativePlatform() && (
+        {viewState === "camera" && !Capacitor.isNativePlatform() && (
           <video
             ref={videoRef}
             autoPlay
@@ -256,8 +316,20 @@ export function CameraInterface({
           />
         )}
 
+        {/* Captured image preview (analyzing/results states) */}
+        {(viewState === "analyzing" || viewState === "results") && capturedImage && (
+          <div className="absolute inset-0">
+            <img 
+              src={capturedImage} 
+              alt="Captured" 
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-black/60" />
+          </div>
+        )}
+
         {/* Permission denied message */}
-        {permissionGranted === false && (
+        {viewState === "camera" && permissionGranted === false && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
             <div className="text-center p-6">
               <Camera className="w-12 h-12 text-white/50 mx-auto mb-4" />
@@ -267,8 +339,10 @@ export function CameraInterface({
           </div>
         )}
 
-        {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none z-10" />
+        {/* Overlay gradient (camera mode only) */}
+        {viewState === "camera" && (
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60 pointer-events-none z-10" />
+        )}
 
         {/* Header */}
         <div className="relative z-20 flex items-center justify-between px-4 py-4 pt-safe">
@@ -286,85 +360,192 @@ export function CameraInterface({
           </button>
         </div>
 
-        {/* Instruction text */}
-        <div className="relative z-20 px-4 py-2 flex items-center justify-center gap-2 text-white/80 text-sm overflow-x-auto whitespace-nowrap">
-          <Camera className="w-4 h-4 flex-shrink-0" />
-          <span>{t.scan.takePhoto}</span>
-          <span className="text-white/40">|</span>
-          <Barcode className="w-4 h-4 flex-shrink-0" />
-          <span>{t.scan.scanBarcode}</span>
-        </div>
+        {/* CAMERA VIEW */}
+        {viewState === "camera" && (
+          <>
+            {/* Instruction text */}
+            <div className="relative z-20 px-4 py-2 flex items-center justify-center gap-2 text-white/80 text-sm overflow-x-auto whitespace-nowrap">
+              <Camera className="w-4 h-4 flex-shrink-0" />
+              <span>{t.scan.takePhoto}</span>
+              <span className="text-white/40">|</span>
+              <Barcode className="w-4 h-4 flex-shrink-0" />
+              <span>{t.scan.scanBarcode}</span>
+            </div>
 
-        {/* Camera viewfinder area */}
-        <div className="flex-1 flex items-center justify-center px-6 relative z-20">
-          <div className="relative w-full max-w-sm aspect-[3/4]">
-            {/* Corner brackets */}
-            <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-white/80 rounded-tl-lg" />
-            <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-white/80 rounded-tr-lg" />
-            <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-white/80 rounded-bl-lg" />
-            <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-white/80 rounded-br-lg" />
+            {/* Camera viewfinder area */}
+            <div className="flex-1 flex items-center justify-center px-6 relative z-20">
+              <div className="relative w-full max-w-sm aspect-[3/4]">
+                {/* Corner brackets */}
+                <div className="absolute top-0 left-0 w-12 h-12 border-l-4 border-t-4 border-white/80 rounded-tl-lg" />
+                <div className="absolute top-0 right-0 w-12 h-12 border-r-4 border-t-4 border-white/80 rounded-tr-lg" />
+                <div className="absolute bottom-0 left-0 w-12 h-12 border-l-4 border-b-4 border-white/80 rounded-bl-lg" />
+                <div className="absolute bottom-0 right-0 w-12 h-12 border-r-4 border-b-4 border-white/80 rounded-br-lg" />
+              </div>
+            </div>
+
+            {/* Capture controls */}
+            <div className="relative z-20 px-6 pb-4">
+              <div className="flex items-center justify-center gap-8">
+                {/* Gallery button */}
+                <button
+                  onClick={handleGallerySelect}
+                  className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
+                >
+                  <ImageIcon className="w-5 h-5 text-white" />
+                </button>
+
+                {/* Capture button */}
+                <button
+                  onClick={handleCapture}
+                  className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center"
+                >
+                  <div className="w-16 h-16 rounded-full bg-white" />
+                </button>
+
+                {/* Spacer for alignment */}
+                <div className="w-12 h-12" />
+              </div>
+            </div>
+
+            {/* Mode selector tabs */}
+            <div className="relative z-20 px-6 pb-8 pb-safe">
+              <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-full p-1">
+                <button
+                  onClick={() => handleModeChange("manual")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    mode === "manual"
+                      ? "bg-white text-black"
+                      : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  {t.scan.manualEntry}
+                </button>
+                <button
+                  onClick={() => setMode("photo")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    mode === "photo"
+                      ? "bg-white text-black"
+                      : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  {t.scan.takePhoto}
+                </button>
+                <button
+                  onClick={() => handleModeChange("barcode")}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    mode === "barcode"
+                      ? "bg-white text-black"
+                      : "text-white/80 hover:text-white"
+                  }`}
+                >
+                  {t.scan.scanBarcode}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ANALYZING VIEW */}
+        {viewState === "analyzing" && (
+          <div className="flex-1 flex flex-col items-center justify-center relative z-20 px-6">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-center"
+            >
+              <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-4">
+                <Loader2 className="w-10 h-10 text-white animate-spin" />
+              </div>
+              <h2 className="text-white text-xl font-semibold mb-2">Analyzing your meal...</h2>
+              <p className="text-white/70 text-sm">This may take a few seconds</p>
+            </motion.div>
           </div>
-        </div>
+        )}
 
-        {/* Capture controls */}
-        <div className="relative z-20 px-6 pb-4">
-          <div className="flex items-center justify-center gap-8">
-            {/* Gallery button */}
-            <button
-              onClick={handleGallerySelect}
-              className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
+        {/* RESULTS VIEW */}
+        {viewState === "results" && analysisResults && (
+          <div className="flex-1 flex flex-col relative z-20 px-4 overflow-y-auto">
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="flex-1 flex flex-col justify-end pb-safe"
             >
-              <ImageIcon className="w-5 h-5 text-white" />
-            </button>
+              {/* Results card */}
+              <div className="bg-background/95 backdrop-blur-xl rounded-t-3xl p-6 space-y-4">
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold text-foreground">Meal Detected</h2>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Found {analysisResults.foods.length} food item(s)
+                  </p>
+                </div>
 
-            {/* Capture button */}
-            <button
-              onClick={handleCapture}
-              className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center"
-            >
-              <div className="w-16 h-16 rounded-full bg-white" />
-            </button>
+                {/* Foods list */}
+                <div className="bg-muted/50 rounded-xl p-4">
+                  <h4 className="text-sm font-medium mb-2 text-foreground">Detected Foods:</h4>
+                  <ul className="space-y-1">
+                    {analysisResults.foods.map((food, i) => (
+                      <motion.li
+                        key={i}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="text-sm text-muted-foreground flex items-center gap-2"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        {food}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </div>
 
-            {/* Spacer for alignment */}
-            <div className="w-12 h-12" />
+                {/* Nutrition overview */}
+                <div className="grid grid-cols-4 gap-2">
+                  <div className="text-center p-3 bg-calories/10 rounded-xl">
+                    <div className="text-lg font-bold text-calories">{analysisResults.calories}</div>
+                    <div className="text-xs text-muted-foreground">kcal</div>
+                  </div>
+                  <div className="text-center p-3 bg-protein/10 rounded-xl">
+                    <div className="text-lg font-bold text-protein">{analysisResults.protein}g</div>
+                    <div className="text-xs text-muted-foreground">protein</div>
+                  </div>
+                  <div className="text-center p-3 bg-carbs/10 rounded-xl">
+                    <div className="text-lg font-bold text-carbs">{analysisResults.carbs}g</div>
+                    <div className="text-xs text-muted-foreground">carbs</div>
+                  </div>
+                  <div className="text-center p-3 bg-fat/10 rounded-xl">
+                    <div className="text-lg font-bold text-fat">{analysisResults.fat}g</div>
+                    <div className="text-xs text-muted-foreground">fat</div>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={handleRetake}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full border border-border text-foreground font-medium"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Retake
+                  </button>
+                  <button
+                    onClick={handleDecline}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full border border-border text-foreground font-medium"
+                  >
+                    <X className="w-4 h-4" />
+                    Just View
+                  </button>
+                  <button
+                    onClick={handleConfirm}
+                    className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-full bg-primary text-primary-foreground font-medium"
+                  >
+                    <Check className="w-4 h-4" />
+                    Add
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           </div>
-        </div>
-
-        {/* Mode selector tabs */}
-        <div className="relative z-20 px-6 pb-8 pb-safe">
-          <div className="flex items-center justify-center gap-2 bg-white/10 backdrop-blur-sm rounded-full p-1">
-            <button
-              onClick={() => handleModeChange("manual")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                mode === "manual"
-                  ? "bg-white text-black"
-                  : "text-white/80 hover:text-white"
-              }`}
-            >
-              {t.scan.manualEntry}
-            </button>
-            <button
-              onClick={() => setMode("photo")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                mode === "photo"
-                  ? "bg-white text-black"
-                  : "text-white/80 hover:text-white"
-              }`}
-            >
-              {t.scan.takePhoto}
-            </button>
-            <button
-              onClick={() => handleModeChange("barcode")}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                mode === "barcode"
-                  ? "bg-white text-black"
-                  : "text-white/80 hover:text-white"
-              }`}
-            >
-              {t.scan.scanBarcode}
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* Hidden file input */}
         <input
