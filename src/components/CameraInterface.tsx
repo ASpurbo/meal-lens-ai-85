@@ -80,20 +80,51 @@ export function CameraInterface({
     }
   };
 
+  const isStartingRef = useRef(false);
+
   const startCamera = async () => {
+    if (isStartingRef.current) return;
+
     try {
+      isStartingRef.current = true;
+
       if (Capacitor.isNativePlatform()) {
+        // Avoid duplicate starts
+        try {
+          await CameraPreview.stop();
+        } catch {
+          // ignore
+        }
+
         setDocumentTransparent(true);
 
-        // Ensure the container is mounted before starting the preview
-        await new Promise((r) => setTimeout(r, 0));
+        // Wait for layout so we can size the preview to the container
+        await new Promise<void>((r) => requestAnimationFrame(() => r()));
+        await new Promise<void>((r) => requestAnimationFrame(() => r()));
+
+        const container = document.getElementById("cameraPreviewContainer");
+        const rect = container?.getBoundingClientRect();
+
+        const width = Math.round(rect?.width ?? window.innerWidth);
+        const height = Math.round(rect?.height ?? window.innerHeight);
+        const x = Math.round(rect?.left ?? 0);
+        const y = Math.round(rect?.top ?? 0);
+
+        // Ensure permissions are granted (some Android builds won't auto-prompt)
+        try {
+          await CapCamera.requestPermissions();
+        } catch {
+          // ignore; start() will still fail if denied
+        }
 
         const cameraPreviewOptions: CameraPreviewOptions = {
           position: "rear",
           parent: "cameraPreviewContainer",
           toBack: true,
-          width: window.screen.width,
-          height: window.screen.height,
+          x,
+          y,
+          width,
+          height,
           disableAudio: true,
         };
 
@@ -118,6 +149,8 @@ export function CameraInterface({
       console.error("Camera start error:", error);
       setPermissionGranted(false);
       toast.error("Could not access camera");
+    } finally {
+      isStartingRef.current = false;
     }
   };
 
@@ -125,15 +158,17 @@ export function CameraInterface({
     if (Capacitor.isNativePlatform()) {
       try {
         await CameraPreview.stop();
-      } catch (e) {
-        // Camera may not be running
+      } catch {
+        // ignore
       }
       setDocumentTransparent(false);
     }
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
+
     setCameraStarted(false);
   };
 
