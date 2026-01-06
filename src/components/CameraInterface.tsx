@@ -2,11 +2,11 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Camera, Barcode, Image as ImageIcon, Check, Loader2, RotateCcw } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
-import { Camera as CapCamera, CameraResultType, CameraSource } from "@capacitor/camera";
+import { Camera as CapCamera, CameraResultType, CameraSource, CameraPermissionState } from "@capacitor/camera";
 import { CameraPreview, CameraPreviewOptions } from "@capacitor-community/camera-preview";
 import { useTranslation } from "@/hooks/useTranslation";
 import { toast } from "sonner";
-
+import { CameraPermissionScreen } from "./CameraPermissionScreen";
 interface NutritionData {
   foods: string[];
   calories: number;
@@ -42,6 +42,8 @@ export function CameraInterface({
   const [mode, setMode] = useState<Mode>("photo");
   const [viewState, setViewState] = useState<ViewState>("camera");
   const [permissionGranted, setPermissionGranted] = useState<boolean | null>(null);
+  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [showPermissionScreen, setShowPermissionScreen] = useState(false);
   const [cameraStarted, setCameraStarted] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [analysisResults, setAnalysisResults] = useState<NutritionData | null>(null);
@@ -50,13 +52,51 @@ export function CameraInterface({
   const streamRef = useRef<MediaStream | null>(null);
   const { t } = useTranslation();
 
+  // Check permission status on open
+  const checkPermission = async (): Promise<"granted" | "denied" | "prompt"> => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const status = await CapCamera.checkPermissions();
+        if (status.camera === "granted") return "granted";
+        if (status.camera === "denied") return "denied";
+        return "prompt";
+      } catch {
+        return "prompt";
+      }
+    } else {
+      // Web: check using Permissions API
+      try {
+        const result = await navigator.permissions.query({ name: "camera" as PermissionName });
+        if (result.state === "granted") return "granted";
+        if (result.state === "denied") return "denied";
+        return "prompt";
+      } catch {
+        return "prompt";
+      }
+    }
+  };
+
   // Reset state when opened
   useEffect(() => {
     if (open) {
       setViewState("camera");
       setCapturedImage(null);
       setAnalysisResults(null);
-      startCamera();
+      setShowPermissionScreen(false);
+      setPermissionDenied(false);
+
+      // Check permission first
+      checkPermission().then((status) => {
+        if (status === "granted") {
+          startCamera();
+        } else if (status === "denied") {
+          setPermissionDenied(true);
+          setShowPermissionScreen(true);
+        } else {
+          // Need to prompt
+          setShowPermissionScreen(true);
+        }
+      });
     }
 
     return () => {
@@ -320,6 +360,34 @@ export function CameraInterface({
     }
   };
 
+  const handleRequestPermission = async () => {
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const result = await CapCamera.requestPermissions();
+        if (result.camera === "granted") {
+          setShowPermissionScreen(false);
+          setPermissionDenied(false);
+          await startCamera();
+        } else {
+          setPermissionDenied(true);
+        }
+      } else {
+        // Web: just try to start camera which will trigger the prompt
+        setShowPermissionScreen(false);
+        await startCamera();
+      }
+    } catch (error) {
+      console.error("Permission request error:", error);
+      setPermissionDenied(true);
+    }
+  };
+
+  const handleOpenSettings = () => {
+    // On native, we can't programmatically open settings, but we can inform the user
+    toast.info("Please open your device Settings app and enable camera permission for NutriMind");
+    handleClose();
+  };
+
   if (!open) return null;
 
   return (
@@ -363,15 +431,14 @@ export function CameraInterface({
           </div>
         )}
 
-        {/* Permission denied message */}
-        {viewState === "camera" && permissionGranted === false && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20">
-            <div className="text-center p-6">
-              <Camera className="w-12 h-12 text-white/50 mx-auto mb-4" />
-              <p className="text-white/80 mb-2">Camera access required</p>
-              <p className="text-white/50 text-sm">Please grant camera permission in your device settings</p>
-            </div>
-          </div>
+        {/* Camera Permission Screen */}
+        {showPermissionScreen && (
+          <CameraPermissionScreen
+            onRequestPermission={handleRequestPermission}
+            onOpenSettings={handleOpenSettings}
+            onClose={handleClose}
+            permissionDenied={permissionDenied}
+          />
         )}
 
         {/* Overlay gradient (camera mode only) */}
