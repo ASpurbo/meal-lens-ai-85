@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backendClient";
 import { useAuth } from "@/hooks/useAuth";
 import { getTranslations, TranslationKeys } from "@/lib/translations";
 

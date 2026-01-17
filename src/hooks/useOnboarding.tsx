@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backendClient";
 import { useAuth } from "./useAuth";
 
 const CACHE_KEY = "meallens_onboarding_completed";

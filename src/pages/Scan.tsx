@@ -17,7 +17,7 @@ import { useTour } from "@/hooks/useTour";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backendClient";
 
 interface NutritionData {
   foods: string[];

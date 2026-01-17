@@ -32,7 +32,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/backendClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { differenceInYears, parseISO } from "date-fns";

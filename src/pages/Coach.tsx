@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppLayout } from "@/components/AppLayout";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, BACKEND_URL } from "@/integrations/backendClient";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -17,7 +17,7 @@ interface Message {
   content: string;
 }
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-coach`;
+const CHAT_URL = `${BACKEND_URL}/functions/v1/ai-coach`;
 
 const STARTER_PROMPTS = [
   { icon: Target, text: "What should my daily calories be?", color: "from-orange-500 to-amber-500" },
