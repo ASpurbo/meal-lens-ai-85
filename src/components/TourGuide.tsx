@@ -1,15 +1,15 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronRight, ChevronLeft, Sparkles, Camera, History, Target, BarChart3 } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
+import { Camera, History, BarChart3, Target, Sparkles, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 
 interface TourStep {
   id: string;
   title: string;
-  description: string;
+  subtitle: string;
   icon: React.ReactNode;
-  position: "top" | "bottom" | "center";
+  gradient: string;
 }
 
 interface TourGuideProps {
@@ -19,54 +19,49 @@ interface TourGuideProps {
 export function TourGuide({ onComplete }: TourGuideProps) {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(0);
+  const [direction, setDirection] = useState(0);
 
   const steps: TourStep[] = [
     {
       id: "welcome",
-      title: t.tour?.welcome || "Welcome to NutriMind!",
-      description: t.tour?.welcomeDesc || "Let's take a quick tour to help you get started with tracking your nutrition.",
-      icon: <Sparkles className="w-8 h-8" />,
-      position: "center",
+      title: t.tour?.welcome || "Welcome to NutriMind",
+      subtitle: t.tour?.welcomeDesc || "Your AI-powered nutrition companion. Track meals effortlessly with just a photo.",
+      icon: <Sparkles className="w-12 h-12" />,
+      gradient: "from-violet-500 to-purple-600",
     },
     {
       id: "scan",
-      title: t.tour?.scanTitle || "Add Your Meals",
-      description: t.tour?.scanDesc || "Tap the + button to open the camera. Take a photo, upload from gallery, scan a barcode, or enter meals manually. Switch between modes anytime!",
-      icon: <Camera className="w-8 h-8" />,
-      position: "bottom",
+      title: t.tour?.scanTitle || "Snap & Track",
+      subtitle: t.tour?.scanDesc || "Take a photo of any meal and our AI instantly analyzes calories and macros.",
+      icon: <Camera className="w-12 h-12" />,
+      gradient: "from-blue-500 to-cyan-500",
     },
     {
       id: "history",
-      title: t.tour?.historyTitle || "Track Your History",
-      description: t.tour?.historyDesc || "View all your logged meals and see your daily nutrition breakdown over time.",
-      icon: <History className="w-8 h-8" />,
-      position: "bottom",
+      title: t.tour?.historyTitle || "Your Food Diary",
+      subtitle: t.tour?.historyDesc || "Every meal is saved. View your complete nutrition history anytime.",
+      icon: <History className="w-12 h-12" />,
+      gradient: "from-emerald-500 to-teal-500",
     },
     {
       id: "charts",
-      title: t.tour?.chartsTitle || "Visualize Progress",
-      description: t.tour?.chartsDesc || "See your nutrition trends with beautiful charts showing weekly and monthly progress.",
-      icon: <BarChart3 className="w-8 h-8" />,
-      position: "bottom",
+      title: t.tour?.chartsTitle || "See Your Progress",
+      subtitle: t.tour?.chartsDesc || "Beautiful charts show your nutrition trends over days and weeks.",
+      icon: <BarChart3 className="w-12 h-12" />,
+      gradient: "from-orange-500 to-amber-500",
     },
     {
       id: "goals",
-      title: t.tour?.goalsTitle || "Set Your Goals",
-      description: t.tour?.goalsDesc || "Customize your daily calorie and macro targets based on your personal fitness goals.",
-      icon: <Target className="w-8 h-8" />,
-      position: "bottom",
-    },
-    {
-      id: "coach",
-      title: t.tour?.coachTitle || "AI Nutrition Coach",
-      description: t.tour?.coachDesc || "Tap the sparkle icon in the header anytime to chat with your personal AI coach for nutrition advice.",
-      icon: <Sparkles className="w-8 h-8" />,
-      position: "top",
+      title: t.tour?.goalsTitle || "Personalized Goals",
+      subtitle: t.tour?.goalsDesc || "Set custom targets based on your body and fitness objectives.",
+      icon: <Target className="w-12 h-12" />,
+      gradient: "from-rose-500 to-pink-500",
     },
   ];
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
+      setDirection(1);
       setCurrentStep(currentStep + 1);
     } else {
       onComplete();
@@ -75,97 +70,139 @@ export function TourGuide({ onComplete }: TourGuideProps) {
 
   const handlePrev = () => {
     if (currentStep > 0) {
+      setDirection(-1);
       setCurrentStep(currentStep - 1);
     }
   };
 
-  const handleSkip = () => {
-    onComplete();
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (info.offset.x < -50 && currentStep < steps.length - 1) {
+      handleNext();
+    } else if (info.offset.x > 50 && currentStep > 0) {
+      handlePrev();
+    }
   };
 
   const step = steps[currentStep];
 
+  const variants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+    },
+    exit: (direction: number) => ({
+      x: direction < 0 ? 300 : -300,
+      opacity: 0,
+    }),
+  };
+
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-sm flex items-center justify-center p-6"
-      >
-        <motion.div
-          key={step.id}
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: -20 }}
-          transition={{ duration: 0.3 }}
-          className="bg-card border border-border rounded-2xl p-8 max-w-md w-full shadow-lg"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-background flex flex-col"
+    >
+      {/* Skip button */}
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          onClick={onComplete}
+          className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors px-4 py-2"
         >
-          {/* Skip button */}
-          <button
-            onClick={handleSkip}
-            className="absolute top-4 right-4 p-2 text-muted-foreground hover:text-foreground transition-colors"
+          Skip
+        </button>
+      </div>
+
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 overflow-hidden">
+        <AnimatePresence mode="wait" custom={direction}>
+          <motion.div
+            key={step.id}
+            custom={direction}
+            variants={variants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={handleDragEnd}
+            className="flex flex-col items-center text-center max-w-sm cursor-grab active:cursor-grabbing"
           >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Step indicator */}
-          <div className="flex justify-center gap-1.5 mb-6">
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  index === currentStep
-                    ? "w-6 bg-primary"
-                    : index < currentStep
-                    ? "w-1.5 bg-primary/50"
-                    : "w-1.5 bg-muted"
-                }`}
-              />
-            ))}
-          </div>
-
-          {/* Icon */}
-          <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+            {/* Icon with gradient background */}
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+              className={`w-28 h-28 rounded-full bg-gradient-to-br ${step.gradient} flex items-center justify-center text-white mb-10 shadow-lg`}
+            >
               {step.icon}
-            </div>
-          </div>
+            </motion.div>
 
-          {/* Content */}
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-3">{step.title}</h2>
-            <p className="text-muted-foreground leading-relaxed">{step.description}</p>
-          </div>
+            {/* Title */}
+            <motion.h1
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.15 }}
+              className="text-3xl font-bold tracking-tight mb-4"
+            >
+              {step.title}
+            </motion.h1>
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between gap-3">
-            <Button
-              variant="ghost"
-              onClick={handlePrev}
-              disabled={currentStep === 0}
-              className="flex-1"
+            {/* Subtitle */}
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-lg text-muted-foreground leading-relaxed"
             >
-              <ChevronLeft className="w-4 h-4 mr-1" />
-              {t.common?.back || "Back"}
-            </Button>
-            
-            <Button
-              onClick={handleNext}
-              className="flex-1"
-            >
-              {currentStep === steps.length - 1 ? (
-                t.tour?.getStarted || "Get Started"
-              ) : (
-                <>
-                  {t.common?.next || "Next"}
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </>
-              )}
-            </Button>
-          </div>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+              {step.subtitle}
+            </motion.p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* Bottom section */}
+      <div className="px-8 pb-12 space-y-8">
+        {/* Progress dots */}
+        <div className="flex justify-center gap-2">
+          {steps.map((_, index) => (
+            <motion.div
+              key={index}
+              initial={false}
+              animate={{
+                width: index === currentStep ? 24 : 8,
+                backgroundColor: index === currentStep 
+                  ? "hsl(var(--foreground))" 
+                  : "hsl(var(--muted-foreground) / 0.3)",
+              }}
+              transition={{ duration: 0.3 }}
+              className="h-2 rounded-full"
+            />
+          ))}
+        </div>
+
+        {/* Continue button */}
+        <Button
+          onClick={handleNext}
+          size="lg"
+          className="w-full h-14 text-base font-semibold rounded-full"
+        >
+          {currentStep === steps.length - 1 ? (
+            t.tour?.getStarted || "Get Started"
+          ) : (
+            <>
+              Continue
+              <ChevronRight className="w-5 h-5 ml-1" />
+            </>
+          )}
+        </Button>
+      </div>
+    </motion.div>
   );
 }

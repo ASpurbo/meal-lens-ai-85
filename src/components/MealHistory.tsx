@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Trash2, ChevronDown, ChevronUp, Utensils } from "lucide-react";
+import { Trash2, ChevronRight, Utensils } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { MealAnalysis } from "@/hooks/useMealHistory";
 import { format } from "date-fns";
 
@@ -16,12 +15,10 @@ export function MealHistory({ meals, loading, onDelete }: MealHistoryProps) {
 
   if (loading) {
     return (
-      <div className="text-center py-12">
-        <div className="animate-pulse space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 bg-muted rounded-2xl" />
-          ))}
-        </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-20 bg-muted rounded-2xl animate-pulse" />
+        ))}
       </div>
     );
   }
@@ -31,117 +28,109 @@ export function MealHistory({ meals, loading, onDelete }: MealHistoryProps) {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center py-12"
+        className="text-center py-16"
       >
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
-          <Utensils className="w-8 h-8 text-muted-foreground" />
+        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-muted flex items-center justify-center">
+          <Utensils className="w-10 h-10 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold text-foreground mb-2">No meals yet</h3>
-        <p className="text-muted-foreground">
-          Upload a meal photo to start tracking your nutrition
+        <h3 className="text-xl font-semibold mb-2">No meals yet</h3>
+        <p className="text-muted-foreground text-sm">
+          Take a photo to start tracking
         </p>
       </motion.div>
     );
   }
 
-  return (
-    <div className="space-y-3">
-      <AnimatePresence>
-        {meals.map((meal, index) => (
-          <motion.div
-            key={meal.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ delay: index * 0.05 }}
-            className="bg-card rounded-2xl border border-border shadow-soft overflow-hidden"
-          >
-            <div
-              className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => setExpandedId(expandedId === meal.id ? null : meal.id)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <Utensils className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {meal.foods.slice(0, 2).join(", ")}
-                      {meal.foods.length > 2 && ` +${meal.foods.length - 2} more`}
-                    </p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-3 h-3" />
-                      {format(new Date(meal.analyzed_at), "MMM d, yyyy 'at' h:mm a")}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p className="font-bold text-primary">{meal.calories} cal</p>
-                  </div>
-                  {expandedId === meal.id ? (
-                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                  )}
-                </div>
-              </div>
-            </div>
+  // Group meals by date
+  const groupedMeals = meals.reduce((acc, meal) => {
+    const date = format(new Date(meal.analyzed_at), "EEEE, MMMM d");
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(meal);
+    return acc;
+  }, {} as Record<string, MealAnalysis[]>);
 
+  return (
+    <div className="space-y-6">
+      {Object.entries(groupedMeals).map(([date, dayMeals]) => (
+        <div key={date}>
+          <h3 className="text-sm font-medium text-muted-foreground mb-3 px-1">{date}</h3>
+          <div className="space-y-2">
             <AnimatePresence>
-              {expandedId === meal.id && (
+              {dayMeals.map((meal, index) => (
                 <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="overflow-hidden"
+                  key={meal.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ delay: index * 0.03 }}
+                  className="bg-card rounded-2xl border border-border overflow-hidden"
                 >
-                  <div className="px-4 pb-4 pt-2 border-t border-border">
-                    <div className="grid grid-cols-3 gap-4 mb-4">
-                      <div className="text-center p-3 rounded-xl bg-protein/10">
-                        <p className="text-lg font-bold text-protein">{meal.protein}g</p>
-                        <p className="text-xs text-muted-foreground">Protein</p>
-                      </div>
-                      <div className="text-center p-3 rounded-xl bg-carbs/10">
-                        <p className="text-lg font-bold text-carbs">{meal.carbs}g</p>
-                        <p className="text-xs text-muted-foreground">Carbs</p>
-                      </div>
-                      <div className="text-center p-3 rounded-xl bg-fat/10">
-                        <p className="text-lg font-bold text-fat">{meal.fat}g</p>
-                        <p className="text-xs text-muted-foreground">Fat</p>
-                      </div>
-                    </div>
-                    
-                    {meal.notes && (
-                      <p className="text-sm text-muted-foreground mb-4">{meal.notes}</p>
-                    )}
-                    
+                  <div
+                    className="p-4 cursor-pointer active:bg-muted/50 transition-colors"
+                    onClick={() => setExpandedId(expandedId === meal.id ? null : meal.id)}
+                  >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground capitalize">
-                        Confidence: {meal.confidence}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(meal.id);
-                        }}
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
-                      </Button>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          {meal.foods.slice(0, 2).join(", ")}
+                          {meal.foods.length > 2 && ` +${meal.foods.length - 2}`}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {format(new Date(meal.analyzed_at), "h:mm a")}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-bold">{meal.calories}</span>
+                        <ChevronRight className={`w-5 h-5 text-muted-foreground transition-transform ${expandedId === meal.id ? 'rotate-90' : ''}`} />
+                      </div>
                     </div>
                   </div>
+
+                  <AnimatePresence>
+                    {expandedId === meal.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4 pt-2 border-t border-border">
+                          <div className="flex justify-between py-3">
+                            <div className="text-center flex-1">
+                              <p className="text-xl font-bold">{meal.protein}g</p>
+                              <p className="text-xs text-muted-foreground">Protein</p>
+                            </div>
+                            <div className="text-center flex-1 border-x border-border">
+                              <p className="text-xl font-bold">{meal.carbs}g</p>
+                              <p className="text-xs text-muted-foreground">Carbs</p>
+                            </div>
+                            <div className="text-center flex-1">
+                              <p className="text-xl font-bold">{meal.fat}g</p>
+                              <p className="text-xs text-muted-foreground">Fat</p>
+                            </div>
+                          </div>
+                          
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDelete(meal.id);
+                            }}
+                            className="w-full mt-2 py-3 text-sm font-medium text-destructive hover:bg-destructive/10 rounded-xl transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
-              )}
+              ))}
             </AnimatePresence>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
