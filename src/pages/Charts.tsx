@@ -9,13 +9,13 @@ export default function ChartsPage() {
   return (
     <AppLayout>
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-6"
       >
-        <div>
-          <h1 className="text-2xl font-bold">Nutrition Charts</h1>
-          <p className="text-muted-foreground text-sm">Track your nutrition trends</p>
+        {/* Cal AI style header */}
+        <div className="text-center pt-4">
+          <h1 className="text-2xl font-semibold tracking-tight">Trends</h1>
         </div>
 
         <NutritionCharts meals={meals} />
