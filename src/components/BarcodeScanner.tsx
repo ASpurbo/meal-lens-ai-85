@@ -224,10 +224,14 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound, onSwitchToC
     await startScanner();
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (scannedProduct) {
+      // Stop scanner first
+      await stopScanner();
+      // Call onProductFound which will trigger confirmation flow
       onProductFound(scannedProduct);
-      handleClose();
+      // Close the barcode scanner
+      onOpenChange(false);
     }
   };
 
