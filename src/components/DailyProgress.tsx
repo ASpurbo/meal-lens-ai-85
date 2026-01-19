@@ -2,9 +2,11 @@ import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
 import { MealAnalysis } from "@/hooks/useMealHistory";
+import { format, isToday } from "date-fns";
 
 interface DailyProgressProps {
   meals: MealAnalysis[];
+  selectedDate?: Date;
 }
 
 interface MacroRingProps {
@@ -62,27 +64,31 @@ function MacroRing({ value, max, size, strokeWidth, color, label, unit }: MacroR
   );
 }
 
-export function DailyProgress({ meals }: DailyProgressProps) {
+export function DailyProgress({ meals, selectedDate = new Date() }: DailyProgressProps) {
   const { goals, loading } = useNutritionGoals();
 
-  const todaysTotals = useMemo(() => {
-    const today = new Date().toDateString();
-    const todaysMeals = meals.filter(
-      (meal) => new Date(meal.analyzed_at).toDateString() === today
+  const { totals, dateLabel, isViewingToday } = useMemo(() => {
+    const targetDate = selectedDate.toDateString();
+    const filteredMeals = meals.filter(
+      (meal) => new Date(meal.analyzed_at).toDateString() === targetDate
     );
 
     return {
-      calories: todaysMeals.reduce((sum, meal) => sum + meal.calories, 0),
-      protein: todaysMeals.reduce((sum, meal) => sum + meal.protein, 0),
-      carbs: todaysMeals.reduce((sum, meal) => sum + meal.carbs, 0),
-      fat: todaysMeals.reduce((sum, meal) => sum + meal.fat, 0),
+      totals: {
+        calories: filteredMeals.reduce((sum, meal) => sum + meal.calories, 0),
+        protein: filteredMeals.reduce((sum, meal) => sum + meal.protein, 0),
+        carbs: filteredMeals.reduce((sum, meal) => sum + meal.carbs, 0),
+        fat: filteredMeals.reduce((sum, meal) => sum + meal.fat, 0),
+      },
+      dateLabel: isToday(selectedDate) ? "Today" : format(selectedDate, "MMM d"),
+      isViewingToday: isToday(selectedDate),
     };
-  }, [meals]);
+  }, [meals, selectedDate]);
 
   if (loading) return null;
 
-  const caloriesRemaining = Math.max(0, goals.calories - todaysTotals.calories);
-  const caloriePercentage = Math.min((todaysTotals.calories / goals.calories) * 100, 100);
+  const caloriesRemaining = Math.max(0, goals.calories - totals.calories);
+  const caloriePercentage = Math.min((totals.calories / goals.calories) * 100, 100);
   const radius = 70;
   const circumference = radius * 2 * Math.PI;
   const strokeDashoffset = circumference - (caloriePercentage / 100) * circumference;
@@ -91,8 +97,22 @@ export function DailyProgress({ meals }: DailyProgressProps) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      key={selectedDate.toDateString()}
       className="py-6"
     >
+      {/* Date indicator when not today */}
+      {!isViewingToday && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-4"
+        >
+          <span className="px-3 py-1 rounded-full bg-muted text-sm font-medium">
+            {dateLabel}
+          </span>
+        </motion.div>
+      )}
+
       {/* Main calorie ring - Cal AI style */}
       <div className="flex flex-col items-center mb-8">
         <div className="relative w-44 h-44">
@@ -124,17 +144,17 @@ export function DailyProgress({ meals }: DailyProgressProps) {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-4xl font-bold cal-number tracking-tight">
-              {Math.round(caloriesRemaining)}
+              {isViewingToday ? Math.round(caloriesRemaining) : Math.round(totals.calories)}
             </span>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider mt-1">
-              remaining
+              {isViewingToday ? "remaining" : "consumed"}
             </span>
           </div>
         </div>
         
         {/* Eaten / Goal subtitle */}
         <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
-          <span>{Math.round(todaysTotals.calories)} eaten</span>
+          <span>{Math.round(totals.calories)} eaten</span>
           <span className="w-1 h-1 rounded-full bg-muted-foreground/50" />
           <span>{goals.calories} goal</span>
         </div>
@@ -143,7 +163,7 @@ export function DailyProgress({ meals }: DailyProgressProps) {
       {/* Macro rings - Cal AI style */}
       <div className="flex justify-center gap-8">
         <MacroRing
-          value={todaysTotals.protein}
+          value={totals.protein}
           max={goals.protein}
           size={64}
           strokeWidth={5}
@@ -152,7 +172,7 @@ export function DailyProgress({ meals }: DailyProgressProps) {
           unit="g"
         />
         <MacroRing
-          value={todaysTotals.carbs}
+          value={totals.carbs}
           max={goals.carbs}
           size={64}
           strokeWidth={5}
@@ -161,7 +181,7 @@ export function DailyProgress({ meals }: DailyProgressProps) {
           unit="g"
         />
         <MacroRing
-          value={todaysTotals.fat}
+          value={totals.fat}
           max={goals.fat}
           size={64}
           strokeWidth={5}

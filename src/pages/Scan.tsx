@@ -38,6 +38,7 @@ export default function ScanPage() {
   const [showCameraInterface, setShowCameraInterface] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showFab, setShowFab] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
   const { user } = useAuth();
   const { meals, saveMeal, refetch } = useMealHistory();
@@ -264,14 +265,17 @@ export default function ScanPage() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <WeeklyCalendarStrip meals={meals} />
+          <WeeklyCalendarStrip 
+            meals={meals} 
+            onDateSelect={(date) => setSelectedDate(date)}
+          />
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <DailyProgress meals={meals} />
+          <DailyProgress meals={meals} selectedDate={selectedDate} />
         </motion.div>
 
         <motion.div
