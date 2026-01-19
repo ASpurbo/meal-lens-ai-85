@@ -1,14 +1,13 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { 
   Moon, Sun, Lock, Trash2, LogOut, Camera, 
-  ChevronRight, AlertTriangle, Loader2, Apple, ArrowLeft,
-  Ruler, Scale, X, Globe, HelpCircle, FileText
+  ChevronRight, AlertTriangle, Loader2, ArrowLeft,
+  X, Globe, HelpCircle, FileText
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
@@ -34,7 +33,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "@/hooks/useTranslation";
 import { supabase } from "@/integrations/backendClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { differenceInYears, parseISO } from "date-fns";
 import { SUPPORTED_LANGUAGES, getLanguageLabel, getLanguageFlag } from "@/lib/languages";
 
@@ -269,16 +267,10 @@ export default function Settings() {
 
     setIsDeletingAccount(true);
     try {
-      // Call the edge function to completely delete the account
       const { data, error } = await supabase.functions.invoke("delete-account");
 
-      if (error) {
-        throw error;
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({ title: "Account deleted successfully" });
       await signOut();
@@ -310,347 +302,368 @@ export default function Settings() {
     return "U";
   };
 
-  return (
-    <div className="h-full flex flex-col overflow-hidden">
-      {/* Header */}
-      <header className="flex-shrink-0 bg-background border-b border-border">
-        <div className="container py-4 flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-accent transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <h1 className="text-lg font-semibold">{t.settings.title}</h1>
+  // Cal AI style setting item component
+  const SettingItem = ({ 
+    icon: Icon, 
+    label, 
+    value, 
+    onClick, 
+    showArrow = true,
+    rightElement 
+  }: { 
+    icon: any; 
+    label: string; 
+    value?: string; 
+    onClick?: () => void; 
+    showArrow?: boolean;
+    rightElement?: React.ReactNode;
+  }) => (
+    <button 
+      onClick={onClick}
+      disabled={!onClick}
+      className="w-full flex items-center justify-between py-4 border-b border-border/50 last:border-0 disabled:cursor-default"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+          <Icon className="w-4 h-4 text-foreground" />
         </div>
+        <span className="font-medium text-sm">{label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        {value && <span className="text-muted-foreground text-sm">{value}</span>}
+        {rightElement}
+        {showArrow && onClick && <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+      </div>
+    </button>
+  );
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="h-full flex flex-col bg-background"
+    >
+      {/* Cal AI style header */}
+      <header className="flex-shrink-0 px-4 py-4 flex items-center gap-4">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="w-10 h-10 rounded-full bg-muted flex items-center justify-center"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-lg font-semibold">{t.settings.title}</h1>
       </header>
 
-      <main className="flex-1 overflow-y-auto overscroll-none">
-        <div className="container py-8 pb-24 space-y-8 max-w-lg mx-auto">
-        {/* Profile */}
-        <div className="flex flex-col items-center text-center space-y-4">
-          <div className="relative">
-            <Avatar className="w-24 h-24 border-2 border-border">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="text-xl bg-accent text-foreground font-medium">
-                {getInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isUploadingAvatar}
-              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-foreground flex items-center justify-center text-background hover:bg-foreground/90 transition-colors"
-            >
-              {isUploadingAvatar ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Camera className="w-4 h-4" />
-              )}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleAvatarUpload}
-              className="hidden"
-            />
-          </div>
-          <div>
-            <h2 className="text-xl font-semibold">{profile?.display_name || "User"}</h2>
-            <p className="text-sm text-muted-foreground">{user?.email}</p>
-          </div>
-          {profile?.avatar_url && (
-            <button 
-              onClick={handleRemoveAvatar}
-              disabled={isRemovingAvatar}
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-            >
-              {isRemovingAvatar ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
-              {t.settings.removePhoto}
-            </button>
-          )}
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-accent rounded-2xl p-4 text-center">
-            <p className="text-2xl font-semibold">{userAge || "—"}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.settings.age}</p>
-          </div>
-          <button 
-            onClick={() => openEditDialog("height")}
-            className="bg-accent rounded-2xl p-4 text-center hover:bg-accent/80 transition-colors"
+      <main className="flex-1 overflow-y-auto px-4 pb-24">
+        <div className="max-w-lg mx-auto space-y-6">
+          {/* Profile Card - Cal AI Style */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card rounded-2xl border border-border p-6"
           >
-            <p className="text-2xl font-semibold">{profile?.height_cm || "—"}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.settings.heightCm}</p>
-          </button>
-          <button 
-            onClick={() => openEditDialog("weight")}
-            className="bg-accent rounded-2xl p-4 text-center hover:bg-accent/80 transition-colors"
-          >
-            <p className="text-2xl font-semibold">{profile?.weight_kg || "—"}</p>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.settings.weightKg}</p>
-          </button>
-        </div>
-
-        {/* Preferences */}
-        <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">{t.settings.preferences}</p>
-          
-          {/* Language */}
-          <button 
-            onClick={() => setIsLanguageDialogOpen(true)}
-            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors mb-2"
-          >
-            <div className="flex items-center gap-3">
-              <Globe className="w-5 h-5" />
-              <span className="font-medium">{t.settings.language}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">
-                {getLanguageFlag(profile?.language || "en")} {getLanguageLabel(profile?.language || "en")}
-              </span>
-              <ChevronRight className="w-5 h-5 text-muted-foreground" />
-            </div>
-          </button>
-          
-          {/* Dark Mode */}
-          <div className="flex items-center justify-between p-4 rounded-2xl bg-accent">
-            <div className="flex items-center gap-3">
-              {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              <span className="font-medium">{t.settings.darkMode}</span>
-            </div>
-            <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
-          </div>
-        </div>
-
-        {/* Security */}
-        <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">{t.settings.security}</p>
-          <button 
-            onClick={() => setIsPasswordDialogOpen(true)}
-            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Lock className="w-5 h-5" />
-              <span className="font-medium">{t.settings.changePassword}</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </button>
-        </div>
-
-        {/* Help */}
-        <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">{t.settings.help}</p>
-          <button 
-            onClick={async () => {
-              if (!user?.id) return;
-              await supabase
-                .from("profiles")
-                .update({ has_seen_tour: false })
-                .eq("user_id", user.id);
-              navigate("/scan");
-            }}
-            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <HelpCircle className="w-5 h-5" />
-              <span className="font-medium">{t.settings.replayTour}</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </button>
-        </div>
-
-        {/* Legal */}
-        <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">Rechtliches</p>
-          <Link 
-            to="/datenschutz"
-            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors mb-2"
-          >
-            <div className="flex items-center gap-3">
-              <FileText className="w-5 h-5" />
-              <span className="font-medium">Datenschutzerklärung</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </Link>
-          <Link 
-            to="/impressum"
-            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <FileText className="w-5 h-5" />
-              <span className="font-medium">Impressum</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </Link>
-        </div>
-
-        {/* Account */}
-        <div className="space-y-1">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider px-1 mb-3">{t.settings.account}</p>
-          <button
-            onClick={handleSignOut}
-            className="w-full flex items-center justify-between p-4 rounded-2xl bg-accent hover:bg-accent/80 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">{t.settings.signOut}</span>
-            </div>
-            <ChevronRight className="w-5 h-5 text-muted-foreground" />
-          </button>
-
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button className="w-full flex items-center justify-between p-4 rounded-2xl border border-destructive/30 text-destructive hover:bg-destructive/5 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Trash2 className="w-5 h-5" />
-                  <span className="font-medium">{t.settings.deleteAccount}</span>
-                </div>
-                <ChevronRight className="w-5 h-5" />
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-2xl">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-destructive" />
-                  {t.settings.deleteAccount}
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  {t.settings.deleteWarning}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="rounded-xl">{t.common.cancel}</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDeleteAccount}
-                  disabled={isDeletingAccount}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <Avatar className="w-16 h-16">
+                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarFallback className="text-lg bg-muted font-medium">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingAvatar}
+                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-foreground flex items-center justify-center text-background"
                 >
-                  {isDeletingAccount && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {t.common.delete}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+                  {isUploadingAvatar ? (
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                  ) : (
+                    <Camera className="w-3 h-3" />
+                  )}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+              </div>
+              <div className="flex-1">
+                <h2 className="font-semibold">{profile?.display_name || "User"}</h2>
+                <p className="text-sm text-muted-foreground">{user?.email}</p>
+                {profile?.avatar_url && (
+                  <button 
+                    onClick={handleRemoveAvatar}
+                    disabled={isRemovingAvatar}
+                    className="text-xs text-muted-foreground hover:text-foreground mt-1 flex items-center gap-1"
+                  >
+                    {isRemovingAvatar ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
+                    Remove photo
+                  </button>
+                )}
+              </div>
+            </div>
 
-        {/* Footer */}
-        <div className="text-center text-sm text-muted-foreground pt-8">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Apple className="w-5 h-5 text-foreground" />
-            <span className="font-medium text-foreground">NutriMind</span>
-          </div>
-          <p className="text-xs">{t.settings.version} 1.0.0</p>
-        </div>
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-3 mt-6">
+              <div className="text-center py-3 bg-muted/50 rounded-xl">
+                <p className="text-xl font-bold">{userAge || "—"}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.settings.age}</p>
+              </div>
+              <button 
+                onClick={() => openEditDialog("height")}
+                className="text-center py-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
+              >
+                <p className="text-xl font-bold">{profile?.height_cm || "—"}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.settings.heightCm}</p>
+              </button>
+              <button 
+                onClick={() => openEditDialog("weight")}
+                className="text-center py-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
+              >
+                <p className="text-xl font-bold">{profile?.weight_kg || "—"}</p>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t.settings.weightKg}</p>
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Preferences Section */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="bg-card rounded-2xl border border-border px-4"
+          >
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider pt-4 pb-2">{t.settings.preferences}</p>
+            
+            <SettingItem 
+              icon={Globe}
+              label={t.settings.language}
+              value={`${getLanguageFlag(profile?.language || "en")} ${getLanguageLabel(profile?.language || "en")}`}
+              onClick={() => setIsLanguageDialogOpen(true)}
+            />
+            
+            <SettingItem 
+              icon={isDarkMode ? Moon : Sun}
+              label={t.settings.darkMode}
+              showArrow={false}
+              rightElement={
+                <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
+              }
+            />
+          </motion.div>
+
+          {/* Security Section */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-card rounded-2xl border border-border px-4"
+          >
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider pt-4 pb-2">{t.settings.security}</p>
+            
+            <SettingItem 
+              icon={Lock}
+              label={t.settings.changePassword}
+              onClick={() => setIsPasswordDialogOpen(true)}
+            />
+          </motion.div>
+
+          {/* Help Section */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-card rounded-2xl border border-border px-4"
+          >
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider pt-4 pb-2">{t.settings.help}</p>
+            
+            <SettingItem 
+              icon={HelpCircle}
+              label={t.settings.replayTour}
+              onClick={async () => {
+                if (!user?.id) return;
+                await supabase
+                  .from("profiles")
+                  .update({ has_seen_tour: false })
+                  .eq("user_id", user.id);
+                navigate("/scan");
+              }}
+            />
+          </motion.div>
+
+          {/* Legal Section */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-card rounded-2xl border border-border px-4"
+          >
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider pt-4 pb-2">Legal</p>
+            
+            <Link to="/datenschutz" className="block">
+              <SettingItem 
+                icon={FileText}
+                label="Privacy Policy"
+              />
+            </Link>
+            
+            <Link to="/impressum" className="block">
+              <SettingItem 
+                icon={FileText}
+                label="Imprint"
+              />
+            </Link>
+          </motion.div>
+
+          {/* Account Actions */}
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="space-y-3"
+          >
+            <button 
+              onClick={handleSignOut}
+              className="w-full py-4 rounded-2xl bg-card border border-border flex items-center justify-center gap-2 text-foreground font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              {t.settings.signOut}
+            </button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <button 
+                  className="w-full py-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center gap-2 text-destructive font-medium"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  {t.settings.deleteAccount}
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="rounded-2xl">
+                <AlertDialogHeader>
+                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-destructive/10 flex items-center justify-center">
+                    <AlertTriangle className="w-6 h-6 text-destructive" />
+                  </div>
+                  <AlertDialogTitle className="text-center">Delete Account?</AlertDialogTitle>
+                  <AlertDialogDescription className="text-center">
+                    This action cannot be undone. All your data will be permanently deleted.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+                  <AlertDialogAction 
+                    onClick={handleDeleteAccount}
+                    disabled={isDeletingAccount}
+                    className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-full"
+                  >
+                    {isDeletingAccount ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    Delete Forever
+                  </AlertDialogAction>
+                  <AlertDialogCancel className="w-full rounded-full">Cancel</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </motion.div>
         </div>
       </main>
 
-      {/* Password Dialog */}
-      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
-        <DialogContent className="rounded-2xl">
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="rounded-2xl max-w-sm">
           <DialogHeader>
-            <DialogTitle>Change Password</DialogTitle>
-            <DialogDescription>Enter your new password</DialogDescription>
+            <DialogTitle>
+              {editField === "height" ? t.settings.heightCm : t.settings.weightKg}
+            </DialogTitle>
+            <DialogDescription>
+              Enter your {editField === "height" ? "height in cm" : "weight in kg"}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input
-                id="new-password"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-                className="h-12 rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm Password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-                className="h-12 rounded-xl"
-              />
-            </div>
-          </div>
+          <Input
+            type="number"
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            placeholder={editField === "height" ? "175" : "70"}
+            className="text-center text-2xl font-bold h-14 rounded-xl"
+          />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPasswordDialogOpen(false)} className="rounded-xl">
-              Cancel
-            </Button>
-            <Button onClick={handlePasswordChange} disabled={isChangingPassword} className="rounded-xl">
-              {isChangingPassword && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Update
-            </Button>
+            <button
+              onClick={handleSaveEdit}
+              disabled={isSavingEdit}
+              className="w-full py-3 rounded-full bg-foreground text-background font-medium flex items-center justify-center"
+            >
+              {isSavingEdit && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Save
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="rounded-2xl">
+      {/* Password Dialog */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent className="rounded-2xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {editField === "height" ? <Ruler className="w-5 h-5" /> : <Scale className="w-5 h-5" />}
-              Edit {editField === "height" ? "Height" : "Weight"}
-            </DialogTitle>
+            <DialogTitle>{t.settings.changePassword}</DialogTitle>
           </DialogHeader>
-          <div className="py-4">
+          <div className="space-y-3">
             <Input
-              type="number"
-              value={editValue}
-              onChange={(e) => setEditValue(e.target.value)}
-              placeholder={editField === "height" ? "170" : "70"}
-              min={editField === "height" ? 100 : 30}
-              max={editField === "height" ? 250 : 300}
-              step={editField === "height" ? 1 : 0.1}
-              className="h-12 rounded-xl text-lg text-center"
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New password"
+              className="rounded-xl"
+            />
+            <Input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm password"
+              className="rounded-xl"
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="rounded-xl">
-              Cancel
-            </Button>
-            <Button onClick={handleSaveEdit} disabled={isSavingEdit} className="rounded-xl">
-              {isSavingEdit && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Save
-            </Button>
+            <button
+              onClick={handlePasswordChange}
+              disabled={isChangingPassword}
+              className="w-full py-3 rounded-full bg-foreground text-background font-medium flex items-center justify-center"
+            >
+              {isChangingPassword && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+              Update Password
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Language Dialog */}
       <Dialog open={isLanguageDialogOpen} onOpenChange={setIsLanguageDialogOpen}>
-        <DialogContent className="rounded-2xl">
+        <DialogContent className="rounded-2xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              {t.settings.selectLanguage}
-            </DialogTitle>
-            <DialogDescription>{t.settings.choosePreferredLanguage}</DialogDescription>
+            <DialogTitle>{t.settings.language}</DialogTitle>
           </DialogHeader>
-          <div className="py-4 space-y-2 max-h-[50vh] overflow-y-auto">
+          <div className="space-y-1 max-h-[60vh] overflow-y-auto">
             {SUPPORTED_LANGUAGES.map((lang) => (
               <button
                 key={lang.code}
                 onClick={() => handleLanguageChange(lang.code)}
                 disabled={isSavingLanguage}
                 className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                  profile?.language === lang.code
-                    ? "bg-foreground text-background"
-                    : "hover:bg-accent"
+                  profile?.language === lang.code 
+                    ? "bg-foreground text-background" 
+                    : "hover:bg-muted"
                 }`}
               >
                 <span className="text-xl">{lang.flag}</span>
                 <span className="font-medium">{lang.label}</span>
                 {isSavingLanguage && profile?.language !== lang.code && (
-                  <Loader2 className="w-4 h-4 ml-auto animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin ml-auto" />
                 )}
               </button>
             ))}
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 }
