@@ -478,8 +478,8 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="container py-6">
+    <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <header className="flex-shrink-0 py-4 px-4">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -490,91 +490,92 @@ export default function Onboarding() {
         </motion.div>
       </header>
 
-      <main className="flex-1 container flex flex-col justify-center py-6 max-w-sm mx-auto">
-        {/* Progress */}
-        <div className="flex justify-center gap-1.5 mb-6">
-          {steps.map((s, i) => (
-            <motion.div
-              key={i}
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              className={`h-1.5 rounded-full transition-all ${
-                i === step ? "w-6 bg-foreground" : i < step ? "w-3 bg-foreground/60" : "w-3 bg-border"
-              }`}
-            />
-          ))}
-        </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          {/* Step header */}
-          {step > 0 && (
-            <div className="text-center mb-6">
-              <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-3 flex items-center justify-center">
-                {(() => {
-                  const Icon = steps[step].icon;
-                  return <Icon className="w-6 h-6 text-foreground" />;
-                })()}
-              </div>
-              <h1 className="text-xl font-semibold tracking-tight">{steps[step].title}</h1>
-              <p className="text-muted-foreground text-sm mt-1">{steps[step].description}</p>
-            </div>
-          )}
-
-          {/* Step content */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="max-h-[55vh] overflow-y-auto hide-scrollbar"
-            >
-              {renderStep()}
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Navigation */}
-          <div className="flex gap-3 mt-8">
-            {step > 0 && (
-              <Button
-                variant="outline"
-                onClick={() => setStep(step - 1)}
-                className="flex-1 h-12 rounded-xl"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-            )}
-            {step < steps.length - 1 ? (
-              <Button
-                onClick={() => setStep(step + 1)}
-                className="flex-1 h-12 rounded-xl"
-              >
-                {step === 0 ? "Let's Go" : "Next"}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            ) : (
-              <Button
-                onClick={handleComplete}
-                disabled={loading}
-                className="flex-1 h-12 rounded-xl"
-              >
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    Get Started
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            )}
+      <main className="flex-1 overflow-y-auto overscroll-none px-4 pb-6">
+        <div className="max-w-sm mx-auto">
+          {/* Progress */}
+          <div className="flex justify-center gap-1.5 mb-6 sticky top-0 bg-background py-2 z-10">
+            {steps.map((s, i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === step ? "w-6 bg-foreground" : i < step ? "w-3 bg-foreground/60" : "w-3 bg-border"
+                }`}
+              />
+            ))}
           </div>
-        </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {/* Step header */}
+            {step > 0 && (
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-muted mx-auto mb-3 flex items-center justify-center">
+                  {(() => {
+                    const Icon = steps[step].icon;
+                    return <Icon className="w-6 h-6 text-foreground" />;
+                  })()}
+                </div>
+                <h1 className="text-xl font-semibold tracking-tight">{steps[step].title}</h1>
+                <p className="text-muted-foreground text-sm mt-1">{steps[step].description}</p>
+              </div>
+            )}
+
+            {/* Step content - now scrollable */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                {renderStep()}
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Navigation - sticky at bottom */}
+            <div className="flex gap-3 mt-8 pb-safe">
+              {step > 0 && (
+                <Button
+                  variant="outline"
+                  onClick={() => setStep(step - 1)}
+                  className="flex-1 h-12 rounded-xl"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              )}
+              {step < steps.length - 1 ? (
+                <Button
+                  onClick={() => setStep(step + 1)}
+                  className="flex-1 h-12 rounded-xl"
+                >
+                  {step === 0 ? "Let's Go" : "Next"}
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleComplete}
+                  disabled={loading}
+                  className="flex-1 h-12 rounded-xl"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      Get Started
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        </div>
       </main>
     </div>
   );
