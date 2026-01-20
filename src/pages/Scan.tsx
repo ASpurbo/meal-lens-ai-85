@@ -11,6 +11,9 @@ import { CameraInterface } from "@/components/CameraInterface";
 import { TourGuide } from "@/components/TourGuide";
 import { WeeklyCalendarStrip } from "@/components/WeeklyCalendarStrip";
 import { AppLayout } from "@/components/AppLayout";
+import { QuickStats } from "@/components/QuickStats";
+import { MotivationalQuote } from "@/components/MotivationalQuote";
+import { WaterIntake } from "@/components/WaterIntake";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -278,10 +281,37 @@ export default function ScanPage() {
           <DailyProgress meals={meals} selectedDate={selectedDate} />
         </motion.div>
 
+        {/* Quick Stats Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <QuickStats meals={meals} />
+        </motion.div>
+
+        {/* Water Intake Tracker */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
+        >
+          <WaterIntake />
+        </motion.div>
+
+        {/* Motivational Quote */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <MotivationalQuote />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
         >
           <SmartRecommendations meals={meals} />
         </motion.div>
