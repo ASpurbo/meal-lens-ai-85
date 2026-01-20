@@ -104,6 +104,9 @@ export const bn: TranslationKeys = {
     version: "সংস্করণ",
     help: "সাহায্য",
     replayTour: "গাইড আবার দেখুন",
+    light: "হালকা",
+    dark: "অন্ধকার",
+    system: "সিস্টেম",
   },
 
   // Scan

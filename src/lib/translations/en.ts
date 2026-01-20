@@ -102,6 +102,9 @@ export const en = {
     version: "Version",
     help: "Help",
     replayTour: "Replay Tour",
+    light: "Light",
+    dark: "Dark",
+    system: "System",
   },
 
   // Scan
