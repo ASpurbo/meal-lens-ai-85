@@ -55,19 +55,27 @@ const App = () => {
 
   // Apply saved theme on app load - with system preference fallback
   useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
+    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     
-    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+    // If no saved theme, use system preference
+    if (!savedTheme) {
+      if (prefersDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    } else if (savedTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
     
-    // Listen for system theme changes
+    // Listen for system theme changes (only if using system theme)
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem("theme")) {
+      const currentTheme = localStorage.getItem("theme");
+      if (!currentTheme) {
         if (e.matches) {
           document.documentElement.classList.add("dark");
         } else {

@@ -1,11 +1,12 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Moon, Sun, Lock, Trash2, LogOut, Camera, 
   ChevronRight, AlertTriangle, Loader2, ArrowLeft,
-  X, Globe, HelpCircle, FileText
+  X, Globe, HelpCircle, FileText, Monitor
 } from "lucide-react";
+import { useTheme } from "@/hooks/useTheme";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -44,12 +45,7 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window !== "undefined") {
-      return document.documentElement.classList.contains("dark");
-    }
-    return false;
-  });
+  const { theme, setTheme, isDark } = useTheme();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isLanguageDialogOpen, setIsLanguageDialogOpen] = useState(false);
@@ -90,28 +86,21 @@ export default function Settings() {
 
   const userAge = profile?.birthday ? calculateAge(profile.birthday) : profile?.age;
 
-  const toggleDarkMode = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    if (newMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
+  const [isThemeDialogOpen, setIsThemeDialogOpen] = useState(false);
+
+  const getThemeLabel = () => {
+    switch (theme) {
+      case "light": return t.settings.light || "Light";
+      case "dark": return t.settings.dark || "Dark";
+      case "system": return t.settings.system || "System";
+      default: return "System";
     }
   };
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-    } else if (savedTheme === "light") {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-    }
-  }, []);
+  const getThemeIcon = () => {
+    if (theme === "system") return Monitor;
+    return isDark ? Moon : Sun;
+  };
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -445,12 +434,10 @@ export default function Settings() {
             />
             
             <SettingItem 
-              icon={isDarkMode ? Moon : Sun}
+              icon={getThemeIcon()}
               label={t.settings.darkMode}
-              showArrow={false}
-              rightElement={
-                <Switch checked={isDarkMode} onCheckedChange={toggleDarkMode} />
-              }
+              value={getThemeLabel()}
+              onClick={() => setIsThemeDialogOpen(true)}
             />
           </motion.div>
 
@@ -659,6 +646,38 @@ export default function Settings() {
                 {isSavingLanguage && profile?.language !== lang.code && (
                   <Loader2 className="w-4 h-4 animate-spin ml-auto" />
                 )}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Theme Dialog */}
+      <Dialog open={isThemeDialogOpen} onOpenChange={setIsThemeDialogOpen}>
+        <DialogContent className="rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.settings.darkMode}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1">
+            {([
+              { value: "light", icon: Sun, label: t.settings.light || "Light" },
+              { value: "dark", icon: Moon, label: t.settings.dark || "Dark" },
+              { value: "system", icon: Monitor, label: t.settings.system || "System" },
+            ] as const).map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  setTheme(option.value);
+                  setIsThemeDialogOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
+                  theme === option.value 
+                    ? "bg-foreground text-background" 
+                    : "hover:bg-muted"
+                }`}
+              >
+                <option.icon className="w-5 h-5" />
+                <span className="font-medium">{option.label}</span>
               </button>
             ))}
           </div>

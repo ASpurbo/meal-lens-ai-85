@@ -104,6 +104,9 @@ export const pt: TranslationKeys = {
     version: "Versão",
     help: "Ajuda",
     replayTour: "Repetir tour",
+    light: "Claro",
+    dark: "Escuro",
+    system: "Sistema",
   },
 
   // Scan
