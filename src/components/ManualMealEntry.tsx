@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Sparkles, Loader2, Edit3, X, Camera, Barcode, PenLine } from "lucide-react";
+import { Plus, Sparkles, Loader2, Edit3, X, Camera, Barcode, PenLine, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/backendClient";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
+
+interface NutritionData {
+  foods: string[];
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  confidence: "low" | "medium" | "high";
+  notes: string;
+}
 
 interface ManualMealEntryProps {
   open: boolean;
@@ -21,6 +31,8 @@ interface ManualMealEntryProps {
     confidence?: string;
     notes?: string;
   }) => void;
+  onConfirmMeal?: (data: NutritionData) => void;
+  onDeclineMeal?: (data: NutritionData) => void;
   onSwitchToCamera?: () => void;
   onSwitchToBarcode?: () => void;
 }
@@ -35,11 +47,15 @@ interface EstimatedNutrition {
   notes: string;
 }
 
-export function ManualMealEntry({ open, onOpenChange, onSubmit, onSwitchToCamera, onSwitchToBarcode }: ManualMealEntryProps) {
+type ViewState = "input" | "results";
+
+export function ManualMealEntry({ open, onOpenChange, onSubmit, onConfirmMeal, onDeclineMeal, onSwitchToCamera, onSwitchToBarcode }: ManualMealEntryProps) {
+  const [viewState, setViewState] = useState<ViewState>("input");
   const [foodDescription, setFoodDescription] = useState("");
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimation, setEstimation] = useState<EstimatedNutrition | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [finalData, setFinalData] = useState<NutritionData | null>(null);
   const { t } = useTranslation();
   
   // Editable values
@@ -91,24 +107,49 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit, onSwitchToCamera
     }
 
     const foods = estimation?.foods || [foodDescription.trim()];
-
-    onSubmit({
+    const data: NutritionData = {
       foods,
       calories: parseInt(calories) || 0,
       protein: parseFloat(protein) || 0,
       carbs: parseFloat(carbs) || 0,
       fat: parseFloat(fat) || 0,
-      confidence: estimation?.confidence,
-      notes: estimation?.notes,
-    });
+      confidence: (estimation?.confidence as "low" | "medium" | "high") || "high",
+      notes: estimation?.notes || "Manually entered",
+    };
 
+    // If we have direct confirm handlers, show results view like camera/barcode
+    if (onConfirmMeal) {
+      setFinalData(data);
+      setViewState("results");
+    } else {
+      // Fallback to old behavior
+      onSubmit(data);
+      resetForm();
+      onOpenChange(false);
+    }
+  };
+
+  const handleConfirm = () => {
+    if (finalData && onConfirmMeal) {
+      onConfirmMeal(finalData);
+    }
+    resetForm();
+    onOpenChange(false);
+  };
+
+  const handleDecline = () => {
+    if (finalData && onDeclineMeal) {
+      onDeclineMeal(finalData);
+    }
     resetForm();
     onOpenChange(false);
   };
 
   const resetForm = () => {
+    setViewState("input");
     setFoodDescription("");
     setEstimation(null);
+    setFinalData(null);
     setCalories("");
     setProtein("");
     setCarbs("");
@@ -135,6 +176,207 @@ export function ManualMealEntry({ open, onOpenChange, onSubmit, onSwitchToCamera
 
   if (!open) return null;
 
+  // Results View (similar to barcode/camera results)
+  if (viewState === "results" && finalData) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[100] flex flex-col bg-background"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-4 pt-safe">
+          <div className="w-10" />
+          <span className="text-foreground text-lg font-semibold">Nutrition Info</span>
+          <button 
+            onClick={handleClose} 
+            className="w-10 h-10 rounded-full flex items-center justify-center"
+          >
+            <X className="w-6 h-6 text-foreground" />
+          </button>
+        </div>
+
+        {/* Foods list */}
+        <div className="px-6 pb-4">
+          <div className="flex flex-wrap justify-center gap-2">
+            {finalData.foods.map((food, i) => (
+              <motion.span
+                key={i}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                className="text-sm text-foreground bg-muted px-3 py-1.5 rounded-full"
+              >
+                {food}
+              </motion.span>
+            ))}
+          </div>
+        </div>
+
+        {/* Large Calories Circle */}
+        <div className="flex justify-center mb-6">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="relative"
+          >
+            <svg className="w-44 h-44 -rotate-90" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                strokeWidth="8"
+                className="stroke-muted"
+              />
+              <motion.circle
+                cx="50"
+                cy="50"
+                r="45"
+                fill="none"
+                strokeWidth="8"
+                strokeLinecap="round"
+                className="stroke-calories"
+                strokeDasharray={2 * Math.PI * 45}
+                initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
+                animate={{ strokeDashoffset: 2 * Math.PI * 45 * (1 - Math.min(finalData.calories / 800, 1)) }}
+                transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-4xl font-bold text-foreground">{finalData.calories}</span>
+              <span className="text-sm text-muted-foreground">kcal</span>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Macro Circles Row */}
+        <div className="flex justify-center gap-6 px-6 mb-6">
+          {/* Protein */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-col items-center"
+          >
+            <div className="relative">
+              <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-muted" />
+                <motion.circle
+                  cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
+                  className="stroke-protein"
+                  strokeDasharray={2 * Math.PI * 42}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(finalData.protein / 50, 1)) }}
+                  transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-lg font-bold text-foreground">{finalData.protein}g</span>
+              </div>
+            </div>
+            <span className="mt-2 text-xs font-medium text-muted-foreground">Protein</span>
+          </motion.div>
+
+          {/* Carbs */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="flex flex-col items-center"
+          >
+            <div className="relative">
+              <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-muted" />
+                <motion.circle
+                  cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
+                  className="stroke-carbs"
+                  strokeDasharray={2 * Math.PI * 42}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(finalData.carbs / 100, 1)) }}
+                  transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-lg font-bold text-foreground">{finalData.carbs}g</span>
+              </div>
+            </div>
+            <span className="mt-2 text-xs font-medium text-muted-foreground">Carbs</span>
+          </motion.div>
+
+          {/* Fat */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="flex flex-col items-center"
+          >
+            <div className="relative">
+              <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-muted" />
+                <motion.circle
+                  cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
+                  className="stroke-fat"
+                  strokeDasharray={2 * Math.PI * 42}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(finalData.fat / 50, 1)) }}
+                  transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-lg font-bold text-foreground">{finalData.fat}g</span>
+              </div>
+            </div>
+            <span className="mt-2 text-xs font-medium text-muted-foreground">Fat</span>
+          </motion.div>
+        </div>
+
+        {/* Confidence indicator */}
+        {finalData.confidence && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="text-center text-sm text-muted-foreground px-6 mb-4"
+          >
+            {finalData.confidence === 'high' && '✓ High confidence'}
+            {finalData.confidence === 'medium' && '○ Medium confidence'}
+            {finalData.confidence === 'low' && '⚠ Low confidence'}
+          </motion.div>
+        )}
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Action buttons */}
+        <div className="px-6 pb-8 pb-safe space-y-3">
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            onClick={handleConfirm}
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-full bg-primary text-primary-foreground font-semibold text-base"
+          >
+            <Check className="w-5 h-5" />
+            Add to Daily Goal
+          </motion.button>
+          <motion.button
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75 }}
+            onClick={handleDecline}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-full border border-border text-foreground font-medium text-sm"
+          >
+            Just View Info
+          </motion.button>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Input View
   return (
     <motion.div
       initial={{ opacity: 0 }}
