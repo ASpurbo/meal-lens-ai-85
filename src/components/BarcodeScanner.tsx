@@ -228,10 +228,12 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound, onSwitchToC
     if (scannedProduct) {
       // Stop scanner first
       await stopScanner();
-      // Call onProductFound which will trigger confirmation flow
-      onProductFound(scannedProduct);
-      // Close the barcode scanner
+      // Close the barcode scanner FIRST so it unmounts
       onOpenChange(false);
+      // Small delay to ensure the scanner is fully unmounted before opening confirmation
+      setTimeout(() => {
+        onProductFound(scannedProduct);
+      }, 100);
     }
   };
 

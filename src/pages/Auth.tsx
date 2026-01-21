@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { PageTransition } from "@/components/PageTransition";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
@@ -109,7 +110,8 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <PageTransition>
+      <div className="min-h-screen bg-background flex flex-col pt-safe">
       {/* Cal AI style - centered logo */}
       <header className="container py-8">
         <motion.div
@@ -223,5 +225,6 @@ export default function Auth() {
         </motion.div>
       </main>
     </div>
+    </PageTransition>
   );
 }
