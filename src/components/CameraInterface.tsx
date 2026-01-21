@@ -567,79 +567,204 @@ export function CameraInterface({
         {/* RESULTS VIEW */}
         {viewState === "results" && analysisResults && (
           <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="absolute bottom-0 left-0 right-0 z-20 px-4 pb-safe"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-20 flex flex-col bg-background"
           >
-            {/* Results card */}
-            <div className="bg-background/95 backdrop-blur-xl rounded-t-3xl p-6 space-y-4">
-              <div className="text-center">
-                <h2 className="text-xl font-semibold text-foreground">Meal Detected</h2>
-                <p className="text-muted-foreground text-sm mt-1">
-                  Found {analysisResults.foods.length} food item(s)
-                </p>
-              </div>
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4 pt-safe">
+              <div className="w-10" />
+              <span className="text-foreground text-lg font-semibold">Meal Detected</span>
+              <button onClick={handleClose} className="w-10 h-10 rounded-full flex items-center justify-center">
+                <X className="w-6 h-6 text-foreground" />
+              </button>
+            </div>
 
-              {/* Foods list */}
-              <div className="bg-muted/50 rounded-xl p-3">
-                <div className="flex flex-wrap gap-2">
-                  {analysisResults.foods.map((food, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="text-sm text-foreground bg-background/80 px-3 py-1 rounded-full"
-                    >
-                      {food}
-                    </motion.span>
-                  ))}
-                </div>
+            {/* Foods list */}
+            <div className="px-6 pb-4">
+              <div className="flex flex-wrap justify-center gap-2">
+                {analysisResults.foods.map((food, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="text-sm text-foreground bg-muted px-3 py-1.5 rounded-full"
+                  >
+                    {food}
+                  </motion.span>
+                ))}
               </div>
+            </div>
 
-              {/* Nutrition overview */}
-              <div className="grid grid-cols-4 gap-2">
-                <div className="text-center p-2 bg-calories/10 rounded-xl">
-                  <div className="text-base font-bold text-calories">{analysisResults.calories}</div>
-                  <div className="text-xs text-muted-foreground">kcal</div>
+            {/* Large Calories Circle */}
+            <div className="flex justify-center mb-6">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="relative"
+              >
+                <svg className="w-44 h-44 -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    strokeWidth="8"
+                    className="stroke-muted"
+                  />
+                  <motion.circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    className="stroke-calories"
+                    strokeDasharray={2 * Math.PI * 45}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 45 * (1 - Math.min(analysisResults.calories / 800, 1)) }}
+                    transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-4xl font-bold text-foreground">{analysisResults.calories}</span>
+                  <span className="text-sm text-muted-foreground">kcal</span>
                 </div>
-                <div className="text-center p-2 bg-protein/10 rounded-xl">
-                  <div className="text-base font-bold text-protein">{analysisResults.protein}g</div>
-                  <div className="text-xs text-muted-foreground">protein</div>
-                </div>
-                <div className="text-center p-2 bg-carbs/10 rounded-xl">
-                  <div className="text-base font-bold text-carbs">{analysisResults.carbs}g</div>
-                  <div className="text-xs text-muted-foreground">carbs</div>
-                </div>
-                <div className="text-center p-2 bg-fat/10 rounded-xl">
-                  <div className="text-base font-bold text-fat">{analysisResults.fat}g</div>
-                  <div className="text-xs text-muted-foreground">fat</div>
-                </div>
-              </div>
+              </motion.div>
+            </div>
 
-              {/* Action buttons */}
-              <div className="flex gap-2">
-                <button
+            {/* Macro Circles Row */}
+            <div className="flex justify-center gap-6 px-6 mb-6">
+              {/* Protein */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="flex flex-col items-center"
+              >
+                <div className="relative">
+                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-muted" />
+                    <motion.circle
+                      cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
+                      className="stroke-protein"
+                      strokeDasharray={2 * Math.PI * 42}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(analysisResults.protein / 50, 1)) }}
+                      transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-bold text-foreground">{analysisResults.protein}g</span>
+                  </div>
+                </div>
+                <span className="mt-2 text-xs font-medium text-muted-foreground">Protein</span>
+              </motion.div>
+
+              {/* Carbs */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex flex-col items-center"
+              >
+                <div className="relative">
+                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-muted" />
+                    <motion.circle
+                      cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
+                      className="stroke-carbs"
+                      strokeDasharray={2 * Math.PI * 42}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(analysisResults.carbs / 100, 1)) }}
+                      transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-bold text-foreground">{analysisResults.carbs}g</span>
+                  </div>
+                </div>
+                <span className="mt-2 text-xs font-medium text-muted-foreground">Carbs</span>
+              </motion.div>
+
+              {/* Fat */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="flex flex-col items-center"
+              >
+                <div className="relative">
+                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-muted" />
+                    <motion.circle
+                      cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
+                      className="stroke-fat"
+                      strokeDasharray={2 * Math.PI * 42}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(analysisResults.fat / 50, 1)) }}
+                      transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-bold text-foreground">{analysisResults.fat}g</span>
+                  </div>
+                </div>
+                <span className="mt-2 text-xs font-medium text-muted-foreground">Fat</span>
+              </motion.div>
+            </div>
+
+            {/* Confidence indicator */}
+            {analysisResults.confidence && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-center text-sm text-muted-foreground px-6 mb-4"
+              >
+                {analysisResults.confidence === 'high' && '✓ High confidence'}
+                {analysisResults.confidence === 'medium' && '○ Medium confidence'}
+                {analysisResults.confidence === 'low' && '⚠ Low confidence'}
+              </motion.div>
+            )}
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Action buttons */}
+            <div className="px-6 pb-8 pb-safe space-y-3">
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                onClick={handleConfirm}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-full bg-primary text-primary-foreground font-semibold text-base"
+              >
+                <Check className="w-5 h-5" />
+                Add to Daily Goal
+              </motion.button>
+              <div className="flex gap-3">
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.75 }}
                   onClick={handleRetake}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-full border border-border text-foreground font-medium text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border border-border text-foreground font-medium text-sm"
                 >
                   <RotateCcw className="w-4 h-4" />
                   Retake
-                </button>
-                <button
+                </motion.button>
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
                   onClick={handleDecline}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-full border border-border text-foreground font-medium text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border border-border text-foreground font-medium text-sm"
                 >
-                  <X className="w-4 h-4" />
-                  View
-                </button>
-                <button
-                  onClick={handleConfirm}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-full bg-primary text-primary-foreground font-medium text-sm"
-                >
-                  <Check className="w-4 h-4" />
-                  Add
-                </button>
+                  View Only
+                </motion.button>
               </div>
             </div>
           </motion.div>

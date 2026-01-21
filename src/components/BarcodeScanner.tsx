@@ -226,14 +226,10 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound, onSwitchToC
 
   const handleConfirm = async () => {
     if (scannedProduct) {
-      // Stop scanner first
+      // Stop scanner and pass product data directly
       await stopScanner();
-      // Close the barcode scanner FIRST so it unmounts
+      onProductFound(scannedProduct);
       onOpenChange(false);
-      // Small delay to ensure the scanner is fully unmounted before opening confirmation
-      setTimeout(() => {
-        onProductFound(scannedProduct);
-      }, 100);
     }
   };
 
@@ -387,60 +383,195 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound, onSwitchToC
         {/* RESULTS VIEW */}
         {viewState === "results" && scannedProduct && (
           <motion.div
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="flex-1 flex flex-col justify-end px-4 pb-safe"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex-1 flex flex-col bg-background"
           >
-            {/* Results card */}
-            <div className="bg-background/95 backdrop-blur-xl rounded-t-3xl p-6 space-y-4">
-              <div className="text-center">
-                <h2 className="text-xl font-semibold text-foreground">Product Found</h2>
-                <p className="text-muted-foreground text-sm mt-1">
-                  {scannedProduct.foods[0]}
-                </p>
-              </div>
+            {/* Header area with product name */}
+            <div className="pt-8 pb-6 px-6 text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <h2 className="text-2xl font-bold text-foreground mb-1">
+                  {scannedProduct.foods[0]?.split(' (')[0] || 'Product'}
+                </h2>
+                {scannedProduct.foods[0]?.includes('(') && (
+                  <p className="text-muted-foreground text-sm">
+                    {scannedProduct.foods[0]?.match(/\(([^)]+)\)/)?.[1]}
+                  </p>
+                )}
+              </motion.div>
+            </div>
 
-              {/* Nutrition overview */}
-              <div className="grid grid-cols-4 gap-2">
-                <div className="text-center p-2 bg-calories/10 rounded-xl">
-                  <div className="text-base font-bold text-calories">{scannedProduct.calories}</div>
-                  <div className="text-xs text-muted-foreground">kcal</div>
+            {/* Large Calories Circle */}
+            <div className="flex justify-center mb-8">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="relative"
+              >
+                <svg className="w-44 h-44 -rotate-90" viewBox="0 0 100 100">
+                  <circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    strokeWidth="8"
+                    className="stroke-muted"
+                  />
+                  <motion.circle
+                    cx="50"
+                    cy="50"
+                    r="45"
+                    fill="none"
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    className="stroke-calories"
+                    strokeDasharray={2 * Math.PI * 45}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 45 }}
+                    animate={{ strokeDashoffset: 2 * Math.PI * 45 * (1 - Math.min(scannedProduct.calories / 800, 1)) }}
+                    transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-4xl font-bold text-foreground">{scannedProduct.calories}</span>
+                  <span className="text-sm text-muted-foreground">kcal</span>
                 </div>
-                <div className="text-center p-2 bg-protein/10 rounded-xl">
-                  <div className="text-base font-bold text-protein">{scannedProduct.protein}g</div>
-                  <div className="text-xs text-muted-foreground">protein</div>
-                </div>
-                <div className="text-center p-2 bg-carbs/10 rounded-xl">
-                  <div className="text-base font-bold text-carbs">{scannedProduct.carbs}g</div>
-                  <div className="text-xs text-muted-foreground">carbs</div>
-                </div>
-                <div className="text-center p-2 bg-fat/10 rounded-xl">
-                  <div className="text-base font-bold text-fat">{scannedProduct.fat}g</div>
-                  <div className="text-xs text-muted-foreground">fat</div>
-                </div>
-              </div>
+              </motion.div>
+            </div>
 
-              {/* Note */}
-              {scannedProduct.notes && (
-                <p className="text-center text-sm text-muted-foreground">{scannedProduct.notes}</p>
-              )}
+            {/* Macro Circles Row */}
+            <div className="flex justify-center gap-6 px-6 mb-8">
+              {/* Protein */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="flex flex-col items-center"
+              >
+                <div className="relative">
+                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-muted" />
+                    <motion.circle
+                      cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
+                      className="stroke-protein"
+                      strokeDasharray={2 * Math.PI * 42}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(scannedProduct.protein / 50, 1)) }}
+                      transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-bold text-foreground">{scannedProduct.protein}g</span>
+                  </div>
+                </div>
+                <span className="mt-2 text-xs font-medium text-muted-foreground">Protein</span>
+              </motion.div>
 
-              {/* Action buttons */}
-              <div className="flex gap-2">
-                <button
+              {/* Carbs */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                className="flex flex-col items-center"
+              >
+                <div className="relative">
+                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-muted" />
+                    <motion.circle
+                      cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
+                      className="stroke-carbs"
+                      strokeDasharray={2 * Math.PI * 42}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(scannedProduct.carbs / 100, 1)) }}
+                      transition={{ duration: 1, delay: 0.5, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-bold text-foreground">{scannedProduct.carbs}g</span>
+                  </div>
+                </div>
+                <span className="mt-2 text-xs font-medium text-muted-foreground">Carbs</span>
+              </motion.div>
+
+              {/* Fat */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+                className="flex flex-col items-center"
+              >
+                <div className="relative">
+                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="42" fill="none" strokeWidth="8" className="stroke-muted" />
+                    <motion.circle
+                      cx="50" cy="50" r="42" fill="none" strokeWidth="8" strokeLinecap="round"
+                      className="stroke-fat"
+                      strokeDasharray={2 * Math.PI * 42}
+                      initial={{ strokeDashoffset: 2 * Math.PI * 42 }}
+                      animate={{ strokeDashoffset: 2 * Math.PI * 42 * (1 - Math.min(scannedProduct.fat / 50, 1)) }}
+                      transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-bold text-foreground">{scannedProduct.fat}g</span>
+                  </div>
+                </div>
+                <span className="mt-2 text-xs font-medium text-muted-foreground">Fat</span>
+              </motion.div>
+            </div>
+
+            {/* Note */}
+            {scannedProduct.notes && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="text-center text-sm text-muted-foreground px-6 mb-6"
+              >
+                {scannedProduct.notes}
+              </motion.p>
+            )}
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Action buttons */}
+            <div className="px-6 pb-8 pb-safe space-y-3">
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                onClick={handleConfirm}
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-full bg-primary text-primary-foreground font-semibold text-base"
+              >
+                <Check className="w-5 h-5" />
+                Add to Daily Goal
+              </motion.button>
+              <div className="flex gap-3">
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.75 }}
                   onClick={handleRetake}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-full border border-border text-foreground font-medium text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border border-border text-foreground font-medium text-sm"
                 >
                   <RotateCcw className="w-4 h-4" />
                   Scan Again
-                </button>
-                <button
-                  onClick={handleConfirm}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-full bg-primary text-primary-foreground font-medium text-sm"
+                </motion.button>
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                  onClick={handleClose}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 rounded-full border border-border text-foreground font-medium text-sm"
                 >
-                  <Check className="w-4 h-4" />
-                  Add
-                </button>
+                  <X className="w-4 h-4" />
+                  Cancel
+                </motion.button>
               </div>
             </div>
           </motion.div>
