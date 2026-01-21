@@ -17,6 +17,8 @@ interface BarcodeScannerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onProductFound: (data: NutritionData) => void;
+  onConfirmMeal?: (data: NutritionData) => void;
+  onDeclineMeal?: (data: NutritionData) => void;
   onSwitchToCamera?: () => void;
   onSwitchToManual?: () => void;
 }
@@ -39,7 +41,7 @@ interface ProductData {
 
 type ViewState = "scanning" | "results";
 
-export function BarcodeScanner({ open, onOpenChange, onProductFound, onSwitchToCamera, onSwitchToManual }: BarcodeScannerProps) {
+export function BarcodeScanner({ open, onOpenChange, onProductFound, onConfirmMeal, onDeclineMeal, onSwitchToCamera, onSwitchToManual }: BarcodeScannerProps) {
   const [viewState, setViewState] = useState<ViewState>("scanning");
   const [isScanning, setIsScanning] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -226,9 +228,21 @@ export function BarcodeScanner({ open, onOpenChange, onProductFound, onSwitchToC
 
   const handleConfirm = async () => {
     if (scannedProduct) {
-      // Stop scanner and pass product data directly
       await stopScanner();
-      onProductFound(scannedProduct);
+      // Use onConfirmMeal if available (direct save like camera), otherwise fallback to onProductFound
+      if (onConfirmMeal) {
+        onConfirmMeal(scannedProduct);
+      } else {
+        onProductFound(scannedProduct);
+      }
+      onOpenChange(false);
+    }
+  };
+
+  const handleDecline = async () => {
+    if (scannedProduct && onDeclineMeal) {
+      await stopScanner();
+      onDeclineMeal(scannedProduct);
       onOpenChange(false);
     }
   };
