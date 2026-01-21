@@ -63,7 +63,6 @@ export function WeeklyCalendarStrip({ meals, onDateSelect }: WeeklyCalendarStrip
     }
   };
 
-  // Format month/year for header
   const monthYear = useMemo(() => {
     const middleDay = weekDays[3]?.date;
     if (!middleDay) return "";
@@ -71,29 +70,31 @@ export function WeeklyCalendarStrip({ meals, onDateSelect }: WeeklyCalendarStrip
   }, [weekDays]);
 
   return (
-    <div className="py-2">
+    <div className="py-3 px-1 rounded-2xl bg-card border border-border/60">
       {/* Month header with navigation */}
-      <div className="flex items-center justify-between mb-4 px-2">
-        <button
+      <div className="flex items-center justify-between mb-3 px-2">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
           onClick={goToPreviousWeek}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
         >
           <ChevronLeft className="w-4 h-4" />
-        </button>
+        </motion.button>
         
-        <span className="text-sm font-semibold">{monthYear}</span>
+        <span className="text-sm font-bold tracking-tight">{monthYear}</span>
         
-        <button
+        <motion.button
+          whileTap={{ scale: 0.9 }}
           onClick={goToNextWeek}
           disabled={weekOffset >= 0}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
             weekOffset >= 0 
               ? "text-muted-foreground/30 cursor-not-allowed" 
               : "text-muted-foreground hover:text-foreground hover:bg-muted"
           }`}
         >
           <ChevronRight className="w-4 h-4" />
-        </button>
+        </motion.button>
       </div>
 
       {/* Days strip */}
@@ -102,7 +103,7 @@ export function WeeklyCalendarStrip({ meals, onDateSelect }: WeeklyCalendarStrip
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.15}
         onDragEnd={handleSwipe}
-        className="flex items-center justify-between cursor-grab active:cursor-grabbing"
+        className="flex items-center justify-between cursor-grab active:cursor-grabbing px-1"
       >
         {weekDays.map((day, index) => (
           <motion.button
@@ -110,30 +111,36 @@ export function WeeklyCalendarStrip({ meals, onDateSelect }: WeeklyCalendarStrip
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.02 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => handleDayClick(day.date)}
-            className="flex flex-col items-center gap-1.5 flex-1"
+            className="flex flex-col items-center gap-1.5 flex-1 py-1"
           >
-            <span className="text-[11px] font-medium text-muted-foreground uppercase">
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
               {day.dayName}
             </span>
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center relative transition-all ${
+            <motion.div
+              animate={day.isSelected ? { scale: 1 } : { scale: 1 }}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center relative transition-all ${
                 day.isSelected
-                  ? "bg-foreground text-background"
+                  ? "bg-foreground text-background shadow-md"
                   : day.isToday
-                  ? "ring-1 ring-foreground/20"
-                  : ""
+                  ? "ring-2 ring-foreground/20 bg-muted/50"
+                  : "hover:bg-muted/50"
               }`}
             >
-              <span className={`text-sm font-semibold ${
+              <span className={`text-sm font-bold ${
                 day.isSelected ? "" : "text-foreground"
               }`}>
                 {day.dayNumber}
               </span>
-            </div>
-            {/* Meal indicator dot */}
-            <div className={`w-1.5 h-1.5 rounded-full transition-colors ${
-              day.hasMeals ? "bg-foreground" : "bg-transparent"
+            </motion.div>
+            {/* Meal indicator */}
+            <div className={`w-1.5 h-1.5 rounded-full transition-all ${
+              day.hasMeals 
+                ? day.isSelected 
+                  ? "bg-foreground" 
+                  : "bg-foreground/60" 
+                : "bg-transparent"
             }`} />
           </motion.button>
         ))}

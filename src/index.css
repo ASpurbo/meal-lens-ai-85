@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,120 +6,139 @@
 
 @layer base {
   :root {
-    /* Cal AI inspired - Clean white/black theme */
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
+    /* Modern clean theme with depth */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
+    --card-foreground: 0 0% 8%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
+    --popover-foreground: 0 0% 8%;
 
-    /* Pure black primary */
-    --primary: 0 0% 0%;
+    /* Refined primary */
+    --primary: 0 0% 12%;
     --primary-foreground: 0 0% 100%;
 
-    /* Light gray secondary */
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 0%;
+    /* Soft secondary */
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 12%;
 
-    --muted: 0 0% 96%;
+    --muted: 0 0% 94%;
     --muted-foreground: 0 0% 45%;
 
-    --accent: 0 0% 96%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 12%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 92%;
-    --input: 0 0% 92%;
-    --ring: 0 0% 0%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 12%;
 
-    --radius: 1.25rem;
+    --radius: 1rem;
 
-    /* Cal AI style tokens */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.04), 0 0 1px rgba(0, 0, 0, 0.04);
-    --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.08);
+    /* Enhanced shadows */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.03);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.03);
+    --shadow-elevated: 0 8px 30px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-glow: 0 0 20px rgba(0, 0, 0, 0.06);
 
-    /* Macro colors - Softer, Cal AI inspired */
-    --protein: 0 0% 0%;
-    --carbs: 0 0% 0%;
-    --fat: 0 0% 0%;
-    --calories: 0 0% 0%;
+    /* Vibrant macro colors */
+    --protein: 0 0% 12%;
+    --carbs: 0 0% 12%;
+    --fat: 0 0% 12%;
+    --calories: 0 0% 12%;
 
-    /* Progress ring colors */
-    --ring-calories: 0 0% 0%;
-    --ring-protein: 340 75% 55%;
-    --ring-carbs: 45 85% 50%;
-    --ring-fat: 200 90% 50%;
+    /* Progress ring colors - vibrant and distinct */
+    --ring-calories: 24 95% 53%;
+    --ring-protein: 338 75% 58%;
+    --ring-carbs: 45 93% 47%;
+    --ring-fat: 199 89% 48%;
+
+    /* Accent colors for UI elements */
+    --accent-orange: 24 95% 53%;
+    --accent-pink: 338 75% 58%;
+    --accent-amber: 45 93% 47%;
+    --accent-blue: 199 89% 48%;
+    --accent-green: 142 71% 45%;
+    --accent-purple: 270 70% 60%;
 
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 0 0% 0%;
-    --sidebar-primary: 0 0% 0%;
+    --sidebar-foreground: 0 0% 12%;
+    --sidebar-primary: 0 0% 12%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 0%;
-    --sidebar-border: 0 0% 92%;
-    --sidebar-ring: 0 0% 0%;
+    --sidebar-accent: 0 0% 94%;
+    --sidebar-accent-foreground: 0 0% 12%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 0 0% 12%;
   }
 }
 
-/* Dark mode - outside @layer base to ensure proper specificity */
+/* Dark mode */
 .dark {
-  --background: 0 0% 0%;
-  --foreground: 0 0% 100%;
+  --background: 0 0% 4%;
+  --foreground: 0 0% 96%;
 
-  --card: 0 0% 6%;
-  --card-foreground: 0 0% 100%;
+  --card: 0 0% 8%;
+  --card-foreground: 0 0% 96%;
 
-  --popover: 0 0% 6%;
-  --popover-foreground: 0 0% 100%;
+  --popover: 0 0% 8%;
+  --popover-foreground: 0 0% 96%;
 
-  --primary: 0 0% 100%;
-  --primary-foreground: 0 0% 0%;
+  --primary: 0 0% 96%;
+  --primary-foreground: 0 0% 8%;
 
-  --secondary: 0 0% 12%;
-  --secondary-foreground: 0 0% 100%;
+  --secondary: 0 0% 14%;
+  --secondary-foreground: 0 0% 96%;
 
-  --muted: 0 0% 12%;
-  --muted-foreground: 0 0% 55%;
+  --muted: 0 0% 14%;
+  --muted-foreground: 0 0% 50%;
 
-  --accent: 0 0% 12%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 0 0% 14%;
+  --accent-foreground: 0 0% 96%;
 
-  --destructive: 0 62% 50%;
+  --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 0 0% 15%;
-  --input: 0 0% 15%;
-  --ring: 0 0% 100%;
+  --border: 0 0% 16%;
+  --input: 0 0% 16%;
+  --ring: 0 0% 96%;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
-  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-elevated: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 8px 30px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.03);
 
   /* Macro colors dark mode */
-  --protein: 0 0% 100%;
-  --carbs: 0 0% 100%;
-  --fat: 0 0% 100%;
-  --calories: 0 0% 100%;
+  --protein: 0 0% 96%;
+  --carbs: 0 0% 96%;
+  --fat: 0 0% 96%;
+  --calories: 0 0% 96%;
 
-  --ring-calories: 0 0% 100%;
-  --ring-protein: 340 75% 65%;
-  --ring-carbs: 45 85% 60%;
-  --ring-fat: 200 90% 60%;
+  --ring-calories: 24 95% 60%;
+  --ring-protein: 338 75% 65%;
+  --ring-carbs: 45 93% 55%;
+  --ring-fat: 199 89% 55%;
 
-  --sidebar-background: 0 0% 4%;
-  --sidebar-foreground: 0 0% 100%;
-  --sidebar-primary: 0 0% 100%;
-  --sidebar-primary-foreground: 0 0% 4%;
-  --sidebar-accent: 0 0% 12%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 0 0% 15%;
-  --sidebar-ring: 0 0% 100%;
+  --accent-orange: 24 95% 60%;
+  --accent-pink: 338 75% 65%;
+  --accent-amber: 45 93% 55%;
+  --accent-blue: 199 89% 55%;
+  --accent-green: 142 71% 50%;
+  --accent-purple: 270 70% 65%;
+
+  --sidebar-background: 0 0% 6%;
+  --sidebar-foreground: 0 0% 96%;
+  --sidebar-primary: 0 0% 96%;
+  --sidebar-primary-foreground: 0 0% 6%;
+  --sidebar-accent: 0 0% 14%;
+  --sidebar-accent-foreground: 0 0% 96%;
+  --sidebar-border: 0 0% 16%;
+  --sidebar-ring: 0 0% 96%;
 }
 
 @layer base {
@@ -136,8 +155,8 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
-    letter-spacing: -0.02em;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    letter-spacing: -0.011em;
     height: 100%;
     overflow: hidden;
   }
@@ -147,11 +166,15 @@
     overflow: hidden;
   }
 
-  /* Cal AI style typography */
+  /* Premium typography */
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    letter-spacing: -0.03em;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
+
+  h1 { @apply text-3xl; }
+  h2 { @apply text-2xl; }
+  h3 { @apply text-xl; }
 }
 
 @layer utilities {
@@ -163,43 +186,81 @@
     box-shadow: var(--shadow-elevated);
   }
 
-  /* Glass effect - Cal AI style */
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Glass effect */
   .glass {
-    @apply bg-background/90 backdrop-blur-xl;
+    @apply bg-background/80 backdrop-blur-xl;
+    box-shadow: var(--shadow-sm);
   }
 
-  .glass-subtle {
-    @apply bg-background/70 backdrop-blur-lg;
-  }
-
-  /* Cal AI card style */
-  .cal-card {
-    @apply bg-card rounded-2xl p-6;
+  .glass-card {
+    @apply bg-card/90 backdrop-blur-lg;
     box-shadow: var(--shadow-card);
   }
 
-  /* Cal AI ring progress */
-  .ring-progress {
-    transition: stroke-dasharray 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Premium card style */
+  .cal-card {
+    @apply bg-card rounded-2xl border border-border/60;
+    box-shadow: var(--shadow-card);
   }
 
-  /* Cal AI button style */
+  /* Gradient backgrounds */
+  .gradient-subtle {
+    background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)/0.3) 100%);
+  }
+
+  .gradient-accent {
+    background: linear-gradient(135deg, hsl(var(--accent-orange)/0.1) 0%, hsl(var(--accent-pink)/0.1) 100%);
+  }
+
+  /* Ring progress */
+  .ring-progress {
+    transition: stroke-dasharray 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Premium button */
   .cal-button {
-    @apply inline-flex items-center justify-center rounded-full font-medium transition-all;
+    @apply inline-flex items-center justify-center rounded-full font-semibold transition-all;
     @apply bg-primary text-primary-foreground;
     @apply hover:opacity-90 active:scale-[0.98];
+    box-shadow: var(--shadow-sm);
   }
 
   /* Large number display */
   .cal-number {
-    font-weight: 700;
-    letter-spacing: -0.04em;
+    font-weight: 800;
+    letter-spacing: -0.03em;
     font-feature-settings: "tnum";
   }
 
-  /* Cal AI subtle text */
+  /* Labels */
   .cal-label {
-    @apply text-xs font-medium uppercase tracking-wider text-muted-foreground;
+    @apply text-[10px] font-semibold uppercase tracking-widest text-muted-foreground;
+  }
+
+  /* Macro indicator dots */
+  .macro-dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .macro-dot-protein {
+    background-color: hsl(var(--ring-protein));
+  }
+
+  .macro-dot-carbs {
+    background-color: hsl(var(--ring-carbs));
+  }
+
+  .macro-dot-fat {
+    background-color: hsl(var(--ring-fat));
+  }
+
+  .macro-dot-calories {
+    background-color: hsl(var(--ring-calories));
   }
 }
 
@@ -212,7 +273,7 @@
 @keyframes slide-up {
   from { 
     opacity: 0; 
-    transform: translateY(20px); 
+    transform: translateY(16px); 
   }
   to { 
     opacity: 1; 
@@ -223,7 +284,7 @@
 @keyframes scale-in {
   from { 
     opacity: 0; 
-    transform: scale(0.95); 
+    transform: scale(0.96); 
   }
   to { 
     opacity: 1; 
@@ -233,21 +294,31 @@
 
 @keyframes pulse-ring {
   0%, 100% { 
-    opacity: 0.4;
+    opacity: 0.5;
     transform: scale(1);
   }
   50% { 
     opacity: 0;
-    transform: scale(1.3);
+    transform: scale(1.4);
   }
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 .animate-fade-in {
-  animation: fade-in 0.3s ease-out forwards;
+  animation: fade-in 0.4s ease-out forwards;
 }
 
 .animate-slide-up {
-  animation: slide-up 0.4s ease-out forwards;
+  animation: slide-up 0.5s ease-out forwards;
 }
 
 .animate-scale-in {
@@ -255,7 +326,17 @@
 }
 
 .animate-pulse-ring {
-  animation: pulse-ring 2s ease-in-out infinite;
+  animation: pulse-ring 2.5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent 25%, hsl(var(--muted)) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
 }
 
 /* Hide scrollbar but keep functionality */
@@ -266,4 +347,21 @@
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+/* Stroke colors for progress rings */
+.stroke-calories {
+  stroke: hsl(var(--ring-calories));
+}
+
+.stroke-protein {
+  stroke: hsl(var(--ring-protein));
+}
+
+.stroke-carbs {
+  stroke: hsl(var(--ring-carbs));
+}
+
+.stroke-fat {
+  stroke: hsl(var(--ring-fat));
 }

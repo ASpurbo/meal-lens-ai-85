@@ -331,32 +331,28 @@ export default function ScanPage() {
         )}
       </div>
 
-      {/* Floating Action Button with subtle animation */}
+      {/* Floating Action Button */}
       <AnimatePresence>
         {showFab && (
           <motion.button
             initial={{ opacity: 0, scale: 0.5, y: 20 }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1, 
-              y: 0,
-            }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.5, y: 20 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={() => setShowCameraInterface(true)}
-            className="fixed bottom-24 right-6 z-50 w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl group"
+            className="fixed bottom-24 right-5 z-50 w-16 h-16 rounded-2xl bg-foreground text-background flex items-center justify-center shadow-xl"
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.92 }}
           >
-            {/* Pulse ring animation */}
+            {/* Glow effect */}
             <motion.span
-              className="absolute inset-0 rounded-full bg-primary/30"
+              className="absolute inset-0 rounded-2xl bg-foreground/40"
               animate={{
-                scale: [1, 1.3, 1],
-                opacity: [0.6, 0, 0.6],
+                scale: [1, 1.2, 1],
+                opacity: [0.5, 0, 0.5],
               }}
               transition={{
-                duration: 2,
+                duration: 2.5,
                 repeat: Infinity,
                 ease: "easeInOut",
               }}

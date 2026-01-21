@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, RefreshCw } from "lucide-react";
 
@@ -48,35 +48,45 @@ export function MotivationalQuote() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl border border-border p-4 relative overflow-hidden"
+      className="relative overflow-hidden rounded-2xl border border-border/60 p-5 bg-card"
     >
-      {/* Decorative sparkle */}
-      <div className="absolute top-3 right-3">
-        <Sparkles className="w-4 h-4 text-primary/40" />
-      </div>
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/5 to-orange-500/10 opacity-70" />
       
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={quote.text}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          transition={{ duration: 0.2 }}
-        >
-          <p className="text-sm font-medium leading-relaxed pr-8">
-            "{quote.text}"
-          </p>
-          <p className="text-xs text-muted-foreground mt-2">— {quote.author}</p>
-        </motion.div>
-      </AnimatePresence>
-      
-      <button
-        onClick={refreshQuote}
-        disabled={isRefreshing}
-        className="absolute bottom-3 right-3 w-7 h-7 rounded-full bg-background/50 flex items-center justify-center hover:bg-background transition-colors"
+      {/* Decorative elements */}
+      <motion.div 
+        animate={{ rotate: 360 }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        className="absolute top-4 right-4"
       >
-        <RefreshCw className={`w-3.5 h-3.5 text-muted-foreground ${isRefreshing ? "animate-spin" : ""}`} />
-      </button>
+        <Sparkles className="w-5 h-5 text-purple-400/40" />
+      </motion.div>
+      
+      <div className="relative z-10">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={quote.text}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25 }}
+          >
+            <p className="text-base font-medium leading-relaxed pr-10">
+              "{quote.text}"
+            </p>
+            <p className="text-sm text-muted-foreground mt-3 font-medium">— {quote.author}</p>
+          </motion.div>
+        </AnimatePresence>
+        
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={refreshQuote}
+          disabled={isRefreshing}
+          className="absolute bottom-4 right-4 w-8 h-8 rounded-full bg-background/80 flex items-center justify-center hover:bg-background transition-all shadow-sm border border-border/50"
+        >
+          <RefreshCw className={`w-4 h-4 text-muted-foreground ${isRefreshing ? "animate-spin" : ""}`} />
+        </motion.button>
+      </div>
     </motion.div>
   );
 }

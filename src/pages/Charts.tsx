@@ -13,12 +13,16 @@ export default function ChartsPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="space-y-6"
+          className="space-y-5"
         >
-          {/* Cal AI style header */}
-          <div className="text-center pt-4">
-            <h1 className="text-2xl font-semibold tracking-tight">Trends</h1>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center pt-2"
+          >
+            <h1 className="text-2xl font-bold tracking-tight">Trends</h1>
+            <p className="text-muted-foreground text-sm mt-1">Your weekly nutrition overview</p>
+          </motion.div>
 
           <NutritionCharts meals={meals} />
         </motion.div>
