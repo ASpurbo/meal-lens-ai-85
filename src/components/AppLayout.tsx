@@ -60,8 +60,8 @@ export function AppLayout({ children, hideMainScroll = false }: AppLayoutProps) 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-background">
       {/* Header - Cal AI style: minimal, clean */}
-      <header className="flex-shrink-0 bg-background border-b border-border">
-        <div className="px-4 py-3 flex items-center justify-between">
+      <header className="flex-shrink-0 bg-background border-b border-border pt-safe">
+        <div className="px-4 py-3 pt-2 flex items-center justify-between">
           <Link to="/scan" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-foreground flex items-center justify-center">
               <Apple className="w-4 h-4 text-background" />
