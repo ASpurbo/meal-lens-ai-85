@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { PageTransition } from "@/components/PageTransition";
 import { supabase } from "@/integrations/backendClient";
 import { differenceInYears, format, parse } from "date-fns";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
@@ -478,7 +479,8 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="h-screen bg-background flex flex-col overflow-hidden">
+    <PageTransition>
+      <div className="h-screen bg-background flex flex-col overflow-hidden pt-safe">
       <header className="flex-shrink-0 py-4 px-4">
         <motion.div
           initial={{ opacity: 0 }}
@@ -578,5 +580,6 @@ export default function Onboarding() {
         </div>
       </main>
     </div>
+    </PageTransition>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Camera } from "lucide-react";
+import { Camera } from "lucide-react";
 import { NutritionResults } from "@/components/NutritionResults";
 import { DailyProgress } from "@/components/DailyProgress";
 import { SmartRecommendations } from "@/components/SmartRecommendations";
@@ -14,6 +14,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { QuickStats } from "@/components/QuickStats";
 import { MotivationalQuote } from "@/components/MotivationalQuote";
 import { WaterIntake } from "@/components/WaterIntake";
+import { PageTransition } from "@/components/PageTransition";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
@@ -223,8 +224,8 @@ export default function ScanPage() {
   };
 
   return (
-    <AppLayout>
-      {showTour && <TourGuide onComplete={completeTour} />}
+    <PageTransition>
+      <AppLayout>
       
       {pendingResults && (
         <FoodScanConfirmation
@@ -360,6 +361,7 @@ export default function ScanPage() {
           </motion.button>
         )}
       </AnimatePresence>
-    </AppLayout>
+      </AppLayout>
+    </PageTransition>
   );
 }

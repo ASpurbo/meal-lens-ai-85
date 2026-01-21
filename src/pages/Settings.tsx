@@ -6,6 +6,7 @@ import {
   ChevronRight, AlertTriangle, Loader2, ArrowLeft,
   X, Globe, HelpCircle, FileText, Monitor
 } from "lucide-react";
+import { PageTransition } from "@/components/PageTransition";
 import { useTheme } from "@/hooks/useTheme";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -327,11 +328,12 @@ export default function Settings() {
   );
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="h-full flex flex-col bg-background"
-    >
+    <PageTransition>
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="h-full flex flex-col bg-background pt-safe"
+      >
       {/* Cal AI style header */}
       <header className="flex-shrink-0 px-4 py-4 flex items-center gap-4">
         <button 
@@ -684,5 +686,6 @@ export default function Settings() {
         </DialogContent>
       </Dialog>
     </motion.div>
+    </PageTransition>
   );
 }

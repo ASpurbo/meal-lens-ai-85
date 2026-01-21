@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Loader2, Bot, User, Sparkles, Brain, Utensils, Target, Lightbulb, ArrowRight } from "lucide-react";
+import { Send, Loader2, User, Sparkles, Brain, Utensils, Target, Lightbulb, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AppLayout } from "@/components/AppLayout";
+import { PageTransition } from "@/components/PageTransition";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase, BACKEND_URL } from "@/integrations/backendClient";
 import { useQuery } from "@tanstack/react-query";
@@ -162,9 +163,10 @@ export default function Coach() {
   };
 
   return (
-    <AppLayout hideMainScroll>
-      <div className="flex flex-col h-full">
-        {/* Messages Area - Scrollable */}
+    <PageTransition>
+      <AppLayout hideMainScroll>
+        <div className="flex flex-col h-full">
+          {/* Messages Area - Scrollable */}
         <div className="flex-1 overflow-y-auto overscroll-none px-1">
           <AnimatePresence mode="wait">
             {messages.length === 0 ? (
@@ -313,6 +315,7 @@ export default function Coach() {
           </form>
         </div>
       </div>
-    </AppLayout>
+      </AppLayout>
+    </PageTransition>
   );
 }
