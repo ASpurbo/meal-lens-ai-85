@@ -241,6 +241,8 @@ export default function ScanPage() {
         open={showManualEntry}
         onOpenChange={setShowManualEntry}
         onSubmit={handleManualSubmit}
+        onConfirmMeal={handleConfirmAdd}
+        onDeclineMeal={handleDeclineAdd}
         onSwitchToCamera={handleSwitchToCamera}
         onSwitchToBarcode={handleSwitchToBarcode}
       />
