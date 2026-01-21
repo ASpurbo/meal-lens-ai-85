@@ -249,6 +249,8 @@ export default function ScanPage() {
         open={showBarcodeScanner}
         onOpenChange={setShowBarcodeScanner}
         onProductFound={handleBarcodeProduct}
+        onConfirmMeal={handleConfirmAdd}
+        onDeclineMeal={handleDeclineAdd}
         onSwitchToCamera={handleSwitchToCamera}
         onSwitchToManual={handleSwitchToManual}
       />
