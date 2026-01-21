@@ -5,7 +5,6 @@ import { useNutritionGoals } from "@/hooks/useNutritionGoals";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/backendClient";
 import { useAuth } from "@/hooks/useAuth";
-import { useTranslation } from "@/hooks/useTranslation";
 
 interface QuickStatsProps {
   meals: MealAnalysis[];
@@ -14,7 +13,6 @@ interface QuickStatsProps {
 export function QuickStats({ meals }: QuickStatsProps) {
   const { goals } = useNutritionGoals();
   const { user } = useAuth();
-  const { t } = useTranslation();
 
   const { data: streakData } = useQuery({
     queryKey: ["user-streak", user?.id],
@@ -50,29 +48,29 @@ export function QuickStats({ meals }: QuickStatsProps) {
       icon: Flame,
       label: "Calories",
       value: `${caloriePercent}%`,
-      color: "text-orange-500",
-      bgColor: "bg-orange-500/10",
+      gradient: "from-orange-500/20 to-red-500/20",
+      iconColor: "text-orange-500",
     },
     {
       icon: Zap,
       label: "Protein",
       value: `${proteinPercent}%`,
-      color: "text-pink-500",
-      bgColor: "bg-pink-500/10",
+      gradient: "from-pink-500/20 to-rose-500/20",
+      iconColor: "text-pink-500",
     },
     {
       icon: Trophy,
       label: "Streak",
       value: `${currentStreak}`,
-      color: "text-amber-500",
-      bgColor: "bg-amber-500/10",
+      gradient: "from-amber-500/20 to-yellow-500/20",
+      iconColor: "text-amber-500",
     },
     {
       icon: TrendingUp,
       label: "Logged",
       value: `${todayMeals.length}`,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
+      gradient: "from-blue-500/20 to-cyan-500/20",
+      iconColor: "text-blue-500",
     },
   ];
 
@@ -85,16 +83,21 @@ export function QuickStats({ meals }: QuickStatsProps) {
       {stats.map((stat, index) => (
         <motion.div
           key={stat.label}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
-          className="bg-card rounded-xl border border-border p-3 text-center"
+          className="relative overflow-hidden rounded-2xl border border-border/60 p-3 text-center bg-card"
         >
-          <div className={`w-8 h-8 rounded-full ${stat.bgColor} mx-auto mb-2 flex items-center justify-center`}>
-            <stat.icon className={`w-4 h-4 ${stat.color}`} />
+          {/* Gradient background */}
+          <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-60`} />
+          
+          <div className="relative z-10">
+            <div className="w-9 h-9 rounded-xl bg-background/80 mx-auto mb-2 flex items-center justify-center shadow-sm">
+              <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
+            </div>
+            <p className="text-lg font-bold cal-number">{stat.value}</p>
+            <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">{stat.label}</p>
           </div>
-          <p className="text-lg font-bold">{stat.value}</p>
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{stat.label}</p>
         </motion.div>
       ))}
     </motion.div>

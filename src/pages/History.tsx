@@ -32,14 +32,18 @@ export default function HistoryPage() {
     <PageTransition>
       <AppLayout>
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-5"
         >
-          <div>
-            <h1 className="text-2xl font-bold">{t.history.title}</h1>
-            <p className="text-muted-foreground text-sm">{t.history.startTracking}</p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center pt-2"
+          >
+            <h1 className="text-2xl font-bold tracking-tight">{t.history.title}</h1>
+            <p className="text-muted-foreground text-sm mt-1">{t.history.startTracking}</p>
+          </motion.div>
 
           <MealHistory
             meals={meals}

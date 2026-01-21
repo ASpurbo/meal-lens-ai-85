@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useTranslation } from "@/hooks/useTranslation";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -59,36 +60,44 @@ export function AppLayout({ children, hideMainScroll = false }: AppLayoutProps) 
 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-background">
-      {/* Header - Cal AI style: minimal, clean */}
-      <header className="flex-shrink-0 bg-background border-b border-border pt-safe">
-        <div className="px-4 py-3 pt-2 flex items-center justify-between">
-          <Link to="/scan" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-foreground flex items-center justify-center">
-              <Apple className="w-4 h-4 text-background" />
-            </div>
+      {/* Header */}
+      <header className="flex-shrink-0 bg-background/80 backdrop-blur-lg border-b border-border/50 pt-safe sticky top-0 z-40">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <Link to="/scan" className="flex items-center gap-2.5">
+            <motion.div 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-9 h-9 rounded-xl bg-foreground flex items-center justify-center shadow-sm"
+            >
+              <Apple className="w-5 h-5 text-background" />
+            </motion.div>
           </Link>
           
           <div className="flex items-center gap-1">
-            <button 
+            <motion.button 
+              whileTap={{ scale: 0.95 }}
               onClick={handleCoachClick}
               className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center transition-all",
+                "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
                 isCoachPage 
-                  ? "bg-foreground text-background" 
+                  ? "bg-foreground text-background shadow-sm" 
                   : "hover:bg-muted text-muted-foreground hover:text-foreground"
               )}
             >
               <Sparkles className="w-5 h-5" />
-            </button>
+            </motion.button>
             <Link to="/settings">
-              <button className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                location.pathname === "/settings"
-                  ? "bg-foreground text-background"
-                  : "hover:bg-muted text-muted-foreground hover:text-foreground"
-              )}>
+              <motion.button 
+                whileTap={{ scale: 0.95 }}
+                className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                  location.pathname === "/settings"
+                    ? "bg-foreground text-background shadow-sm"
+                    : "hover:bg-muted text-muted-foreground hover:text-foreground"
+                )}
+              >
                 <Settings className="w-5 h-5" />
-              </button>
+              </motion.button>
             </Link>
           </div>
         </div>
@@ -107,9 +116,9 @@ export function AppLayout({ children, hideMainScroll = false }: AppLayoutProps) 
         </div>
       </main>
 
-      {/* Bottom Navigation - Cal AI style: clean pill indicators */}
-      <nav className="flex-shrink-0 bg-background border-t border-border pb-safe">
-        <div className="px-2">
+      {/* Bottom Navigation */}
+      <nav className="flex-shrink-0 bg-background/80 backdrop-blur-lg border-t border-border/50 pb-safe">
+        <div className="px-3">
           <div className="flex items-center justify-around py-2">
             {navItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -117,25 +126,25 @@ export function AppLayout({ children, hideMainScroll = false }: AppLayoutProps) 
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={cn(
-                    "flex flex-col items-center gap-1 py-2 px-4 rounded-2xl transition-all min-w-[64px]",
-                    isActive 
-                      ? "text-foreground" 
-                      : "text-muted-foreground"
-                  )}
+                  className="flex flex-col items-center gap-1 py-2 px-4 min-w-[64px]"
                 >
-                  <div className={cn(
-                    "w-10 h-10 rounded-full flex items-center justify-center transition-all",
-                    isActive && "bg-foreground"
-                  )}>
+                  <motion.div 
+                    whileTap={{ scale: 0.9 }}
+                    className={cn(
+                      "w-11 h-11 rounded-xl flex items-center justify-center transition-all",
+                      isActive 
+                        ? "bg-foreground shadow-md" 
+                        : "hover:bg-muted"
+                    )}
+                  >
                     <item.icon className={cn(
                       "w-5 h-5 transition-colors",
-                      isActive ? "text-background" : ""
+                      isActive ? "text-background" : "text-muted-foreground"
                     )} />
-                  </div>
+                  </motion.div>
                   <span className={cn(
-                    "text-[10px] font-medium",
-                    isActive && "font-semibold"
+                    "text-[10px] font-semibold transition-colors",
+                    isActive ? "text-foreground" : "text-muted-foreground"
                   )}>
                     {item.label}
                   </span>

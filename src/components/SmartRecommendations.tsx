@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Lightbulb, ChevronRight } from "lucide-react";
+import { Lightbulb, ChevronRight, Sparkles } from "lucide-react";
 import { MealAnalysis } from "@/hooks/useMealHistory";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -10,7 +10,6 @@ interface SmartRecommendationsProps {
   meals: MealAnalysis[];
 }
 
-// Recipe database (keeping existing recipes)
 const recipes: Recipe[] = [
   { id: "1", name: "Greek Yogurt Power Bowl", description: "High-protein breakfast", prepTime: "5 mins", servings: 1, calories: 320, protein: 25, carbs: 35, fat: 8, difficulty: "Easy", ingredients: ["1 cup Greek yogurt", "1/2 cup berries", "2 tbsp honey", "1/4 cup granola"], instructions: ["Add yogurt to bowl", "Top with berries and granola", "Drizzle honey"] },
   { id: "2", name: "Grilled Chicken Salad", description: "Lean protein with greens", prepTime: "20 mins", servings: 1, calories: 380, protein: 35, carbs: 15, fat: 18, difficulty: "Easy", ingredients: ["150g chicken", "2 cups greens", "1/2 cucumber", "Olive oil"], instructions: ["Grill chicken", "Arrange salad", "Top and dress"] },
@@ -39,7 +38,7 @@ export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
     };
 
     if (todayMeals.length === 0) {
-      return { title: "Start your day", subtitle: "Log your first meal", recipes: recipes.slice(0, 2) };
+      return { title: "Start your day right", subtitle: "Log your first meal", recipes: recipes.slice(0, 2) };
     }
     if (remaining.protein > 15) {
       return { title: `${Math.round(remaining.protein)}g protein to go`, subtitle: "Try these high-protein options", recipes: recipes.filter(r => r.protein >= 15).slice(0, 2) };
@@ -60,27 +59,40 @@ export function SmartRecommendations({ meals }: SmartRecommendationsProps) {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-card rounded-2xl border border-border p-4"
+        className="relative overflow-hidden bg-card rounded-2xl border border-border/60 p-4"
       >
-        <div className="flex items-center gap-2 mb-3">
-          <Lightbulb className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium">{recommendation.title}</span>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-500/10 opacity-60" />
         
-        <div className="space-y-2">
-          {recommendation.recipes.map((recipe) => (
-            <button
-              key={recipe.id}
-              onClick={() => setSelectedRecipe(recipe)}
-              className="w-full flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted transition-colors text-left"
-            >
-              <div>
-                <p className="font-medium text-sm">{recipe.name}</p>
-                <p className="text-xs text-muted-foreground">{recipe.calories} cal • {recipe.protein}g protein</p>
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground" />
-            </button>
-          ))}
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-green-600" />
+            </div>
+            <div>
+              <p className="font-bold text-sm">{recommendation.title}</p>
+              <p className="text-xs text-muted-foreground">{recommendation.subtitle}</p>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            {recommendation.recipes.map((recipe, index) => (
+              <motion.button
+                key={recipe.id}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedRecipe(recipe)}
+                className="w-full flex items-center justify-between p-3 rounded-xl bg-background/70 hover:bg-background transition-colors text-left border border-border/30"
+              >
+                <div>
+                  <p className="font-semibold text-sm">{recipe.name}</p>
+                  <p className="text-xs text-muted-foreground">{recipe.calories} cal • {recipe.protein}g protein</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              </motion.button>
+            ))}
+          </div>
         </div>
       </motion.div>
     </>

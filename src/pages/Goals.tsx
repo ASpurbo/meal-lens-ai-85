@@ -12,21 +12,29 @@ export default function GoalsPage() {
     <PageTransition>
       <AppLayout>
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="space-y-6"
         >
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center pt-2"
+          >
             <h1 className="text-2xl font-bold tracking-tight">{t.goals.title}</h1>
-            <p className="text-muted-foreground text-sm">{t.goals.dailyTarget}</p>
-          </div>
+            <p className="text-muted-foreground text-sm mt-1">{t.goals.dailyTarget}</p>
+          </motion.div>
 
           <NutritionGoals />
           
-          <div>
-            <h2 className="text-lg font-semibold mb-4">{t.goals.badges}</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-4 px-1">{t.goals.badges}</h2>
             <GamificationPanel />
-          </div>
+          </motion.div>
         </motion.div>
       </AppLayout>
     </PageTransition>

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
 
-const WATER_GOAL = 8; // 8 glasses per day
+const WATER_GOAL = 8;
 
 export function WaterIntake() {
   const [glasses, setGlasses] = useState(() => {
@@ -39,64 +39,72 @@ export function WaterIntake() {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-card rounded-2xl border border-border p-4"
+      className="relative overflow-hidden rounded-2xl border border-border/60 p-4 bg-card"
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-            <Droplets className="w-4 h-4 text-blue-500" />
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 opacity-60" />
+      
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <Droplets className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <p className="font-semibold">Hydration</p>
+              <p className="text-xs text-muted-foreground">{glasses} of {WATER_GOAL} glasses</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium">Water</p>
-            <p className="text-xs text-muted-foreground">{glasses}/{WATER_GOAL} glasses</p>
+          
+          <div className="flex items-center gap-2">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={removeGlass}
+              disabled={glasses === 0}
+              className="w-9 h-9 rounded-xl bg-muted/80 flex items-center justify-center hover:bg-muted disabled:opacity-30 transition-all shadow-sm"
+            >
+              <Minus className="w-4 h-4" />
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={addGlass}
+              disabled={glasses >= WATER_GOAL}
+              className="w-9 h-9 rounded-xl bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 disabled:opacity-30 transition-all shadow-sm"
+            >
+              <Plus className="w-4 h-4" />
+            </motion.button>
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
-          <button
-            onClick={removeGlass}
-            disabled={glasses === 0}
-            className="w-8 h-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 disabled:opacity-40 transition-colors"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          <button
-            onClick={addGlass}
-            disabled={glasses >= WATER_GOAL}
-            className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center hover:bg-blue-600 disabled:opacity-40 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-      
-      {/* Progress bar */}
-      <div className="h-2 bg-muted rounded-full overflow-hidden">
-        <motion.div
-          className="h-full bg-blue-500 rounded-full"
-          initial={{ width: 0 }}
-          animate={{ width: `${percentage}%` }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-        />
-      </div>
-      
-      {/* Glass indicators */}
-      <div className="flex justify-between mt-3">
-        {Array.from({ length: WATER_GOAL }).map((_, i) => (
+        {/* Progress bar */}
+        <div className="h-2.5 bg-muted/80 rounded-full overflow-hidden shadow-inner">
           <motion.div
-            key={i}
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: i * 0.05 }}
-            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors ${
-              i < glasses 
-                ? "bg-blue-500 text-white" 
-                : "bg-muted text-muted-foreground"
-            }`}
-          >
-            <Droplets className="w-3 h-3" />
-          </motion.div>
-        ))}
+            className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${percentage}%` }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
+        </div>
+        
+        {/* Glass indicators */}
+        <div className="flex justify-between mt-3 gap-1">
+          {Array.from({ length: WATER_GOAL }).map((_, i) => (
+            <motion.button
+              key={i}
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: i * 0.03 }}
+              onClick={() => setGlasses(i + 1)}
+              className={`flex-1 h-8 rounded-lg flex items-center justify-center transition-all ${
+                i < glasses 
+                  ? "bg-blue-500 text-white shadow-sm" 
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <Droplets className="w-3.5 h-3.5" />
+            </motion.button>
+          ))}
+        </div>
       </div>
     </motion.div>
   );

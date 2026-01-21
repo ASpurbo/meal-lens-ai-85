@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Flame, Trophy, Target, Star, Award, Zap, Check } from "lucide-react";
+import { Flame, Trophy, Target, Star, Award, Zap, Check, Medal } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/backendClient";
 
@@ -47,7 +47,6 @@ export function GamificationPanel() {
     
     const fetchData = async () => {
       try {
-        // Fetch streak
         const { data: streakData } = await supabase
           .from("user_streaks")
           .select("*")
@@ -56,7 +55,6 @@ export function GamificationPanel() {
         
         if (streakData) setStreak(streakData);
 
-        // Fetch badges
         const { data: badgesData } = await supabase
           .from("user_badges")
           .select("*")
@@ -64,7 +62,6 @@ export function GamificationPanel() {
         
         if (badgesData) setBadges(badgesData);
 
-        // Fetch active challenges with progress
         const { data: challengesData } = await supabase
           .from("weekly_challenges")
           .select("*")
@@ -100,7 +97,7 @@ export function GamificationPanel() {
     return (
       <div className="space-y-4">
         {[1, 2].map((i) => (
-          <div key={i} className="bg-card rounded-2xl border border-border p-6 animate-pulse">
+          <div key={i} className="bg-card rounded-2xl border border-border/60 p-6 animate-pulse">
             <div className="h-4 bg-muted rounded w-24 mb-4" />
             <div className="h-8 bg-muted rounded w-16" />
           </div>
@@ -111,46 +108,64 @@ export function GamificationPanel() {
 
   return (
     <div className="space-y-4">
-      {/* Streak Card - Cal AI Style */}
+      {/* Streak Card */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-card rounded-2xl border border-border p-6"
+        className="relative overflow-hidden bg-card rounded-2xl border border-border/60 p-5"
       >
-        <div className="flex items-center justify-between">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/15 to-red-500/15 opacity-60" />
+        <div className="relative z-10 flex items-center justify-between">
           <div>
-            <p className="text-sm text-muted-foreground mb-1">Current Streak</p>
-            <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-bold tracking-tight">
+            <p className="text-sm font-semibold text-muted-foreground mb-1">Current Streak</p>
+            <div className="flex items-baseline gap-1.5">
+              <motion.span 
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.2, type: "spring" }}
+                className="text-5xl font-extrabold tracking-tighter cal-number"
+              >
                 {streak?.current_streak || 0}
-              </span>
-              <span className="text-muted-foreground text-sm">days</span>
+              </motion.span>
+              <span className="text-muted-foreground font-medium">days</span>
             </div>
           </div>
-          <div className="w-14 h-14 rounded-full bg-orange-500/10 flex items-center justify-center">
-            <Flame className="w-7 h-7 text-orange-500" />
-          </div>
+          <motion.div 
+            animate={{ rotate: [0, 10, -10, 0] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+            className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500/30 to-red-500/30 flex items-center justify-center"
+          >
+            <Flame className="w-8 h-8 text-orange-500" />
+          </motion.div>
         </div>
         
         {streak && streak.longest_streak > 0 && (
-          <div className="mt-4 pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground">
-              Longest streak: <span className="text-foreground font-medium">{streak.longest_streak} days</span>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="relative z-10 mt-4 pt-4 border-t border-border/50"
+          >
+            <p className="text-sm text-muted-foreground">
+              Best streak: <span className="text-foreground font-bold">{streak.longest_streak} days</span>
             </p>
-          </div>
+          </motion.div>
         )}
       </motion.div>
 
-      {/* Badges - Cal AI Style */}
+      {/* Badges */}
       {badges.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-card rounded-2xl border border-border p-6"
+          className="bg-card rounded-2xl border border-border/60 p-5"
         >
-          <p className="text-sm text-muted-foreground mb-4">Achievements</p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex items-center gap-2 mb-4">
+            <Medal className="w-4 h-4 text-muted-foreground" />
+            <p className="text-sm font-bold text-muted-foreground uppercase tracking-wide">Achievements</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
             {badges.map((badge, index) => {
               const Icon = badgeIcons[badge.badge_type] || Trophy;
               return (
@@ -159,10 +174,10 @@ export function GamificationPanel() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: index * 0.05 }}
-                  className="flex items-center gap-2 px-3 py-2 rounded-full bg-muted/50"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl bg-muted/60 border border-border/50"
                 >
                   <Icon className="w-4 h-4 text-foreground" />
-                  <span className="text-sm font-medium">{badge.badge_name}</span>
+                  <span className="text-sm font-semibold">{badge.badge_name}</span>
                 </motion.div>
               );
             })}
@@ -170,15 +185,15 @@ export function GamificationPanel() {
         </motion.div>
       )}
 
-      {/* Challenges - Cal AI Style */}
+      {/* Challenges */}
       {challenges.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-card rounded-2xl border border-border p-6"
+          className="bg-card rounded-2xl border border-border/60 p-5"
         >
-          <p className="text-sm text-muted-foreground mb-4">Weekly Challenges</p>
+          <p className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-4">Weekly Challenges</p>
           <div className="space-y-4">
             {challenges.map((challenge, index) => {
               const progressPercent = challenge.target_value 
@@ -194,29 +209,29 @@ export function GamificationPanel() {
                   className="space-y-2"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {challenge.completed ? (
-                        <div className="w-5 h-5 rounded-full bg-foreground flex items-center justify-center">
-                          <Check className="w-3 h-3 text-background" />
+                        <div className="w-6 h-6 rounded-lg bg-foreground flex items-center justify-center">
+                          <Check className="w-4 h-4 text-background" />
                         </div>
                       ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
+                        <div className="w-6 h-6 rounded-lg border-2 border-muted-foreground/30" />
                       )}
-                      <span className={`text-sm font-medium ${challenge.completed ? 'line-through text-muted-foreground' : ''}`}>
+                      <span className={`font-semibold ${challenge.completed ? 'line-through text-muted-foreground' : ''}`}>
                         {challenge.title}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-sm font-bold text-muted-foreground">
                       {challenge.progress || 0}/{challenge.target_value}
                     </span>
                   </div>
                   
                   {!challenge.completed && (
-                    <div className="h-1.5 bg-muted rounded-full overflow-hidden ml-7">
+                    <div className="h-2 bg-muted rounded-full overflow-hidden ml-9">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${progressPercent}%` }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
                         className="h-full bg-foreground rounded-full"
                       />
                     </div>
@@ -235,10 +250,14 @@ export function GamificationPanel() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center py-12"
         >
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
+          <motion.div 
+            animate={{ y: [0, -5, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-muted flex items-center justify-center"
+          >
             <Trophy className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <p className="text-muted-foreground text-sm">
+          </motion.div>
+          <p className="text-muted-foreground text-sm max-w-[200px] mx-auto">
             Log meals daily to earn badges and build streaks
           </p>
         </motion.div>
