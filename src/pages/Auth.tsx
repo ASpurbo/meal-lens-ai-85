@@ -268,17 +268,17 @@ export default function Auth() {
             </button>
           </div>
 
-          <div className="mt-6 text-center flex items-center justify-center gap-3">
+          <div className="mt-6 text-center flex items-center justify-center gap-3 pb-6">
             <Link
               to="/datenschutz"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors relative z-10"
             >
               Datenschutzerklärung
             </Link>
             <span className="text-xs text-muted-foreground">·</span>
             <Link
               to="/impressum"
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors relative z-10"
             >
               Impressum
             </Link>

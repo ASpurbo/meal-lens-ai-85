@@ -225,6 +225,9 @@ export default function ScanPage() {
 
   return (
     <PageTransition>
+      {/* Tour Guide Overlay */}
+      {showTour && <TourGuide onComplete={completeTour} />}
+
       <AppLayout>
       
       {pendingResults && (
