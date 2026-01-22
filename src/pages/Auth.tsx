@@ -128,9 +128,9 @@ export default function Auth() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background flex flex-col pt-safe">
+      <div className="min-h-screen bg-background flex flex-col pt-safe overflow-y-auto">
       {/* Cal AI style - centered logo */}
-      <header className="container py-8">
+      <header className="container py-6 shrink-0">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -141,7 +141,7 @@ export default function Auth() {
         </motion.div>
       </header>
 
-      <main className="flex-1 container flex items-center justify-center py-8 px-4">
+      <main className="flex-1 container flex items-center justify-center py-6 px-4 pb-safe">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
