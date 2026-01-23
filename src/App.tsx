@@ -11,6 +11,7 @@ import { SplashScreen } from "./components/SplashScreen";
 import { OfflineBanner } from "./components/OfflineBanner";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import Landing from "./pages/Landing";
 import VerifyEmail from "./pages/VerifyEmail";
 import Onboarding from "./pages/Onboarding";
 import Scan from "./pages/Scan";
@@ -32,6 +33,7 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<Index />} />
+        <Route path="/welcome" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/verify" element={<VerifyEmail />} />
         <Route path="/onboarding" element={<Onboarding />} />
