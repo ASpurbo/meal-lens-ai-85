@@ -18,28 +18,25 @@ export function HorizontalRulerPicker({
   unit = "kg",
 }: HorizontalRulerPickerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const hasInitializedRef = useRef(false);
   
   const tickWidth = 8;
   const containerWidth = typeof window !== "undefined" ? window.innerWidth : 375;
   const centerOffset = containerWidth / 2;
   const totalTicks = Math.floor((max - min) / step) + 1;
 
+  // Only scroll to initial value on mount, not on every value change
   useEffect(() => {
-    if (containerRef.current && !isScrolling) {
+    if (containerRef.current && !hasInitializedRef.current) {
+      hasInitializedRef.current = true;
       const scrollPosition = ((value - min) / step) * tickWidth;
-      containerRef.current.scrollTo({
-        left: scrollPosition,
-        behavior: "smooth",
-      });
+      containerRef.current.scrollLeft = scrollPosition;
     }
-  }, [value, min, step, tickWidth, isScrolling]);
+  }, []);
 
   const handleScroll = () => {
     if (!containerRef.current) return;
-    
-    setIsScrolling(true);
     
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
@@ -61,9 +58,7 @@ export function HorizontalRulerPicker({
         left: tickIndex * tickWidth,
         behavior: "smooth",
       });
-      
-      setIsScrolling(false);
-    }, 100);
+    }, 150);
   };
 
   return (
