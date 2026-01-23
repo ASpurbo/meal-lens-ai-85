@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Apple, Home, BarChart3, Settings, Loader2, Flame, Sparkles } from "lucide-react";
+import { Apple, Home, BarChart3, Trophy, Loader2, Flame, Sparkles, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useQuery } from "@tanstack/react-query";
@@ -37,7 +37,7 @@ export function AppLayout({ children, hideMainScroll = false }: AppLayoutProps) 
   const navItems = [
     { path: "/scan", icon: Home, label: "Home" },
     { path: "/charts", icon: BarChart3, label: "Progress" },
-    { path: "/settings", icon: Settings, label: "Settings" },
+    { path: "/goals", icon: Trophy, label: "Goals" },
   ];
 
   useEffect(() => {
