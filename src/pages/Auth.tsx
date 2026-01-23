@@ -145,7 +145,7 @@ export default function Auth() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background flex flex-col pt-safe overflow-y-auto">
+      <div className="h-screen bg-background flex flex-col pt-safe overflow-y-auto">
         {/* Header */}
         <header className="container py-6 shrink-0">
           <motion.div
