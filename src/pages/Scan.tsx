@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus } from "lucide-react";
-import { DailyProgress } from "@/components/DailyProgress";
+import { DashboardCards } from "@/components/DashboardCards";
 import { SmartRecommendations } from "@/components/SmartRecommendations";
 import { FoodScanConfirmation } from "@/components/FoodScanConfirmation";
 import { ManualMealEntry } from "@/components/ManualMealEntry";
@@ -302,12 +302,12 @@ export default function ScanPage() {
           />
         </motion.div>
 
-        {/* Daily Progress */}
+        {/* Dashboard Cards (Swipeable) */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <DailyProgress meals={meals} selectedDate={selectedDate} />
+          <DashboardCards meals={meals} selectedDate={selectedDate} />
         </motion.div>
 
         {/* Recently Uploaded */}
@@ -338,24 +338,11 @@ export default function ScanPage() {
             exit={{ opacity: 0, scale: 0.5, y: 20 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={handleOpenCamera}
-            className="fixed bottom-24 right-5 z-50 w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center shadow-xl"
+            className="fixed bottom-24 right-5 z-50 w-14 h-14 rounded-full bg-foreground text-background flex items-center justify-center shadow-xl"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.92 }}
           >
-            {/* Glow effect */}
-            <motion.span
-              className="absolute inset-0 rounded-full bg-foreground/40"
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.5, 0, 0.5],
-              }}
-              transition={{
-                duration: 2.5,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-            />
-            <Plus className="w-7 h-7 relative z-10" />
+            <Plus className="w-7 h-7" />
           </motion.button>
         )}
       </AnimatePresence>
