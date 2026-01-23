@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Camera } from "lucide-react";
-import { NutritionResults } from "@/components/NutritionResults";
+import { Plus } from "lucide-react";
 import { DailyProgress } from "@/components/DailyProgress";
 import { SmartRecommendations } from "@/components/SmartRecommendations";
 import { FoodScanConfirmation } from "@/components/FoodScanConfirmation";
@@ -9,15 +8,15 @@ import { ManualMealEntry } from "@/components/ManualMealEntry";
 import { BarcodeScanner } from "@/components/BarcodeScanner";
 import { CameraInterface } from "@/components/CameraInterface";
 import { TourGuide } from "@/components/TourGuide";
+import { ScanTutorial } from "@/components/ScanTutorial";
 import { WeeklyCalendarStrip } from "@/components/WeeklyCalendarStrip";
 import { AppLayout } from "@/components/AppLayout";
-import { QuickStats } from "@/components/QuickStats";
-import { MotivationalQuote } from "@/components/MotivationalQuote";
-import { WaterIntake } from "@/components/WaterIntake";
+import { RecentlyUploaded } from "@/components/RecentlyUploaded";
 import { PageTransition } from "@/components/PageTransition";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
+import { useScanTutorial } from "@/hooks/useScanTutorial";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
@@ -47,6 +46,7 @@ export default function ScanPage() {
   const { user } = useAuth();
   const { meals, saveMeal, refetch } = useMealHistory();
   const { showTour, completeTour } = useTour();
+  const { showTutorial, completeTutorial } = useScanTutorial();
   const { toast } = useToast();
   const { t } = useTranslation();
   const isOffline = useOfflineStatus();
@@ -58,6 +58,14 @@ export default function ScanPage() {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  const handleOpenCamera = () => {
+    // If user hasn't seen tutorial, show it first
+    if (showTutorial) {
+      return; // Tutorial will show automatically
+    }
+    setShowCameraInterface(true);
+  };
 
   const handleImageSelect = async (base64: string): Promise<NutritionData | null> => {
     if (isOffline) {
@@ -223,10 +231,22 @@ export default function ScanPage() {
     setTimeout(() => setShowManualEntry(true), 50);
   };
 
+  const handleTutorialComplete = () => {
+    completeTutorial();
+    setShowCameraInterface(true);
+  };
+
   return (
     <PageTransition>
       {/* Tour Guide Overlay */}
       {showTour && <TourGuide onComplete={completeTour} />}
+      
+      {/* Scan Tutorial for first-time users */}
+      <AnimatePresence>
+        {showTutorial && (
+          <ScanTutorial onComplete={handleTutorialComplete} />
+        )}
+      </AnimatePresence>
 
       <AppLayout>
       
@@ -270,7 +290,7 @@ export default function ScanPage() {
         onDeclineMeal={handleDeclineAdd}
       />
 
-      <div className="space-y-4 pb-24">
+      <div className="space-y-6 pb-24">
         {/* Weekly Calendar Strip */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -282,6 +302,7 @@ export default function ScanPage() {
           />
         </motion.div>
 
+        {/* Daily Progress */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -289,33 +310,16 @@ export default function ScanPage() {
           <DailyProgress meals={meals} selectedDate={selectedDate} />
         </motion.div>
 
-        {/* Quick Stats Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-        >
-          <QuickStats meals={meals} />
-        </motion.div>
-
-        {/* Water Intake Tracker */}
+        {/* Recently Uploaded */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <WaterIntake />
+          <RecentlyUploaded meals={meals} />
         </motion.div>
 
-        {/* Motivational Quote */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <MotivationalQuote />
-        </motion.div>
-
+        {/* Smart Recommendations */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -323,33 +327,24 @@ export default function ScanPage() {
         >
           <SmartRecommendations meals={meals} />
         </motion.div>
-
-        {results && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <NutritionResults data={results} />
-          </motion.div>
-        )}
       </div>
 
       {/* Floating Action Button */}
       <AnimatePresence>
-        {showFab && (
+        {showFab && !showTutorial && (
           <motion.button
             initial={{ opacity: 0, scale: 0.5, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.5, y: 20 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            onClick={() => setShowCameraInterface(true)}
-            className="fixed bottom-24 right-5 z-50 w-16 h-16 rounded-2xl bg-foreground text-background flex items-center justify-center shadow-xl"
+            onClick={handleOpenCamera}
+            className="fixed bottom-24 right-5 z-50 w-16 h-16 rounded-full bg-foreground text-background flex items-center justify-center shadow-xl"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.92 }}
           >
             {/* Glow effect */}
             <motion.span
-              className="absolute inset-0 rounded-2xl bg-foreground/40"
+              className="absolute inset-0 rounded-full bg-foreground/40"
               animate={{
                 scale: [1, 1.2, 1],
                 opacity: [0.5, 0, 0.5],
@@ -360,7 +355,7 @@ export default function ScanPage() {
                 ease: "easeInOut",
               }}
             />
-            <Camera className="w-7 h-7 relative z-10" />
+            <Plus className="w-7 h-7 relative z-10" />
           </motion.button>
         )}
       </AnimatePresence>
