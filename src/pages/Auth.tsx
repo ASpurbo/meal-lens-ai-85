@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Apple, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,9 @@ const passwordSchema = z.string().min(6, "Password must be at least 6 characters
 type AuthMode = "login" | "signup" | "forgot";
 
 export default function Auth() {
-  const [mode, setMode] = useState<AuthMode>("login");
+  const [searchParams] = useSearchParams();
+  const initialMode = (searchParams.get("mode") as AuthMode) || "login";
+  const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -30,6 +32,14 @@ export default function Auth() {
       navigate("/");
     }
   }, [user, navigate]);
+
+  // Update mode if URL parameter changes
+  useEffect(() => {
+    const urlMode = searchParams.get("mode") as AuthMode;
+    if (urlMode && ["login", "signup", "forgot"].includes(urlMode)) {
+      setMode(urlMode);
+    }
+  }, [searchParams]);
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
