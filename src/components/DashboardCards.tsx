@@ -300,14 +300,88 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
       <HealthScoreCard score={healthScore} mealCount={mealCount} />
     </div>,
 
-    // Page 3: Additional stats (Water, Exercise, etc.)
+    // Page 3: Detailed Analytics
     <div key="page3" className="space-y-3">
-      <div className="bg-card rounded-2xl p-6 shadow-sm border border-border/30 text-center">
-        <h3 className="font-semibold text-lg mb-2">More Coming Soon</h3>
-        <p className="text-muted-foreground text-sm">
-          Water intake, exercise tracking, and more detailed analytics will be available here.
-        </p>
-      </div>
+      {/* Meal breakdown */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-card rounded-2xl p-5 shadow-sm border border-border/30"
+      >
+        <h3 className="font-semibold text-lg mb-3">Today's Breakdown</h3>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Meals logged</span>
+            <span className="font-semibold">{mealCount}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Avg cal/meal</span>
+            <span className="font-semibold">
+              {mealCount > 0 ? Math.round(totals.calories / mealCount) : 0}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Protein ratio</span>
+            <span className="font-semibold">
+              {totals.calories > 0 
+                ? Math.round((totals.protein * 4 / totals.calories) * 100) 
+                : 0}%
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Carbs ratio</span>
+            <span className="font-semibold">
+              {totals.calories > 0 
+                ? Math.round((totals.carbs * 4 / totals.calories) * 100) 
+                : 0}%
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Fat ratio</span>
+            <span className="font-semibold">
+              {totals.calories > 0 
+                ? Math.round((totals.fat * 9 / totals.calories) * 100) 
+                : 0}%
+            </span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Goal progress summary */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-card rounded-2xl p-5 shadow-sm border border-border/30"
+      >
+        <h3 className="font-semibold text-lg mb-3">Goal Progress</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="text-center p-3 bg-muted/50 rounded-xl">
+            <span className="text-2xl font-bold">
+              {Math.min(100, Math.round((totals.calories / goals.calories) * 100))}%
+            </span>
+            <p className="text-xs text-muted-foreground mt-1">Calories</p>
+          </div>
+          <div className="text-center p-3 bg-muted/50 rounded-xl">
+            <span className="text-2xl font-bold">
+              {Math.min(100, Math.round((totals.protein / goals.protein) * 100))}%
+            </span>
+            <p className="text-xs text-muted-foreground mt-1">Protein</p>
+          </div>
+          <div className="text-center p-3 bg-muted/50 rounded-xl">
+            <span className="text-2xl font-bold">
+              {Math.min(100, Math.round((totals.carbs / goals.carbs) * 100))}%
+            </span>
+            <p className="text-xs text-muted-foreground mt-1">Carbs</p>
+          </div>
+          <div className="text-center p-3 bg-muted/50 rounded-xl">
+            <span className="text-2xl font-bold">
+              {Math.min(100, Math.round((totals.fat / goals.fat) * 100))}%
+            </span>
+            <p className="text-xs text-muted-foreground mt-1">Fat</p>
+          </div>
+        </div>
+      </motion.div>
     </div>,
   ];
 
