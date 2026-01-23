@@ -50,7 +50,9 @@ export type Database = {
           created_at: string
           fat: number
           foods: string[]
+          health_score: number | null
           id: string
+          image_url: string | null
           meal_period: string | null
           notes: string | null
           protein: number
@@ -64,7 +66,9 @@ export type Database = {
           created_at?: string
           fat?: number
           foods?: string[]
+          health_score?: number | null
           id?: string
+          image_url?: string | null
           meal_period?: string | null
           notes?: string | null
           protein?: number
@@ -78,7 +82,9 @@ export type Database = {
           created_at?: string
           fat?: number
           foods?: string[]
+          health_score?: number | null
           id?: string
+          image_url?: string | null
           meal_period?: string | null
           notes?: string | null
           protein?: number

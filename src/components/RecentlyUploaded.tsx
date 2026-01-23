@@ -8,6 +8,32 @@ interface RecentlyUploadedProps {
   meals: MealAnalysis[];
 }
 
+// Food emoji mapping based on common food types
+function getFoodEmoji(foods: string[]): string {
+  const foodText = foods.join(" ").toLowerCase();
+  
+  if (foodText.includes("egg")) return "🍳";
+  if (foodText.includes("bread") || foodText.includes("toast")) return "🍞";
+  if (foodText.includes("salad") || foodText.includes("vegetable")) return "🥗";
+  if (foodText.includes("chicken") || foodText.includes("poultry")) return "🍗";
+  if (foodText.includes("beef") || foodText.includes("steak")) return "🥩";
+  if (foodText.includes("fish") || foodText.includes("salmon")) return "🐟";
+  if (foodText.includes("rice")) return "🍚";
+  if (foodText.includes("pasta") || foodText.includes("spaghetti")) return "🍝";
+  if (foodText.includes("pizza")) return "🍕";
+  if (foodText.includes("burger") || foodText.includes("hamburger")) return "🍔";
+  if (foodText.includes("sandwich")) return "🥪";
+  if (foodText.includes("soup")) return "🍲";
+  if (foodText.includes("coffee")) return "☕";
+  if (foodText.includes("milk")) return "🥛";
+  if (foodText.includes("smoothie") || foodText.includes("shake")) return "🥤";
+  if (foodText.includes("fruit") || foodText.includes("apple") || foodText.includes("banana")) return "🍎";
+  if (foodText.includes("yogurt") || foodText.includes("skyr")) return "🥛";
+  if (foodText.includes("cereal") || foodText.includes("oatmeal")) return "🥣";
+  
+  return "🍽️";
+}
+
 export function RecentlyUploaded({ meals }: RecentlyUploadedProps) {
   const { t } = useTranslation();
   
@@ -34,11 +60,19 @@ export function RecentlyUploaded({ meals }: RecentlyUploadedProps) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
-            className="bg-card rounded-2xl p-4 flex items-center gap-4 shadow-sm"
+            className="bg-card rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-border/30"
           >
-            {/* Food image placeholder */}
-            <div className="w-24 h-24 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0">
-              <div className="text-4xl">🍽️</div>
+            {/* Food image or emoji placeholder */}
+            <div className="w-20 h-20 rounded-xl bg-muted flex items-center justify-center overflow-hidden shrink-0">
+              {meal.image_url ? (
+                <img 
+                  src={meal.image_url} 
+                  alt={meal.foods[0] || "Meal"} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="text-3xl">{getFoodEmoji(meal.foods)}</div>
+              )}
             </div>
 
             {/* Meal info */}
@@ -46,7 +80,7 @@ export function RecentlyUploaded({ meals }: RecentlyUploadedProps) {
               <div className="flex items-center justify-between mb-1">
                 <h3 className="font-semibold text-foreground truncate pr-2">
                   {meal.foods.length > 0 ? meal.foods[0] : "Unnamed Food"}
-                  {meal.foods.length > 1 && "..."}
+                  {meal.foods.length > 1 && ` +${meal.foods.length - 1}`}
                 </h3>
                 <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0">
                   {format(new Date(meal.analyzed_at), "h:mm a")}
@@ -57,7 +91,7 @@ export function RecentlyUploaded({ meals }: RecentlyUploadedProps) {
               <div className="flex items-center gap-1.5 mb-2">
                 <Flame className="w-4 h-4 text-orange-500" />
                 <span className="font-semibold text-foreground">
-                  {Math.round(meal.calories)} calories
+                  {Math.round(meal.calories)} cal
                 </span>
               </div>
 

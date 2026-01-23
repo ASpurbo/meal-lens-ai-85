@@ -4,6 +4,7 @@ import { Flame, Drumstick, Wheat, Droplets, Apple, Candy, Salad } from "lucide-r
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
 import { MealAnalysis } from "@/hooks/useMealHistory";
 import { format, isToday } from "date-fns";
+import { calculateHealthScore } from "@/lib/healthScore";
 
 interface DashboardCardsProps {
   meals: MealAnalysis[];
@@ -146,8 +147,14 @@ function CalorieCard({ consumed, goal, delay = 0 }: { consumed: number; goal: nu
   );
 }
 
-function HealthScoreCard({ score, mealCount }: { score: number | null; mealCount: number }) {
-  const showScore = mealCount >= 3;
+function HealthScoreCard({ score, mealCount }: { score: number; mealCount: number }) {
+  const showScore = mealCount >= 3 && score > 0;
+  
+  // Get gradient position based on score
+  const getGradientPosition = () => {
+    if (!showScore) return "0%";
+    return `${score}%`;
+  };
   
   return (
     <motion.div
@@ -158,18 +165,22 @@ function HealthScoreCard({ score, mealCount }: { score: number | null; mealCount
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-lg">Health Score</h3>
         <span className="text-xl font-bold">
-          {showScore && score !== null ? score : "N/A"}
+          {showScore ? score : "N/A"}
         </span>
       </div>
       
-      {/* Progress bar */}
-      <div className="w-full h-1.5 bg-muted rounded-full mb-4">
-        {showScore && score !== null && (
+      {/* Gradient progress bar */}
+      <div className="relative w-full h-2 bg-muted rounded-full mb-4 overflow-hidden">
+        {/* Full gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-r from-rose-500 via-amber-500 to-green-500 opacity-20" />
+        
+        {/* Active gradient fill */}
+        {showScore && (
           <motion.div 
             initial={{ width: 0 }}
-            animate={{ width: `${score}%` }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="h-full rounded-full bg-gradient-to-r from-rose-400 via-amber-400 to-green-400"
+            animate={{ width: getGradientPosition() }}
+            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+            className="absolute inset-y-0 left-0 bg-gradient-to-r from-rose-500 via-amber-500 to-green-500 rounded-full"
           />
         )}
       </div>
@@ -187,22 +198,29 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
   const [currentPage, setCurrentPage] = useState(0);
   const { goals, loading } = useNutritionGoals();
 
-  const { totals, mealCount } = useMemo(() => {
+  const { totals, mealCount, healthScore, filteredMeals } = useMemo(() => {
     const targetDate = selectedDate.toDateString();
-    const filteredMeals = meals.filter(
+    const filtered = meals.filter(
       (meal) => new Date(meal.analyzed_at).toDateString() === targetDate
     );
 
-    return {
-      totals: {
-        calories: filteredMeals.reduce((sum, meal) => sum + meal.calories, 0),
-        protein: filteredMeals.reduce((sum, meal) => sum + meal.protein, 0),
-        carbs: filteredMeals.reduce((sum, meal) => sum + meal.carbs, 0),
-        fat: filteredMeals.reduce((sum, meal) => sum + meal.fat, 0),
-      },
-      mealCount: filteredMeals.length,
+    const calculatedTotals = {
+      calories: filtered.reduce((sum, meal) => sum + meal.calories, 0),
+      protein: filtered.reduce((sum, meal) => sum + meal.protein, 0),
+      carbs: filtered.reduce((sum, meal) => sum + meal.carbs, 0),
+      fat: filtered.reduce((sum, meal) => sum + meal.fat, 0),
     };
-  }, [meals, selectedDate]);
+
+    // Calculate health score using the utility function
+    const score = calculateHealthScore(filtered, goals);
+
+    return {
+      totals: calculatedTotals,
+      mealCount: filtered.length,
+      healthScore: score,
+      filteredMeals: filtered,
+    };
+  }, [meals, selectedDate, goals]);
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const threshold = 50;
@@ -276,7 +294,7 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
           delay={0.1}
         />
       </div>
-      <HealthScoreCard score={null} mealCount={mealCount} />
+      <HealthScoreCard score={healthScore} mealCount={mealCount} />
     </div>,
 
     // Page 3: Additional stats (Water, Exercise, etc.)
