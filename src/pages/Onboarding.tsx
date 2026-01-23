@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Loader2, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ArrowLeft, Loader2, ThumbsDown, ThumbsUp, Check, Flame, Wheat, Beef, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
@@ -10,8 +10,11 @@ import { PageTransition } from "@/components/PageTransition";
 import { OnboardingCard } from "@/components/OnboardingCard";
 import { OnboardingProgress } from "@/components/OnboardingProgress";
 import { WheelPicker } from "@/components/WheelPicker";
+import { HorizontalRulerPicker } from "@/components/HorizontalRulerPicker";
+import { SpeedSlider } from "@/components/SpeedSlider";
+import { MacroRing } from "@/components/MacroRing";
 import { supabase } from "@/integrations/backendClient";
-import { differenceInYears, parse } from "date-fns";
+import { differenceInYears, parse, addWeeks, format } from "date-fns";
 import { SUPPORTED_LANGUAGES } from "@/lib/languages";
 
 interface OnboardingData {
@@ -25,6 +28,9 @@ interface OnboardingData {
   height_in: number;
   weight_kg: number;
   weight_lb: number;
+  target_weight_kg: number;
+  target_weight_lb: number;
+  weekly_goal_kg: number;
   gender: string;
   activity_level: string;
   used_other_apps: boolean;
@@ -39,12 +45,12 @@ const MONTHS = [
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const YEARS = Array.from({ length: 80 }, (_, i) => new Date().getFullYear() - 10 - i);
 
-const HEIGHT_CM = Array.from({ length: 121 }, (_, i) => i + 120); // 120-240 cm
+const HEIGHT_CM = Array.from({ length: 121 }, (_, i) => i + 120);
 const HEIGHT_FT = [3, 4, 5, 6, 7, 8];
 const HEIGHT_IN = Array.from({ length: 12 }, (_, i) => i);
 
-const WEIGHT_KG = Array.from({ length: 151 }, (_, i) => i + 30); // 30-180 kg
-const WEIGHT_LB = Array.from({ length: 351 }, (_, i) => i + 60); // 60-410 lb
+const WEIGHT_KG = Array.from({ length: 151 }, (_, i) => i + 30);
+const WEIGHT_LB = Array.from({ length: 351 }, (_, i) => i + 60);
 
 const GOALS = [
   { value: "lose_weight", label: "Lose weight" },
@@ -72,10 +78,12 @@ const calculateAge = (birthday: string): number => {
   }
 };
 
-const getDietGoalModifier = (goal: string): number => {
+const getDietGoalModifier = (goal: string, weeklyGoal: number): number => {
+  // Convert weekly goal to daily calories (1 kg ≈ 7700 calories)
+  const dailyModifier = (weeklyGoal * 7700) / 7;
   switch (goal) {
-    case "lose_weight": return -500;
-    case "gain_weight": return 300;
+    case "lose_weight": return -dailyModifier;
+    case "gain_weight": return dailyModifier;
     default: return 0;
   }
 };
@@ -100,8 +108,8 @@ const calculateNutritionGoals = (data: OnboardingData) => {
   };
 
   const tdee = Math.round(bmr * (activityMultipliers[data.activity_level] || 1.55));
-  const goalModifier = getDietGoalModifier(data.diet_goal);
-  const targetCalories = Math.max(1200, tdee + goalModifier);
+  const goalModifier = getDietGoalModifier(data.diet_goal, data.weekly_goal_kg);
+  const targetCalories = Math.max(1200, Math.round(tdee + goalModifier));
   
   let proteinRatio = 0.30;
   let carbsRatio = 0.40;
@@ -138,6 +146,9 @@ export default function Onboarding() {
     height_in: 7,
     weight_kg: 70,
     weight_lb: 154,
+    target_weight_kg: 77,
+    target_weight_lb: 170,
+    weekly_goal_kg: 0.8,
     gender: "",
     activity_level: "",
     used_other_apps: false,
@@ -148,17 +159,31 @@ export default function Onboarding() {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const totalSteps = 7;
+  const totalSteps = 11; // Added 4 new steps
+
+  // Calculate weight difference and estimated date
+  const currentWeight = data.use_metric ? data.weight_kg : Math.round(data.weight_lb * 0.453592);
+  const targetWeight = data.use_metric ? data.target_weight_kg : Math.round(data.target_weight_lb * 0.453592);
+  const weightDifference = Math.abs(targetWeight - currentWeight);
+  const weeksToGoal = data.weekly_goal_kg > 0 ? Math.ceil(weightDifference / data.weekly_goal_kg) : 0;
+  const estimatedDate = addWeeks(new Date(), weeksToGoal);
+
+  // Calculate nutrition goals for summary
+  const nutritionGoals = useMemo(() => calculateNutritionGoals(data), [data]);
 
   const canProceed = useMemo(() => {
     switch (step) {
       case 0: return data.gender !== "";
-      case 1: return true; // Birthday always has default
-      case 2: return true; // Height/weight always has default
+      case 1: return true;
+      case 2: return true;
       case 3: return data.diet_goal !== "";
-      case 4: return data.activity_level !== "";
-      case 5: return true; // Used other apps is boolean
-      case 6: return data.language !== "";
+      case 4: return data.diet_goal !== "maintain" ? true : true; // Target weight (skip for maintain)
+      case 5: return true; // Motivation message
+      case 6: return data.diet_goal !== "maintain" ? true : true; // Speed slider
+      case 7: return data.activity_level !== "";
+      case 8: return true;
+      case 9: return data.language !== "";
+      case 10: return true; // Summary
       default: return true;
     }
   }, [step, data]);
@@ -227,6 +252,26 @@ export default function Onboarding() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNext = () => {
+    // Skip target weight, motivation, and speed steps for "maintain" goal
+    if (data.diet_goal === "maintain") {
+      if (step === 3) {
+        setStep(7); // Skip to activity level
+        return;
+      }
+    }
+    setStep(step + 1);
+  };
+
+  const handleBack = () => {
+    // Handle skipped steps when going back
+    if (data.diet_goal === "maintain" && step === 7) {
+      setStep(3);
+      return;
+    }
+    setStep(step - 1);
   };
 
   const renderDots = (count: number, selected: boolean) => {
@@ -321,7 +366,6 @@ export default function Onboarding() {
               <p className="text-muted-foreground">This will be used to calibrate your custom plan.</p>
             </div>
             
-            {/* Unit toggle */}
             <div className="flex items-center justify-center gap-4 mb-6">
               <span className={`font-semibold transition-colors ${!data.use_metric ? "text-foreground" : "text-muted-foreground"}`}>
                 Imperial
@@ -400,7 +444,68 @@ export default function Onboarding() {
           </div>
         );
 
-      case 4: // Activity level
+      case 4: // Target Weight
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2 mb-8">
+              <h1 className="text-3xl font-bold tracking-tight">What is your desired weight?</h1>
+            </div>
+            
+            <div className="flex flex-col items-center justify-center mt-16">
+              <p className="text-muted-foreground mb-4">
+                {data.diet_goal === "gain_weight" ? "Gain weight" : "Lose weight"}
+              </p>
+              
+              <HorizontalRulerPicker
+                min={30}
+                max={180}
+                value={data.target_weight_kg}
+                onChange={(v) => setData({ ...data, target_weight_kg: v })}
+                step={0.5}
+                unit="kg"
+              />
+            </div>
+          </div>
+        );
+
+      case 5: // Motivation Message
+        const isGaining = data.diet_goal === "gain_weight";
+        return (
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="text-center px-4">
+              <h1 className="text-3xl font-bold tracking-tight mb-4">
+                {isGaining ? "Gaining" : "Losing"}{" "}
+                <span className="text-[hsl(var(--accent-amber))]">{weightDifference} kg</span>{" "}
+                is a realistic target. It's not hard at all!
+              </h1>
+              <p className="text-muted-foreground mt-6">
+                90% of users say that the change is obvious after using MealLens and it is not easy to rebound.
+              </p>
+            </div>
+          </div>
+        );
+
+      case 6: // Speed Slider
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2 mb-8">
+              <h1 className="text-3xl font-bold tracking-tight">How fast do you want to reach your goal?</h1>
+            </div>
+            
+            <div className="mt-12">
+              <SpeedSlider
+                value={data.weekly_goal_kg}
+                onChange={(v) => setData({ ...data, weekly_goal_kg: v })}
+                min={0.1}
+                max={1.5}
+                step={0.1}
+                goal={data.diet_goal === "gain_weight" ? "gain" : "lose"}
+              />
+            </div>
+          </div>
+        );
+
+      case 7: // Activity level
         return (
           <div className="space-y-4">
             <div className="space-y-2 mb-8">
@@ -432,7 +537,7 @@ export default function Onboarding() {
           </div>
         );
 
-      case 5: // Used other apps
+      case 8: // Used other apps
         return (
           <div className="space-y-4">
             <div className="space-y-2 mb-8">
@@ -471,7 +576,7 @@ export default function Onboarding() {
           </div>
         );
 
-      case 6: // Language
+      case 9: // Language
         return (
           <div className="space-y-4">
             <div className="space-y-2 mb-8">
@@ -494,9 +599,91 @@ export default function Onboarding() {
           </div>
         );
 
+      case 10: // Congratulations Summary
+        return (
+          <div className="space-y-6">
+            {/* Check icon */}
+            <div className="flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-foreground flex items-center justify-center">
+                <Check className="w-8 h-8 text-background" />
+              </div>
+            </div>
+            
+            {/* Title */}
+            <div className="text-center">
+              <h1 className="text-2xl font-bold tracking-tight">Congratulations</h1>
+              <h2 className="text-2xl font-bold tracking-tight">your custom plan is ready!</h2>
+            </div>
+            
+            {/* Goal summary */}
+            {data.diet_goal !== "maintain" && (
+              <div className="text-center">
+                <p className="text-muted-foreground">You should {data.diet_goal === "gain_weight" ? "gain" : "lose"}:</p>
+                <div className="bg-secondary rounded-full px-6 py-2 inline-block mt-2">
+                  <span className="font-semibold">
+                    {data.diet_goal === "gain_weight" ? "Gain" : "Lose"} {weightDifference} kg by {format(estimatedDate, "MMMM d")}
+                  </span>
+                </div>
+              </div>
+            )}
+            
+            {/* Daily recommendation */}
+            <div className="bg-secondary/30 rounded-3xl p-5 mt-4">
+              <h3 className="font-semibold text-lg mb-1">Daily recommendation</h3>
+              <p className="text-muted-foreground text-sm mb-4">You can edit this anytime</p>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <MacroRing
+                  value={nutritionGoals.calories}
+                  label="Calories"
+                  unit=""
+                  color="calories"
+                  icon={<Flame className="w-4 h-4 text-[hsl(var(--ring-calories))]" />}
+                />
+                <MacroRing
+                  value={nutritionGoals.carbs}
+                  label="Carbs"
+                  unit="g"
+                  color="carbs"
+                  icon={<Wheat className="w-4 h-4 text-[hsl(var(--ring-carbs))]" />}
+                />
+                <MacroRing
+                  value={nutritionGoals.protein}
+                  label="Protein"
+                  unit="g"
+                  color="protein"
+                  icon={<Beef className="w-4 h-4 text-[hsl(var(--ring-protein))]" />}
+                />
+                <MacroRing
+                  value={nutritionGoals.fat}
+                  label="Fats"
+                  unit="g"
+                  color="fat"
+                  icon={<Droplets className="w-4 h-4 text-[hsl(var(--ring-fat))]" />}
+                />
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
+  };
+
+  // Calculate progress step accounting for skipped steps
+  const getProgressStep = () => {
+    if (data.diet_goal === "maintain" && step > 3) {
+      return step - 3; // Adjust for skipped steps
+    }
+    return step;
+  };
+
+  const getProgressTotal = () => {
+    if (data.diet_goal === "maintain") {
+      return totalSteps - 3; // 3 steps are skipped for maintain
+    }
+    return totalSteps;
   };
 
   return (
@@ -507,7 +694,7 @@ export default function Onboarding() {
           <div className="flex items-center gap-4">
             {step > 0 ? (
               <button
-                onClick={() => setStep(step - 1)}
+                onClick={handleBack}
                 className="w-10 h-10 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -516,7 +703,7 @@ export default function Onboarding() {
               <div className="w-10" />
             )}
             <div className="flex-1">
-              <OnboardingProgress current={step} total={totalSteps} />
+              <OnboardingProgress current={getProgressStep()} total={getProgressTotal()} />
             </div>
             <div className="w-10" />
           </div>
@@ -541,7 +728,7 @@ export default function Onboarding() {
         {/* Continue button */}
         <div className="flex-shrink-0 px-6 pb-safe py-4">
           <Button
-            onClick={step < totalSteps - 1 ? () => setStep(step + 1) : handleComplete}
+            onClick={step < totalSteps - 1 ? handleNext : handleComplete}
             disabled={!canProceed || loading}
             className={`w-full h-14 rounded-2xl text-lg font-semibold transition-all ${
               canProceed 
@@ -551,6 +738,8 @@ export default function Onboarding() {
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />
+            ) : step === totalSteps - 1 ? (
+              "Let's get started!"
             ) : (
               "Continue"
             )}
