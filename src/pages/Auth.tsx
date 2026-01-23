@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Apple, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Apple, Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,14 +13,16 @@ import { z } from "zod";
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
 
+type AuthMode = "login" | "signup" | "forgot";
+
 export default function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const { toast } = useToast();
-  const { user, signIn, signUp } = useAuth();
+  const { user, signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -40,11 +42,13 @@ export default function Auth() {
       }
     }
     
-    try {
-      passwordSchema.parse(password);
-    } catch (e) {
-      if (e instanceof z.ZodError) {
-        newErrors.password = e.errors[0].message;
+    if (mode !== "forgot") {
+      try {
+        passwordSchema.parse(password);
+      } catch (e) {
+        if (e instanceof z.ZodError) {
+          newErrors.password = e.errors[0].message;
+        }
       }
     }
     
@@ -60,7 +64,22 @@ export default function Auth() {
     setLoading(true);
     
     try {
-      if (isLogin) {
+      if (mode === "forgot") {
+        const { error } = await resetPassword(email);
+        if (error) {
+          toast({
+            title: "Reset failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Check your email",
+            description: "We've sent you a password reset link.",
+          });
+          setMode("login");
+        }
+      } else if (mode === "login") {
         const { error } = await signIn(email, password);
         if (error) {
           if (error.message.includes("Invalid login credentials")) {
@@ -108,10 +127,26 @@ export default function Auth() {
     }
   };
 
+  const getTitle = () => {
+    switch (mode) {
+      case "login": return "Welcome back";
+      case "signup": return "Create account";
+      case "forgot": return "Reset password";
+    }
+  };
+
+  const getSubtitle = () => {
+    switch (mode) {
+      case "login": return "Sign in to continue tracking";
+      case "signup": return "Start your nutrition journey";
+      case "forgot": return "Enter your email to receive a reset link";
+    }
+  };
+
   return (
     <PageTransition>
       <div className="min-h-screen bg-background flex flex-col pt-safe overflow-y-auto">
-        {/* Cal AI style - centered logo */}
+        {/* Header */}
         <header className="container py-6 shrink-0">
           <motion.div
             initial={{ opacity: 0 }}
@@ -130,81 +165,121 @@ export default function Auth() {
             transition={{ delay: 0.1 }}
             className="w-full max-w-sm"
           >
-            <div className="text-center mb-10">
-              <h1 className="text-2xl font-semibold tracking-tight mb-2">
-                {isLogin ? "Welcome back" : "Create account"}
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                {isLogin
-                  ? "Sign in to continue tracking"
-                  : "Start your nutrition journey"}
-              </p>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-12 rounded-xl border-border bg-background"
-                  disabled={loading}
-                />
-                {errors.email && (
-                  <p className="text-xs text-destructive">{errors.email}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 rounded-xl border-border bg-background"
-                  disabled={loading}
-                />
-                {errors.password && (
-                  <p className="text-xs text-destructive">{errors.password}</p>
-                )}
-              </div>
-
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full h-12 rounded-xl"
-                disabled={loading}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={mode}
+                initial={{ opacity: 0, x: mode === "forgot" ? 20 : -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: mode === "forgot" ? -20 : 20 }}
+                transition={{ duration: 0.2 }}
               >
-                {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : isLogin ? (
-                  "Sign in"
-                ) : (
-                  "Create account"
+                {mode === "forgot" && (
+                  <button
+                    type="button"
+                    onClick={() => setMode("login")}
+                    className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to login
+                  </button>
                 )}
-              </Button>
-            </form>
 
-            <div className="mt-8 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrors({});
-                }}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                disabled={loading}
-              >
-                {isLogin
-                  ? "Don't have an account? Sign up"
-                  : "Already have an account? Sign in"}
-              </button>
-            </div>
+                <div className="text-center mb-10">
+                  <h1 className="text-2xl font-semibold tracking-tight mb-2">
+                    {getTitle()}
+                  </h1>
+                  <p className="text-muted-foreground text-sm">
+                    {getSubtitle()}
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="h-12 rounded-xl border-border bg-background"
+                      disabled={loading}
+                    />
+                    {errors.email && (
+                      <p className="text-xs text-destructive">{errors.email}</p>
+                    )}
+                  </div>
+
+                  {mode !== "forgot" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-12 rounded-xl border-border bg-background"
+                        disabled={loading}
+                      />
+                      {errors.password && (
+                        <p className="text-xs text-destructive">{errors.password}</p>
+                      )}
+                    </div>
+                  )}
+
+                  {mode === "login" && (
+                    <div className="text-right">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMode("forgot");
+                          setErrors({});
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        Forgot password?
+                      </button>
+                    </div>
+                  )}
+
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full h-12 rounded-xl"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : mode === "login" ? (
+                      "Sign in"
+                    ) : mode === "signup" ? (
+                      "Create account"
+                    ) : (
+                      "Send reset link"
+                    )}
+                  </Button>
+                </form>
+
+                {mode !== "forgot" && (
+                  <div className="mt-8 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode(mode === "login" ? "signup" : "login");
+                        setErrors({});
+                      }}
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={loading}
+                    >
+                      {mode === "login"
+                        ? "Don't have an account? Sign up"
+                        : "Already have an account? Sign in"}
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
 
             <div className="mt-6 text-center flex items-center justify-center gap-3 pb-6">
               <Link
