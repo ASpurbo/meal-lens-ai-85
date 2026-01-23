@@ -9,6 +9,9 @@ export interface MealAnalysis {
   protein: number;
   carbs: number;
   fat: number;
+  fiber?: number;
+  sugar?: number;
+  sodium?: number;
   confidence: string;
   notes: string | null;
   analyzed_at: string;
@@ -116,6 +119,9 @@ export function useMealHistory() {
     protein: number;
     carbs: number;
     fat: number;
+    fiber?: number;
+    sugar?: number;
+    sodium?: number;
     confidence: string;
     notes: string;
     image_url?: string;
@@ -133,6 +139,9 @@ export function useMealHistory() {
           protein: mealData.protein,
           carbs: mealData.carbs,
           fat: mealData.fat,
+          fiber: mealData.fiber || 0,
+          sugar: mealData.sugar || 0,
+          sodium: mealData.sodium || 0,
           confidence: mealData.confidence,
           notes: mealData.notes,
           image_url: mealData.image_url || null,

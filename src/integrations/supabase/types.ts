@@ -49,6 +49,7 @@ export type Database = {
           confidence: string | null
           created_at: string
           fat: number
+          fiber: number | null
           foods: string[]
           health_score: number | null
           id: string
@@ -56,6 +57,8 @@ export type Database = {
           meal_period: string | null
           notes: string | null
           protein: number
+          sodium: number | null
+          sugar: number | null
           user_id: string
         }
         Insert: {
@@ -65,6 +68,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           fat?: number
+          fiber?: number | null
           foods?: string[]
           health_score?: number | null
           id?: string
@@ -72,6 +76,8 @@ export type Database = {
           meal_period?: string | null
           notes?: string | null
           protein?: number
+          sodium?: number | null
+          sugar?: number | null
           user_id: string
         }
         Update: {
@@ -81,6 +87,7 @@ export type Database = {
           confidence?: string | null
           created_at?: string
           fat?: number
+          fiber?: number | null
           foods?: string[]
           health_score?: number | null
           id?: string
@@ -88,6 +95,8 @@ export type Database = {
           meal_period?: string | null
           notes?: string | null
           protein?: number
+          sodium?: number | null
+          sugar?: number | null
           user_id?: string
         }
         Relationships: []

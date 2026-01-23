@@ -30,6 +30,9 @@ interface NutritionData {
   protein: number;
   carbs: number;
   fat: number;
+  fiber?: number;
+  sugar?: number;
+  sodium?: number;
   confidence: "low" | "medium" | "high";
   notes: string;
   imageBase64?: string;
@@ -194,6 +197,9 @@ export default function ScanPage() {
       protein: mealData.protein,
       carbs: mealData.carbs,
       fat: mealData.fat,
+      fiber: mealData.fiber || 0,
+      sugar: mealData.sugar || 0,
+      sodium: mealData.sodium || 0,
       confidence: mealData.confidence,
       notes: mealData.notes,
       image_url: imageUrl || undefined,
