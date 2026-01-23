@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { Flame, Drumstick, Wheat, Droplets, Apple, Candy, Salad } from "lucide-react";
+import { Flame, Drumstick, Wheat, Droplets, Apple, Candy, Salad, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useNutritionGoals } from "@/hooks/useNutritionGoals";
 import { MealAnalysis } from "@/hooks/useMealHistory";
-import { format, isToday } from "date-fns";
+import { format, isToday, subDays, startOfDay, endOfDay } from "date-fns";
 import { calculateHealthScore } from "@/lib/healthScore";
-
+import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 interface DashboardCardsProps {
   meals: MealAnalysis[];
   selectedDate?: Date;
@@ -198,7 +198,7 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
   const [currentPage, setCurrentPage] = useState(0);
   const { goals, loading } = useNutritionGoals();
 
-  const { totals, mealCount, healthScore, filteredMeals } = useMemo(() => {
+  const { totals, mealCount, healthScore, filteredMeals, weeklyAverage } = useMemo(() => {
     const targetDate = selectedDate.toDateString();
     const filtered = meals.filter(
       (meal) => new Date(meal.analyzed_at).toDateString() === targetDate
@@ -214,6 +214,33 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
       sodium: filtered.reduce((sum, meal) => sum + (meal.sodium || 0), 0),
     };
 
+    // Calculate 7-day average (excluding selected date)
+    const sevenDaysAgo = subDays(selectedDate, 7);
+    const weekMeals = meals.filter((meal) => {
+      const mealDate = new Date(meal.analyzed_at);
+      return mealDate >= startOfDay(sevenDaysAgo) && 
+             mealDate < startOfDay(selectedDate);
+    });
+
+    // Group by day to get daily totals, then average
+    const dailyTotals: Record<string, { calories: number; protein: number }> = {};
+    weekMeals.forEach((meal) => {
+      const day = new Date(meal.analyzed_at).toDateString();
+      if (!dailyTotals[day]) {
+        dailyTotals[day] = { calories: 0, protein: 0 };
+      }
+      dailyTotals[day].calories += meal.calories;
+      dailyTotals[day].protein += meal.protein;
+    });
+
+    const daysWithData = Object.keys(dailyTotals).length;
+    const avgCalories = daysWithData > 0 
+      ? Object.values(dailyTotals).reduce((sum, d) => sum + d.calories, 0) / daysWithData 
+      : 0;
+    const avgProtein = daysWithData > 0 
+      ? Object.values(dailyTotals).reduce((sum, d) => sum + d.protein, 0) / daysWithData 
+      : 0;
+
     // Calculate health score using the utility function
     const score = calculateHealthScore(filtered, goals);
 
@@ -222,6 +249,7 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
       mealCount: filtered.length,
       healthScore: score,
       filteredMeals: filtered,
+      weeklyAverage: { calories: avgCalories, protein: avgProtein, daysWithData },
     };
   }, [meals, selectedDate, goals]);
 
@@ -300,87 +328,166 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
       <HealthScoreCard score={healthScore} mealCount={mealCount} />
     </div>,
 
-    // Page 3: Detailed Analytics
+    // Page 3: Detailed Analytics with Pie Chart & Weekly Comparison
     <div key="page3" className="space-y-3">
-      {/* Meal breakdown */}
+      {/* Macro Pie Chart */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-card rounded-2xl p-5 shadow-sm border border-border/30"
       >
-        <h3 className="font-semibold text-lg mb-3">Today's Breakdown</h3>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Meals logged</span>
-            <span className="font-semibold">{mealCount}</span>
+        <h3 className="font-semibold text-lg mb-3">Macro Distribution</h3>
+        {totals.protein + totals.carbs + totals.fat > 0 ? (
+          <div className="flex items-center gap-4">
+            <div className="w-28 h-28">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: "Protein", value: Math.round(totals.protein * 4), color: "hsl(var(--ring-protein))" },
+                      { name: "Carbs", value: Math.round(totals.carbs * 4), color: "hsl(var(--ring-carbs))" },
+                      { name: "Fat", value: Math.round(totals.fat * 9), color: "hsl(var(--ring-fat))" },
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={30}
+                    outerRadius={50}
+                    paddingAngle={2}
+                    dataKey="value"
+                    animationBegin={0}
+                    animationDuration={800}
+                  >
+                    {[
+                      { color: "hsl(var(--ring-protein))" },
+                      { color: "hsl(var(--ring-carbs))" },
+                      { color: "hsl(var(--ring-fat))" },
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                    ))}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "hsl(var(--ring-protein))" }} />
+                <span className="text-sm text-muted-foreground">Protein</span>
+                <span className="ml-auto font-semibold">
+                  {totals.calories > 0 ? Math.round((totals.protein * 4 / totals.calories) * 100) : 0}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "hsl(var(--ring-carbs))" }} />
+                <span className="text-sm text-muted-foreground">Carbs</span>
+                <span className="ml-auto font-semibold">
+                  {totals.calories > 0 ? Math.round((totals.carbs * 4 / totals.calories) * 100) : 0}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: "hsl(var(--ring-fat))" }} />
+                <span className="text-sm text-muted-foreground">Fat</span>
+                <span className="ml-auto font-semibold">
+                  {totals.calories > 0 ? Math.round((totals.fat * 9 / totals.calories) * 100) : 0}%
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Avg cal/meal</span>
-            <span className="font-semibold">
-              {mealCount > 0 ? Math.round(totals.calories / mealCount) : 0}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Protein ratio</span>
-            <span className="font-semibold">
-              {totals.calories > 0 
-                ? Math.round((totals.protein * 4 / totals.calories) * 100) 
-                : 0}%
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Carbs ratio</span>
-            <span className="font-semibold">
-              {totals.calories > 0 
-                ? Math.round((totals.carbs * 4 / totals.calories) * 100) 
-                : 0}%
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Fat ratio</span>
-            <span className="font-semibold">
-              {totals.calories > 0 
-                ? Math.round((totals.fat * 9 / totals.calories) * 100) 
-                : 0}%
-            </span>
-          </div>
-        </div>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Log meals to see your macro distribution
+          </p>
+        )}
       </motion.div>
 
-      {/* Goal progress summary */}
+      {/* Weekly Comparison */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
         className="bg-card rounded-2xl p-5 shadow-sm border border-border/30"
       >
-        <h3 className="font-semibold text-lg mb-3">Goal Progress</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="text-center p-3 bg-muted/50 rounded-xl">
-            <span className="text-2xl font-bold">
-              {Math.min(100, Math.round((totals.calories / goals.calories) * 100))}%
-            </span>
-            <p className="text-xs text-muted-foreground mt-1">Calories</p>
+        <h3 className="font-semibold text-lg mb-3">vs 7-Day Average</h3>
+        {weeklyAverage.daysWithData > 0 ? (
+          <div className="space-y-4">
+            {/* Calories comparison */}
+            {(() => {
+              const diff = totals.calories - weeklyAverage.calories;
+              const percentDiff = weeklyAverage.calories > 0 ? Math.round((diff / weeklyAverage.calories) * 100) : 0;
+              const isUp = diff > 0;
+              const isFlat = Math.abs(percentDiff) < 5;
+              return (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${isFlat ? 'bg-muted' : isUp ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
+                      {isFlat ? (
+                        <Minus className="w-4 h-4 text-muted-foreground" />
+                      ) : isUp ? (
+                        <TrendingUp className="w-4 h-4 text-amber-500" />
+                      ) : (
+                        <TrendingDown className="w-4 h-4 text-emerald-500" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">Calories</p>
+                      <p className="text-xs text-muted-foreground">
+                        Avg: {Math.round(weeklyAverage.calories)} kcal
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className={`font-bold ${isFlat ? 'text-muted-foreground' : isUp ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      {isUp ? '+' : ''}{Math.round(diff)}
+                    </span>
+                    <p className="text-xs text-muted-foreground">
+                      {isFlat ? 'on track' : isUp ? `${percentDiff}% more` : `${Math.abs(percentDiff)}% less`}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Protein comparison */}
+            {(() => {
+              const diff = totals.protein - weeklyAverage.protein;
+              const percentDiff = weeklyAverage.protein > 0 ? Math.round((diff / weeklyAverage.protein) * 100) : 0;
+              const isUp = diff > 0;
+              const isFlat = Math.abs(percentDiff) < 5;
+              return (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-full ${isFlat ? 'bg-muted' : isUp ? 'bg-emerald-500/10' : 'bg-amber-500/10'}`}>
+                      {isFlat ? (
+                        <Minus className="w-4 h-4 text-muted-foreground" />
+                      ) : isUp ? (
+                        <TrendingUp className="w-4 h-4 text-emerald-500" />
+                      ) : (
+                        <TrendingDown className="w-4 h-4 text-amber-500" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium">Protein</p>
+                      <p className="text-xs text-muted-foreground">
+                        Avg: {Math.round(weeklyAverage.protein)}g
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className={`font-bold ${isFlat ? 'text-muted-foreground' : isUp ? 'text-emerald-500' : 'text-amber-500'}`}>
+                      {isUp ? '+' : ''}{Math.round(diff)}g
+                    </span>
+                    <p className="text-xs text-muted-foreground">
+                      {isFlat ? 'on track' : isUp ? `${percentDiff}% more` : `${Math.abs(percentDiff)}% less`}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
-          <div className="text-center p-3 bg-muted/50 rounded-xl">
-            <span className="text-2xl font-bold">
-              {Math.min(100, Math.round((totals.protein / goals.protein) * 100))}%
-            </span>
-            <p className="text-xs text-muted-foreground mt-1">Protein</p>
-          </div>
-          <div className="text-center p-3 bg-muted/50 rounded-xl">
-            <span className="text-2xl font-bold">
-              {Math.min(100, Math.round((totals.carbs / goals.carbs) * 100))}%
-            </span>
-            <p className="text-xs text-muted-foreground mt-1">Carbs</p>
-          </div>
-          <div className="text-center p-3 bg-muted/50 rounded-xl">
-            <span className="text-2xl font-bold">
-              {Math.min(100, Math.round((totals.fat / goals.fat) * 100))}%
-            </span>
-            <p className="text-xs text-muted-foreground mt-1">Fat</p>
-          </div>
-        </div>
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-4">
+            Track for a few days to see your weekly trends
+          </p>
+        )}
       </motion.div>
     </div>,
   ];
