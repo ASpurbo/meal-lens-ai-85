@@ -12,6 +12,8 @@ export interface MealAnalysis {
   confidence: string;
   notes: string | null;
   analyzed_at: string;
+  image_url?: string | null;
+  health_score?: number | null;
 }
 
 const CACHE_KEY = "meallens_meal_history";
@@ -116,6 +118,8 @@ export function useMealHistory() {
     fat: number;
     confidence: string;
     notes: string;
+    image_url?: string;
+    health_score?: number;
   }) => {
     if (!user) return null;
 
@@ -131,6 +135,8 @@ export function useMealHistory() {
           fat: mealData.fat,
           confidence: mealData.confidence,
           notes: mealData.notes,
+          image_url: mealData.image_url || null,
+          health_score: mealData.health_score || null,
         })
         .select()
         .single();

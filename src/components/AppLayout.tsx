@@ -1,12 +1,12 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Apple, Home, BarChart3, Settings, Loader2, Flame } from "lucide-react";
+import { Apple, Home, BarChart3, Settings, Loader2, Flame, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/backendClient";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -65,24 +65,46 @@ export function AppLayout({ children, hideMainScroll = false }: AppLayoutProps) 
   return (
     <div className="h-full flex flex-col overflow-hidden bg-gradient-to-b from-muted/30 to-background">
       {/* Header */}
-      <header className="flex-shrink-0 pt-safe sticky top-0 z-40">
+      <header className="flex-shrink-0 pt-safe sticky top-0 z-40 bg-background/80 backdrop-blur-lg">
         <div className="px-5 py-4 flex items-center justify-between">
-          <Link to="/scan" className="flex items-center gap-2">
-            <Apple className="w-6 h-6 text-foreground" />
-            <span className="text-xl font-bold tracking-tight">Cal AI</span>
-          </Link>
+          {/* Logo and Streak */}
+          <div className="flex items-center gap-3">
+            <Link to="/scan" className="flex items-center gap-2">
+              <Apple className="w-6 h-6 text-foreground" />
+              <span className="text-xl font-bold tracking-tight">Cal AI</span>
+            </Link>
+            
+            {/* Streak badge */}
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-orange-500/10 border border-orange-500/20"
+            >
+              <Flame className="w-3.5 h-3.5 text-orange-500" />
+              <span className="font-semibold text-xs text-orange-600 dark:text-orange-400">
+                {streakData?.current_streak || 0}
+              </span>
+            </motion.div>
+          </div>
           
-          {/* Streak badge */}
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background border border-border shadow-sm"
-          >
-            <Flame className="w-4 h-4 text-orange-500" />
-            <span className="font-semibold text-sm">
-              {streakData?.current_streak || 0}
-            </span>
-          </motion.div>
+          {/* Right side icons */}
+          <div className="flex items-center gap-2">
+            {/* AI Coach Button */}
+            <Link
+              to="/coach"
+              className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center shadow-sm hover:bg-muted transition-colors"
+            >
+              <Sparkles className="w-5 h-5 text-foreground" />
+            </Link>
+            
+            {/* Settings Button */}
+            <Link
+              to="/settings"
+              className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center shadow-sm hover:bg-muted transition-colors"
+            >
+              <Settings className="w-5 h-5 text-foreground" />
+            </Link>
+          </div>
         </div>
       </header>
 

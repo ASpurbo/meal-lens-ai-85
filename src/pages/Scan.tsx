@@ -13,7 +13,9 @@ import { WeeklyCalendarStrip } from "@/components/WeeklyCalendarStrip";
 import { AppLayout } from "@/components/AppLayout";
 import { RecentlyUploaded } from "@/components/RecentlyUploaded";
 import { PageTransition } from "@/components/PageTransition";
+import { AnalyzingBanner } from "@/components/AnalyzingBanner";
 import { useMealHistory } from "@/hooks/useMealHistory";
+import { useMealImageUpload } from "@/hooks/useMealImageUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { useTour } from "@/hooks/useTour";
 import { useScanTutorial } from "@/hooks/useScanTutorial";
@@ -30,6 +32,7 @@ interface NutritionData {
   fat: number;
   confidence: "low" | "medium" | "high";
   notes: string;
+  imageBase64?: string;
 }
 
 export default function ScanPage() {
@@ -45,6 +48,7 @@ export default function ScanPage() {
   
   const { user } = useAuth();
   const { meals, saveMeal, refetch } = useMealHistory();
+  const { uploadMealImage } = useMealImageUpload();
   const { showTour, completeTour } = useTour();
   const { showTutorial, completeTutorial } = useScanTutorial();
   const { toast } = useToast();
@@ -95,7 +99,8 @@ export default function ScanPage() {
         duration: 3000,
       });
 
-      return data as NutritionData;
+      // Return data with the original base64 image for later upload
+      return { ...data, imageBase64: base64 } as NutritionData;
     } catch (error) {
       console.error("Analysis error:", error);
       toast({
@@ -177,6 +182,12 @@ export default function ScanPage() {
     const mealData = data || pendingResults;
     if (!mealData) return;
 
+    // Upload image if available
+    let imageUrl: string | null = null;
+    if (mealData.imageBase64) {
+      imageUrl = await uploadMealImage(mealData.imageBase64);
+    }
+
     const saved = await saveMeal({
       foods: mealData.foods,
       calories: mealData.calories,
@@ -185,6 +196,7 @@ export default function ScanPage() {
       fat: mealData.fat,
       confidence: mealData.confidence,
       notes: mealData.notes,
+      image_url: imageUrl || undefined,
     });
 
     if (saved) {
@@ -238,6 +250,11 @@ export default function ScanPage() {
 
   return (
     <PageTransition>
+      {/* Analyzing Banner */}
+      <AnimatePresence>
+        <AnalyzingBanner isVisible={isAnalyzing} />
+      </AnimatePresence>
+
       {/* Tour Guide Overlay */}
       {showTour && <TourGuide onComplete={completeTour} />}
       
