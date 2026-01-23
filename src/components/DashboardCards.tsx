@@ -209,6 +209,9 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
       protein: filtered.reduce((sum, meal) => sum + meal.protein, 0),
       carbs: filtered.reduce((sum, meal) => sum + meal.carbs, 0),
       fat: filtered.reduce((sum, meal) => sum + meal.fat, 0),
+      fiber: filtered.reduce((sum, meal) => sum + (meal.fiber || 0), 0),
+      sugar: filtered.reduce((sum, meal) => sum + (meal.sugar || 0), 0),
+      sodium: filtered.reduce((sum, meal) => sum + (meal.sodium || 0), 0),
     };
 
     // Calculate health score using the utility function
@@ -269,7 +272,7 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
     <div key="page2" className="space-y-3">
       <div className="grid grid-cols-3 gap-3">
         <MacroCard
-          value={0}
+          value={totals.fiber}
           max={38}
           label="Fiber"
           color="hsl(270, 60%, 65%)"
@@ -277,15 +280,15 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
           delay={0}
         />
         <MacroCard
-          value={0}
-          max={96}
+          value={totals.sugar}
+          max={50}
           label="Sugar"
           color="hsl(340, 70%, 65%)"
           icon={<Candy className="w-5 h-5" />}
           delay={0.05}
         />
         <MacroCard
-          value={0}
+          value={totals.sodium}
           max={2300}
           label="Sodium"
           unit="mg"

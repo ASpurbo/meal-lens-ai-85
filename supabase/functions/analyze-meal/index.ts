@@ -101,15 +101,23 @@ ALWAYS respond with ONLY valid JSON in this exact format:
   "protein": <number in grams>,
   "carbs": <number in grams>,
   "fat": <number in grams>,
+  "fiber": <number in grams>,
+  "sugar": <number in grams>,
+  "sodium": <number in milligrams>,
   "confidence": "<low|medium|high>",
   "notes": "<brief note about what you see and why you identified it this way>"
 }
 
-PORTION SIZE REFERENCE:
-- Glass of milk (250ml): 150 cal, 8g protein, 12g carbs, 8g fat
-- Skyr (150g): 100 cal, 17g protein, 6g carbs, 0g fat
-- Eggs (1 large): 70 cal, 6g protein, 0.5g carbs, 5g fat
-- Oatmeal (40g dry): 150 cal, 5g protein, 27g carbs, 3g fat
+PORTION SIZE REFERENCE (with fiber/sugar/sodium):
+- Glass of milk (250ml): 150 cal, 8g protein, 12g carbs, 8g fat, 0g fiber, 12g sugar, 120mg sodium
+- Skyr (150g): 100 cal, 17g protein, 6g carbs, 0g fat, 0g fiber, 4g sugar, 50mg sodium
+- Eggs (1 large): 70 cal, 6g protein, 0.5g carbs, 5g fat, 0g fiber, 0g sugar, 70mg sodium
+- Oatmeal (40g dry): 150 cal, 5g protein, 27g carbs, 3g fat, 4g fiber, 1g sugar, 5mg sodium
+- Banana (medium): 105 cal, 1g protein, 27g carbs, 0g fat, 3g fiber, 14g sugar, 1mg sodium
+- Apple (medium): 95 cal, 0g protein, 25g carbs, 0g fat, 4g fiber, 19g sugar, 2mg sodium
+- Chicken breast (100g): 165 cal, 31g protein, 0g carbs, 4g fat, 0g fiber, 0g sugar, 75mg sodium
+- Rice (1 cup cooked): 205 cal, 4g protein, 45g carbs, 0g fat, 1g fiber, 0g sugar, 5mg sodium
+- Bread (1 slice): 80 cal, 3g protein, 15g carbs, 1g fat, 1g fiber, 2g sugar, 150mg sodium
 
 If you genuinely cannot identify the food, say so honestly and return low confidence with zeros.`
           },
@@ -176,6 +184,9 @@ If you genuinely cannot identify the food, say so honestly and return low confid
         protein: 0,
         carbs: 0,
         fat: 0,
+        fiber: 0,
+        sugar: 0,
+        sodium: 0,
         confidence: "low",
         notes: "Could not analyze the image. Please try with a clearer photo."
       };
