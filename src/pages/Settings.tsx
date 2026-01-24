@@ -107,14 +107,40 @@ export default function Settings() {
     const file = event.target.files?.[0];
     if (!file || !user?.id) return;
 
+    // Security: Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ 
+        title: "Invalid file type", 
+        description: "Please upload a JPG, PNG, WebP, or GIF image",
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    // Security: Validate file size (5MB max)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast({ 
+        title: "File too large", 
+        description: "Avatar must be less than 5MB",
+        variant: "destructive" 
+      });
+      return;
+    }
+
     setIsUploadingAvatar(true);
     try {
-      const fileExt = file.name.split(".").pop();
+      // Use content type from validated file, not user-supplied extension
+      const fileExt = file.type.split('/')[1];
       const fileName = `${user.id}/avatar.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { 
+          upsert: true,
+          contentType: file.type // Set explicit content type
+        });
 
       if (uploadError) throw uploadError;
 

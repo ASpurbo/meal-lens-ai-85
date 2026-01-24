@@ -9,12 +9,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface VerificationRequest {
-  email: string;
-  userId: string;
-  isResend?: boolean;
-}
-
 serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -22,19 +16,49 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, userId, isResend } = await req.json() as VerificationRequest;
-
-    if (!email || !userId) {
-      console.error("Missing email or userId");
+    // Security: Require authentication to prevent email bombing attacks
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.log("Request rejected: No authorization header");
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify the user's JWT token
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      console.log("Request rejected: Invalid token", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Use authenticated user's email and ID - don't accept from request body
+    const email = user.email;
+    const userId = user.id;
+
+    if (!email) {
+      console.error("User has no email");
+      return new Response(
+        JSON.stringify({ error: "User email not found" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Processing verification email for: ${email}, userId: ${userId}, isResend: ${isResend}`);
+    const { isResend } = await req.json().catch(() => ({}));
 
-    // Create Supabase client with service role
+    console.log(`Processing verification email for authenticated user: ${userId}`);
+
+    // Create Supabase client with service role for database operations
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
