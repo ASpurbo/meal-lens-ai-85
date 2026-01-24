@@ -155,6 +155,32 @@ export default function Landing() {
               </div>
             </div>
           </motion.section>
+
+          {/* Testimonials */}
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7, duration: 0.45 }}
+            className="w-full max-w-sm mt-8"
+            aria-label="User testimonials"
+          >
+            <div className="flex flex-col gap-3">
+              <div className="bg-card border border-border/30 rounded-2xl p-4 shadow-sm">
+                <p className="text-sm text-muted-foreground italic leading-relaxed">"Finally, an app that makes tracking effortless. I just snap a photo and I'm done!"</p>
+                <p className="text-xs font-medium mt-2">— Sarah M.</p>
+              </div>
+
+              <div className="bg-card border border-border/30 rounded-2xl p-4 shadow-sm">
+                <p className="text-sm text-muted-foreground italic leading-relaxed">"Lost 12 lbs in 2 months. The AI is scary accurate at estimating portions."</p>
+                <p className="text-xs font-medium mt-2">— James K.</p>
+              </div>
+
+              <div className="bg-card border border-border/30 rounded-2xl p-4 shadow-sm">
+                <p className="text-sm text-muted-foreground italic leading-relaxed">"Way better than manually logging everything. This actually fits my lifestyle."</p>
+                <p className="text-xs font-medium mt-2">— Emily R.</p>
+              </div>
+            </div>
+          </motion.section>
           
           {/* Sign in link */}
           <motion.p
