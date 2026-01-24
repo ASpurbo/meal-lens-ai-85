@@ -6,6 +6,7 @@ import { MealAnalysis } from "@/hooks/useMealHistory";
 import { format, isToday, subDays, startOfDay, endOfDay } from "date-fns";
 import { calculateHealthScore } from "@/lib/healthScore";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { StreakCalendar } from "./StreakCalendar";
 interface DashboardCardsProps {
   meals: MealAnalysis[];
   selectedDate?: Date;
@@ -223,14 +224,16 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
     });
 
     // Group by day to get daily totals, then average
-    const dailyTotals: Record<string, { calories: number; protein: number }> = {};
+    const dailyTotals: Record<string, { calories: number; protein: number; carbs: number; fat: number }> = {};
     weekMeals.forEach((meal) => {
       const day = new Date(meal.analyzed_at).toDateString();
       if (!dailyTotals[day]) {
-        dailyTotals[day] = { calories: 0, protein: 0 };
+        dailyTotals[day] = { calories: 0, protein: 0, carbs: 0, fat: 0 };
       }
       dailyTotals[day].calories += meal.calories;
       dailyTotals[day].protein += meal.protein;
+      dailyTotals[day].carbs += meal.carbs;
+      dailyTotals[day].fat += meal.fat;
     });
 
     const daysWithData = Object.keys(dailyTotals).length;
@@ -239,6 +242,12 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
       : 0;
     const avgProtein = daysWithData > 0 
       ? Object.values(dailyTotals).reduce((sum, d) => sum + d.protein, 0) / daysWithData 
+      : 0;
+    const avgCarbs = daysWithData > 0 
+      ? Object.values(dailyTotals).reduce((sum, d) => sum + d.carbs, 0) / daysWithData 
+      : 0;
+    const avgFat = daysWithData > 0 
+      ? Object.values(dailyTotals).reduce((sum, d) => sum + d.fat, 0) / daysWithData 
       : 0;
 
     // Calculate health score using the utility function
@@ -249,7 +258,7 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
       mealCount: filtered.length,
       healthScore: score,
       filteredMeals: filtered,
-      weeklyAverage: { calories: avgCalories, protein: avgProtein, daysWithData },
+      weeklyAverage: { calories: avgCalories, protein: avgProtein, carbs: avgCarbs, fat: avgFat, daysWithData },
     };
   }, [meals, selectedDate, goals]);
 
@@ -408,75 +417,85 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
       >
         <h3 className="font-semibold text-lg mb-3">vs 7-Day Average</h3>
         {weeklyAverage.daysWithData > 0 ? (
-          <div className="space-y-4">
-            {/* Calories comparison */}
+          <div className="grid grid-cols-2 gap-3">
+            {/* Calories */}
             {(() => {
               const diff = totals.calories - weeklyAverage.calories;
               const percentDiff = weeklyAverage.calories > 0 ? Math.round((diff / weeklyAverage.calories) * 100) : 0;
               const isUp = diff > 0;
               const isFlat = Math.abs(percentDiff) < 5;
               return (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${isFlat ? 'bg-muted' : isUp ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
-                      {isFlat ? (
-                        <Minus className="w-4 h-4 text-muted-foreground" />
-                      ) : isUp ? (
-                        <TrendingUp className="w-4 h-4 text-amber-500" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-emerald-500" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">Calories</p>
-                      <p className="text-xs text-muted-foreground">
-                        Avg: {Math.round(weeklyAverage.calories)} kcal
-                      </p>
-                    </div>
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-full ${isFlat ? 'bg-muted' : isUp ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
+                    {isFlat ? <Minus className="w-3 h-3 text-muted-foreground" /> : isUp ? <TrendingUp className="w-3 h-3 text-amber-500" /> : <TrendingDown className="w-3 h-3 text-emerald-500" />}
                   </div>
-                  <div className="text-right">
-                    <span className={`font-bold ${isFlat ? 'text-muted-foreground' : isUp ? 'text-amber-500' : 'text-emerald-500'}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Calories</p>
+                    <p className={`text-sm font-semibold ${isFlat ? 'text-muted-foreground' : isUp ? 'text-amber-500' : 'text-emerald-500'}`}>
                       {isUp ? '+' : ''}{Math.round(diff)}
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      {isFlat ? 'on track' : isUp ? `${percentDiff}% more` : `${Math.abs(percentDiff)}% less`}
                     </p>
                   </div>
                 </div>
               );
             })()}
 
-            {/* Protein comparison */}
+            {/* Protein */}
             {(() => {
               const diff = totals.protein - weeklyAverage.protein;
               const percentDiff = weeklyAverage.protein > 0 ? Math.round((diff / weeklyAverage.protein) * 100) : 0;
               const isUp = diff > 0;
               const isFlat = Math.abs(percentDiff) < 5;
               return (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-full ${isFlat ? 'bg-muted' : isUp ? 'bg-emerald-500/10' : 'bg-amber-500/10'}`}>
-                      {isFlat ? (
-                        <Minus className="w-4 h-4 text-muted-foreground" />
-                      ) : isUp ? (
-                        <TrendingUp className="w-4 h-4 text-emerald-500" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-amber-500" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">Protein</p>
-                      <p className="text-xs text-muted-foreground">
-                        Avg: {Math.round(weeklyAverage.protein)}g
-                      </p>
-                    </div>
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-full ${isFlat ? 'bg-muted' : isUp ? 'bg-emerald-500/10' : 'bg-amber-500/10'}`}>
+                    {isFlat ? <Minus className="w-3 h-3 text-muted-foreground" /> : isUp ? <TrendingUp className="w-3 h-3 text-emerald-500" /> : <TrendingDown className="w-3 h-3 text-amber-500" />}
                   </div>
-                  <div className="text-right">
-                    <span className={`font-bold ${isFlat ? 'text-muted-foreground' : isUp ? 'text-emerald-500' : 'text-amber-500'}`}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Protein</p>
+                    <p className={`text-sm font-semibold ${isFlat ? 'text-muted-foreground' : isUp ? 'text-emerald-500' : 'text-amber-500'}`}>
                       {isUp ? '+' : ''}{Math.round(diff)}g
-                    </span>
-                    <p className="text-xs text-muted-foreground">
-                      {isFlat ? 'on track' : isUp ? `${percentDiff}% more` : `${Math.abs(percentDiff)}% less`}
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Carbs */}
+            {(() => {
+              const diff = totals.carbs - weeklyAverage.carbs;
+              const percentDiff = weeklyAverage.carbs > 0 ? Math.round((diff / weeklyAverage.carbs) * 100) : 0;
+              const isUp = diff > 0;
+              const isFlat = Math.abs(percentDiff) < 5;
+              return (
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-full ${isFlat ? 'bg-muted' : isUp ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
+                    {isFlat ? <Minus className="w-3 h-3 text-muted-foreground" /> : isUp ? <TrendingUp className="w-3 h-3 text-amber-500" /> : <TrendingDown className="w-3 h-3 text-emerald-500" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Carbs</p>
+                    <p className={`text-sm font-semibold ${isFlat ? 'text-muted-foreground' : isUp ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      {isUp ? '+' : ''}{Math.round(diff)}g
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Fat */}
+            {(() => {
+              const diff = totals.fat - weeklyAverage.fat;
+              const percentDiff = weeklyAverage.fat > 0 ? Math.round((diff / weeklyAverage.fat) * 100) : 0;
+              const isUp = diff > 0;
+              const isFlat = Math.abs(percentDiff) < 5;
+              return (
+                <div className="flex items-center gap-2">
+                  <div className={`p-1.5 rounded-full ${isFlat ? 'bg-muted' : isUp ? 'bg-amber-500/10' : 'bg-emerald-500/10'}`}>
+                    {isFlat ? <Minus className="w-3 h-3 text-muted-foreground" /> : isUp ? <TrendingUp className="w-3 h-3 text-amber-500" /> : <TrendingDown className="w-3 h-3 text-emerald-500" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs text-muted-foreground">Fat</p>
+                    <p className={`text-sm font-semibold ${isFlat ? 'text-muted-foreground' : isUp ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      {isUp ? '+' : ''}{Math.round(diff)}g
                     </p>
                   </div>
                 </div>
@@ -489,6 +508,9 @@ export function DashboardCards({ meals, selectedDate = new Date() }: DashboardCa
           </p>
         )}
       </motion.div>
+
+      {/* Streak Calendar */}
+      <StreakCalendar meals={meals} />
     </div>,
   ];
 
