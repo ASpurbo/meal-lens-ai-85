@@ -9,8 +9,12 @@ export default function Landing() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background flex flex-col overflow-y-auto overscroll-none">
-        <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 pb-safe pt-safe">
+      {/*
+        NOTE: The app uses a fixed-viewport layout globally (html/body/root overflow hidden).
+        So this page must be its own scroll container.
+      */}
+      <div className="h-full bg-background flex flex-col overflow-y-auto overscroll-none">
+        <main className="min-h-full flex flex-col items-center justify-start px-6 py-12 pb-safe pt-safe">
           {/* Phone Mockup */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -108,12 +112,55 @@ export default function Landing() {
           >
             Get Started
           </motion.button>
+
+          {/* Feature highlights */}
+          <motion.section
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.45 }}
+            className="w-full max-w-sm mt-6"
+            aria-label="Key features"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-card border border-border/30 rounded-2xl p-4 shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3">
+                  <Camera className="w-5 h-5 text-foreground" />
+                </div>
+                <p className="font-semibold leading-tight">Photo AI analysis</p>
+                <p className="text-sm text-muted-foreground mt-1 leading-snug">Snap a meal, get calories + macros.</p>
+              </div>
+
+              <div className="bg-card border border-border/30 rounded-2xl p-4 shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3">
+                  <Barcode className="w-5 h-5 text-foreground" />
+                </div>
+                <p className="font-semibold leading-tight">Barcode scanning</p>
+                <p className="text-sm text-muted-foreground mt-1 leading-snug">Log packaged foods instantly.</p>
+              </div>
+
+              <div className="bg-card border border-border/30 rounded-2xl p-4 shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3">
+                  <Pencil className="w-5 h-5 text-foreground" />
+                </div>
+                <p className="font-semibold leading-tight">Manual logging</p>
+                <p className="text-sm text-muted-foreground mt-1 leading-snug">Quick add when you’re offline.</p>
+              </div>
+
+              <div className="bg-card border border-border/30 rounded-2xl p-4 shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3">
+                  <Zap className="w-5 h-5 text-foreground" />
+                </div>
+                <p className="font-semibold leading-tight">Smarter goals</p>
+                <p className="text-sm text-muted-foreground mt-1 leading-snug">Personal targets + progress insights.</p>
+              </div>
+            </div>
+          </motion.section>
           
           {/* Sign in link */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
+            transition={{ delay: 0.75, duration: 0.5 }}
             className="mt-4 text-sm text-muted-foreground"
           >
             Already have an account?{" "}
