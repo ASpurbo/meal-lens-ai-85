@@ -9,8 +9,8 @@ export default function Landing() {
 
   return (
     <PageTransition>
-      <div className="h-screen bg-background flex flex-col overflow-hidden">
-        <main className="flex-1 flex flex-col items-center justify-center px-6 pb-safe pt-safe">
+      <div className="min-h-screen bg-background flex flex-col overflow-y-auto overscroll-none">
+        <main className="flex-1 flex flex-col items-center justify-center px-6 py-12 pb-safe pt-safe">
           {/* Phone Mockup */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
