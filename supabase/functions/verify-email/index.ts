@@ -10,6 +10,28 @@ interface VerifyRequest {
   token: string;
 }
 
+// Simple in-memory rate limiting (per-IP, resets on function cold start)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 10; // max attempts per window
+const RATE_WINDOW = 60 * 1000; // 1 minute window
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_WINDOW });
+    return false;
+  }
+  
+  record.count++;
+  if (record.count > RATE_LIMIT) {
+    return true;
+  }
+  
+  return false;
+}
+
 serve(async (req: Request): Promise<Response> => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -17,12 +39,34 @@ serve(async (req: Request): Promise<Response> => {
   }
 
   try {
+    // Security: Rate limiting to prevent brute force attacks
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                     req.headers.get("cf-connecting-ip") || 
+                     "unknown";
+    
+    if (isRateLimited(clientIP)) {
+      console.log(`Rate limited IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ error: "Too many attempts. Please try again later." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { token } = await req.json() as VerifyRequest;
 
     if (!token) {
       console.error("No token provided");
       return new Response(
         JSON.stringify({ error: "Token is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Security: Basic token format validation (UUIDs concatenated)
+    if (token.length !== 72 || !/^[a-f0-9-]+$/.test(token)) {
+      console.error("Invalid token format");
+      return new Response(
+        JSON.stringify({ error: "Invalid token format" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
