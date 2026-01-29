@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Moon, Sun, Lock, Trash2, LogOut, Camera, 
@@ -528,19 +528,17 @@ export default function Settings() {
           >
             <p className="text-[10px] text-muted-foreground uppercase tracking-wider pt-4 pb-2">Legal</p>
             
-            <Link to="/datenschutz" className="block">
-              <SettingItem 
-                icon={FileText}
-                label="Privacy Policy"
-              />
-            </Link>
+            <SettingItem 
+              icon={FileText}
+              label="Privacy Policy"
+              onClick={() => navigate("/datenschutz")}
+            />
             
-            <Link to="/impressum" className="block">
-              <SettingItem 
-                icon={FileText}
-                label="Imprint"
-              />
-            </Link>
+            <SettingItem 
+              icon={FileText}
+              label="Imprint"
+              onClick={() => navigate("/impressum")}
+            />
           </motion.div>
 
           {/* Account Actions */}

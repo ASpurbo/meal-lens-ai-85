@@ -1,18 +1,20 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 export default function Datenschutz() {
+  const navigate = useNavigate();
+
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
       <header className="flex-shrink-0 container py-6">
-        <Link
-          to="/auth"
+        <button
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Zurück
-        </Link>
+        </button>
       </header>
 
       <main className="flex-1 overflow-y-auto">

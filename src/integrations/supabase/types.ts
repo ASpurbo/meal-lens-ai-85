@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      dashboard_settings: {
+        Row: {
+          created_at: string
+          hidden_widgets: string[] | null
+          id: string
+          updated_at: string
+          user_id: string
+          widget_order: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          hidden_widgets?: string[] | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          widget_order?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          hidden_widgets?: string[] | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          widget_order?: string[] | null
+        }
+        Relationships: []
+      }
       email_verification_tokens: {
         Row: {
           created_at: string
@@ -331,6 +358,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_feedback: {
+        Row: {
+          created_at: string
+          feedback_type: string
+          id: string
+          message: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_type: string
+          id?: string
+          message: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_type?: string
+          id?: string
+          message?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       user_streaks: {
         Row: {
