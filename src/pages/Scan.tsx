@@ -14,6 +14,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { RecentlyUploaded } from "@/components/RecentlyUploaded";
 import { PageTransition } from "@/components/PageTransition";
 import { AnalyzingBanner } from "@/components/AnalyzingBanner";
+import { DailyTip } from "@/components/DailyTip";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useMealImageUpload } from "@/hooks/useMealImageUpload";
 import { useAuth } from "@/hooks/useAuth";
@@ -314,10 +315,19 @@ export default function ScanPage() {
       />
 
       <div className="space-y-6 pb-24">
+        {/* Daily Tip */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <DailyTip showMotivation />
+        </motion.div>
+
         {/* Weekly Calendar Strip */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
         >
           <WeeklyCalendarStrip 
             meals={meals} 
