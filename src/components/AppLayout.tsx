@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
-import { Apple, Home, BarChart3, Trophy, Loader2, Flame, Sparkles, Settings } from "lucide-react";
+import { Apple, Home, BarChart3, Trophy, Loader2, Flame, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useOnboarding } from "@/hooks/useOnboarding";
 import { useQuery } from "@tanstack/react-query";
@@ -97,11 +97,6 @@ export function AppLayout({
           
           {/* Right side icons */}
           <div className="flex items-center gap-2">
-            {/* AI Coach Button */}
-            <Link to="/coach" className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center shadow-sm hover:bg-muted transition-colors">
-              <Sparkles className="w-5 h-5 text-foreground" />
-            </Link>
-            
             {/* Settings Button */}
             <Link to="/settings" className="w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center shadow-sm hover:bg-muted transition-colors">
               <Settings className="w-5 h-5 text-foreground" />
