@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { 
   Moon, Sun, Lock, Trash2, LogOut, Camera, 
   ChevronRight, AlertTriangle, Loader2, ArrowLeft,
-  X, Globe, HelpCircle, FileText, Monitor
+  X, Globe, HelpCircle, FileText, Monitor, MessageSquare
 } from "lucide-react";
 import { PageTransition } from "@/components/PageTransition";
 import { useTheme } from "@/hooks/useTheme";
@@ -37,6 +37,7 @@ import { supabase } from "@/integrations/backendClient";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { differenceInYears, parseISO } from "date-fns";
 import { SUPPORTED_LANGUAGES, getLanguageLabel, getLanguageFlag } from "@/lib/languages";
+import { FeedbackForm } from "@/components/FeedbackForm";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -60,6 +61,7 @@ export default function Settings() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
   const [isSavingLanguage, setIsSavingLanguage] = useState(false);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -355,6 +357,9 @@ export default function Settings() {
 
   return (
     <PageTransition>
+      {/* Feedback Form Modal */}
+      <FeedbackForm open={isFeedbackOpen} onOpenChange={setIsFeedbackOpen} />
+      
       <motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -505,6 +510,12 @@ export default function Settings() {
                   .eq("user_id", user.id);
                 navigate("/scan");
               }}
+            />
+            
+            <SettingItem 
+              icon={MessageSquare}
+              label="Send Feedback"
+              onClick={() => setIsFeedbackOpen(true)}
             />
           </motion.div>
 

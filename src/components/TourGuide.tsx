@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
-import { Camera, History, BarChart3, Target, Sparkles } from "lucide-react";
+import { Camera, History, BarChart3, Target, Apple, Utensils, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/hooks/useTranslation";
 
@@ -9,6 +9,7 @@ interface TourStep {
   title: string;
   subtitle: string;
   icon: React.ReactNode;
+  tip?: string;
 }
 
 interface TourGuideProps {
@@ -25,31 +26,36 @@ export function TourGuide({ onComplete }: TourGuideProps) {
       id: "welcome",
       title: t.tour?.welcome || "Welcome to NutriMind",
       subtitle: t.tour?.welcomeDesc || "Your AI-powered nutrition companion. Track meals effortlessly with just a photo.",
-      icon: <Sparkles className="w-8 h-8" />,
+      icon: <Apple className="w-8 h-8" />,
+      tip: "Swipe left to continue →",
     },
     {
       id: "scan",
       title: t.tour?.scanTitle || "Snap & Track",
       subtitle: t.tour?.scanDesc || "Take a photo of any meal and our AI instantly analyzes calories and macros.",
       icon: <Camera className="w-8 h-8" />,
+      tip: "Tap the + button on the home screen to start",
     },
     {
       id: "history",
       title: t.tour?.historyTitle || "Your Food Diary",
       subtitle: t.tour?.historyDesc || "Every meal is saved. View your complete nutrition history anytime.",
-      icon: <History className="w-8 h-8" />,
+      icon: <Utensils className="w-8 h-8" />,
+      tip: "Access via Recently Uploaded on your dashboard",
     },
     {
       id: "charts",
       title: t.tour?.chartsTitle || "See Your Progress",
       subtitle: t.tour?.chartsDesc || "Beautiful charts show your nutrition trends over days and weeks.",
-      icon: <BarChart3 className="w-8 h-8" />,
+      icon: <TrendingUp className="w-8 h-8" />,
+      tip: "Tap 'Progress' in the bottom navigation",
     },
     {
       id: "goals",
       title: t.tour?.goalsTitle || "Personalized Goals",
       subtitle: t.tour?.goalsDesc || "Set custom targets based on your body and fitness objectives.",
       icon: <Target className="w-8 h-8" />,
+      tip: "Tap 'Goals' to customize your targets",
     },
   ];
 
@@ -157,6 +163,18 @@ export function TourGuide({ onComplete }: TourGuideProps) {
             >
               {step.subtitle}
             </motion.p>
+
+            {/* Tip - contextual hint */}
+            {step.tip && (
+              <motion.div
+                initial={{ y: 15, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.25 }}
+                className="mt-6 px-4 py-2 bg-muted/50 rounded-full"
+              >
+                <p className="text-xs text-muted-foreground">💡 {step.tip}</p>
+              </motion.div>
+            )}
           </motion.div>
         </AnimatePresence>
       </div>
