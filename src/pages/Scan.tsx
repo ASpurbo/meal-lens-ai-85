@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus } from "lucide-react";
+import { Plus, Settings2 } from "lucide-react";
 import { DashboardCards } from "@/components/DashboardCards";
 import { SmartRecommendations } from "@/components/SmartRecommendations";
 import { FoodScanConfirmation } from "@/components/FoodScanConfirmation";
@@ -15,6 +15,7 @@ import { RecentlyUploaded } from "@/components/RecentlyUploaded";
 import { PageTransition } from "@/components/PageTransition";
 import { AnalyzingBanner } from "@/components/AnalyzingBanner";
 import { DailyTip } from "@/components/DailyTip";
+import { DashboardCustomizer } from "@/components/DashboardCustomizer";
 import { useMealHistory } from "@/hooks/useMealHistory";
 import { useMealImageUpload } from "@/hooks/useMealImageUpload";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +24,7 @@ import { useScanTutorial } from "@/hooks/useScanTutorial";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "@/hooks/useTranslation";
 import { useOfflineStatus } from "@/hooks/useOfflineStatus";
+import { useDashboardSettings } from "@/hooks/useDashboardSettings";
 import { supabase } from "@/integrations/backendClient";
 
 interface NutritionData {
@@ -49,6 +51,7 @@ export default function ScanPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showFab, setShowFab] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [showCustomizer, setShowCustomizer] = useState(false);
   
   const { user } = useAuth();
   const { meals, saveMeal, refetch } = useMealHistory();
@@ -58,6 +61,7 @@ export default function ScanPage() {
   const { toast } = useToast();
   const { t } = useTranslation();
   const isOffline = useOfflineStatus();
+  const { isWidgetVisible } = useDashboardSettings();
 
   // Show FAB after a delay (simulating splash screen completion)
   useEffect(() => {
@@ -314,52 +318,76 @@ export default function ScanPage() {
         onDeclineMeal={handleDeclineAdd}
       />
 
+      {/* Dashboard Customizer Modal */}
+      <DashboardCustomizer open={showCustomizer} onOpenChange={setShowCustomizer} />
+
       <div className="space-y-6 pb-24">
+        {/* Customize Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowCustomizer(true)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-lg hover:bg-muted"
+          >
+            <Settings2 className="w-3.5 h-3.5" />
+            Customize
+          </button>
+        </div>
+
         {/* Daily Tip */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <DailyTip showMotivation />
-        </motion.div>
+        {isWidgetVisible("daily_tip") && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <DailyTip showMotivation />
+          </motion.div>
+        )}
 
         {/* Weekly Calendar Strip */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-        >
-          <WeeklyCalendarStrip 
-            meals={meals} 
-            onDateSelect={(date) => setSelectedDate(date)}
-          />
-        </motion.div>
+        {isWidgetVisible("calendar") && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+          >
+            <WeeklyCalendarStrip 
+              meals={meals} 
+              onDateSelect={(date) => setSelectedDate(date)}
+            />
+          </motion.div>
+        )}
 
         {/* Dashboard Cards (Swipeable) */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <DashboardCards meals={meals} selectedDate={selectedDate} />
-        </motion.div>
+        {isWidgetVisible("dashboard_cards") && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <DashboardCards meals={meals} selectedDate={selectedDate} />
+          </motion.div>
+        )}
 
         {/* Recently Uploaded */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <RecentlyUploaded meals={meals} />
-        </motion.div>
+        {isWidgetVisible("recently_uploaded") && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <RecentlyUploaded meals={meals} />
+          </motion.div>
+        )}
 
         {/* Smart Recommendations */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <SmartRecommendations meals={meals} />
-        </motion.div>
+        {isWidgetVisible("recommendations") && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <SmartRecommendations meals={meals} />
+          </motion.div>
+        )}
       </div>
 
       {/* Floating Action Button */}

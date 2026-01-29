@@ -25,14 +25,16 @@ export function FeedbackForm({ open, onOpenChange }: FeedbackFormProps) {
 
     setIsSubmitting(true);
     try {
-      // For now, we'll log feedback to console and show success
-      // In production, this would save to a feedback table or send to an external service
-      console.log("Feedback submitted:", {
-        user_id: user.id,
-        type: feedbackType,
-        message: feedback,
-        timestamp: new Date().toISOString(),
-      });
+      // Save feedback to database
+      const { error } = await supabase
+        .from("user_feedback")
+        .insert({
+          user_id: user.id,
+          feedback_type: feedbackType,
+          message: feedback.trim(),
+        });
+
+      if (error) throw error;
 
       setIsSuccess(true);
       setTimeout(() => {
